@@ -496,3 +496,26 @@ Prompt mẫu: "Bạn là Security Reviewer. Review đoạn code sau theo checkli
 2. `Security Reviewer` chạy bổ sung sau mỗi feature — không thay thế PR checklist ở mục 6.4
 3. Mặc định dùng `Feature Developer` khi không chắc chọn role nào
 4. Đặt role ở đầu cuộc hội thoại hoặc system prompt để có hiệu lực xuyên suốt
+
+---
+
+## 15. AI-Driven Task Workflow (Quy trình giao việc tự động qua AI)
+
+Nhằm tối ưu hóa việc phân công nhiệm vụ và đồng bộ thông tin trong nhóm (Minh, Hưng, Thảo), chúng ta áp dụng mô hình quản lý công việc lưu trữ dưới dạng File (Doc-as-Task) ngay trên repository này.
+
+### Cấu trúc lưu trữ
+- `docs/templates/task_template.md`: Template chuẩn quy định những thông tin cần có của một task.
+- `docs/tasks/`: Thư mục chứa các file đặc tả nhiệm vụ (Task Spec). VD: `TASK-001-login.md`.
+
+### Cách vận hành bằng AI Agent (Custom Skills)
+
+1. **Dành cho Leader (Người giao việc - PM)**
+   - Không cần tự viết file dài dòng. Gọi kỹ năng chuyên dụng cho AI Agent:
+     > "@AI /create-task Hãy tạo yêu cầu tính năng Đăng nhập bằng Email/Password cho khách hàng"
+   - AI sẽ tự phân tích, đối chiếu rule (mục 10) và sinh ra file `TASK-XXX.md` có đầy đủ Acceptance Criteria và Tech Notes. Sau đó Leader chỉ việc commit lên Git.
+
+2. **Dành cho Developer / QA Engineer (Người thực thi)**
+   - Sau khi pull code về, không cần copy thủ công hay giải thích lại requirement cho AI. Dùng kỹ năng:
+     > "@AI /execute-task TASK-001"
+   - AI sẽ tự động tìm file Spec, hiểu rõ "Acceptance Criteria", và tiến hành code (nếu là Feature Developer) hoặc viết Unit Test (nếu là QA Engineer).
+   - Khi làm xong, AI tự động cập nhật trạng thái file Task thành `Ready for Test` hoặc `Done`.
