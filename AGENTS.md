@@ -1,7 +1,8 @@
-# Shop Giày AI — Project Rules & Conventions
+# Shop Giày AI — Project Rules & Conventions (v2 — Production-grade)
 
 > Website bán giày thể thao
 > PHP Core, MySQL, MVC, Bootstrap
+> v2: bổ sung transaction/concurrency, upload security, session security, CI/CD, migration có version, static analysis.
 
 ---
 
@@ -9,13 +10,16 @@
 
 | Layer | Công nghệ | Ghi chú |
 |-------|-----------|---------|
-| Ngôn ngữ backend | **PHP Core (không framework)** | PHP 8.x |
-| Database | **MySQL** | Quan hệ, 6 bảng chính: Users, Categories, Brands, Products, Orders, Order_Details |
-| Kiến trúc | **MVC (Model – View – Controller)** | Tự viết Router + Core, không dùng Laravel/CodeIgniter |
-| Frontend | **HTML5, CSS3, JavaScript, Bootstrap 5** | Render qua View (server-side), không SPA |
-| Quản lý phụ thuộc | **Composer** (nếu cần, ví dụ PHPMailer) | Không bắt buộc |
+| Ngôn ngữ backend | **PHP Core (không framework)** | PHP 8.1+ |
+| Database | **MySQL 8.0+**, engine **InnoDB bắt buộc** | InnoDB hỗ trợ transaction + row lock, MyISAM **không được dùng** |
+| Kiến trúc | **MVC (Model – View – Controller)** | Tự viết Router + Core |
+| Frontend | **HTML5, CSS3, JavaScript, Bootstrap 5** | Server-side render |
+| Quản lý phụ thuộc | **Composer** | PHPMailer, PHPUnit, PHPStan qua Composer |
 | Testing | **PHPUnit** | Test Model/business rules |
-| Local env | **Docker Compose** (khuyến nghị) hoặc XAMPP/Laragon | Đảm bảo PHP + MySQL version giống nhau giữa 3 máy |
+| Static analysis | **PHPStan (level ≥ 5)** | Bắt lỗi type, null-safety trước khi chạy |
+| CI | **GitHub Actions** (hoặc GitLab CI) | Chạy lint + PHPStan + PHPUnit tự động trên mọi PR |
+| Migration | **Custom migration script** (`database/migrations/`, đánh số thứ tự) | Không dùng 1 file `schema.sql` tĩnh duy nhất |
+| Local env | **Docker Compose** (khuyến nghị) | Cố định PHP + MySQL version giữa 3 máy |
 
 ---
 
@@ -28,15 +32,11 @@
 ProductController.php
 class ProductController { ... }
 
-OrderDetail.php
-class OrderDetail { ... }
-
 // Methods & variables: camelCase
 public function getProductById(int $productId): ?array { ... }
 $totalAmount = 0;
 
 // Constants: UPPER_SNAKE_CASE
-define('MIN_PASSWORD_LENGTH', 6);
 const ORDER_STATUS_PENDING = 'pending';
 
 // Database: snake_case cho tên bảng và cột
@@ -46,413 +46,453 @@ const ORDER_STATUS_PENDING = 'pending';
 ### 2.2 Naming — Frontend (View/Bootstrap)
 
 ```
-// View files: snake_case, đặt theo action, nhóm theo module
 views/client/product_list.php
-views/client/product_detail.php
 views/admin/category_manage.php
 
-// CSS class tự đặt thêm (ngoài Bootstrap): kebab-case, prefix theo module
-.product-card { ... }
-.order-status-badge { ... }
+.product-card { ... }          /* CSS custom: kebab-case, prefix module */
 
-// JS: camelCase cho biến/hàm, file JS đặt theo module
-// public/assets/js/cart.js
+// public/assets/js/cart.js — camelCase
 function addToCart(productId) { ... }
 ```
 
-### 2.3 Docstring / Comment (PHPDoc bắt buộc cho method public trong Model & Controller)
+### 2.3 Docstring (PHPDoc bắt buộc cho method public trong Model & Controller)
 
 ```php
 /**
  * Tính tổng tiền đơn hàng dựa trên chi tiết đơn hàng.
  *
- * Subtotal = Quantity x Price, tổng các dòng trừ đi giảm giá (nếu có).
- *
  * @param int $orderId Mã đơn hàng.
  * @return float Tổng tiền cuối cùng.
  * @throws OrderNotFoundException Khi không tìm thấy đơn hàng.
  */
-public function calculateTotalAmount(int $orderId): float
-{
-    ...
-}
+public function calculateTotalAmount(int $orderId): float { ... }
 ```
 
 ### 2.4 Comments
 
-- Comment **tại sao**, không comment **cái gì** (code tự nói lên nó làm gì)
-- Mọi ràng buộc nghiệp vụ (business rule) phải có comment trích dẫn quy tắc tương ứng
-- Comment nghiệp vụ bằng **tiếng Việt**, comment kỹ thuật thuần (thuật toán, thư viện) bằng tiếng Anh
+- Comment **tại sao**, không comment **cái gì**
+- Mọi ràng buộc nghiệp vụ phải trích dẫn rule tương ứng (mục 10)
+- Nghiệp vụ → tiếng Việt; kỹ thuật thuần (thuật toán, thư viện) → tiếng Anh
 
 ```php
 // Giá khuyến mãi không được lớn hơn giá bán (business rule PRODUCTS)
 if ($salePrice > $price) {
     throw new InvalidProductDataException('sale_price', 'Giá khuyến mãi vượt giá bán');
 }
-
-// Dùng prepared statement để tránh SQL injection
-$stmt = $pdo->prepare('SELECT * FROM products WHERE product_id = :id');
 ```
 
-### 2.5 Error Handling (Backend)
+### 2.5 Error Handling
 
-- **KHÔNG** dùng `@` để nuốt lỗi PHP, không `catch (Exception $e) {}` rỗng
-- Dữ liệu không hợp lệ → `throw` custom Exception (ví dụ `InvalidProductDataException`, `InsufficientStockException`), **KHÔNG** âm thầm trả `false`/`null` giả vờ thành công
-- Validate input ở **Controller** trước khi gọi Model; Model validate lại business rule trước khi ghi DB (defense in depth)
-- Mọi truy vấn DB **bắt buộc dùng prepared statement** (PDO hoặc mysqli với bind param) — không nối chuỗi SQL trực tiếp từ input người dùng
+- **KHÔNG** dùng `@` để nuốt lỗi, không `catch (Exception $e) {}` rỗng
+- Custom Exception theo phân cấp rõ ràng, không dùng `Exception` trần trụi:
 
 ```php
-// ✅ Đúng
-if ($quantity <= 0) {
-    throw new InvalidOrderDetailException('quantity', 'Số lượng phải lớn hơn 0');
+abstract class AppException extends \Exception {}
+
+class ValidationException extends AppException {
+    public function __construct(public readonly string $field, string $message) {
+        parent::__construct($message);
+    }
 }
 
-// ❌ Sai — nuốt lỗi
-if ($quantity <= 0) {
-    $quantity = 1; // âm thầm sửa, che giấu lỗi input
+class InsufficientStockException extends AppException {}
+class InvalidOrderTransitionException extends AppException {}
+class RecordNotFoundException extends AppException {}
+```
+
+- Validate input ở **Controller**; Model validate lại business rule trước khi ghi DB (defense in depth)
+- **Global error handler** (đặt trong `app/Core/ErrorHandler.php`, đăng ký bằng `set_exception_handler`):
+  - Môi trường **production**: log lỗi chi tiết vào file (`storage/logs/app.log`), hiển thị cho user trang lỗi chung chung (không lộ stack trace, không lộ câu SQL)
+  - Môi trường **local/dev**: hiển thị stack trace đầy đủ để debug
+  - Phân biệt qua biến `APP_ENV` trong `.env`
+
+```php
+// ❌ Sai — lộ thông tin nội bộ ra production
+catch (\PDOException $e) {
+    echo $e->getMessage(); // có thể lộ tên bảng, cấu trúc DB
 }
 
-// ❌ Sai — SQL injection risk
-$sql = "SELECT * FROM products WHERE name = '" . $_GET['name'] . "'";
-
 // ✅ Đúng
-$stmt = $pdo->prepare('SELECT * FROM products WHERE product_name LIKE :name');
-$stmt->execute(['name' => '%' . $productName . '%']);
+catch (\PDOException $e) {
+    Logger::error($e->getMessage());
+    throw new AppException('Có lỗi xảy ra, vui lòng thử lại sau.');
+}
 ```
 
-### 2.6 View / Bootstrap
+---
+
+## 3. Transaction & Concurrency (bắt buộc — vá lỗ hổng thường gặp nhất)
+
+### 3.1 Mọi thao tác nhiều bước phải nằm trong transaction
+
+Đặt hàng = tạo `Order` + tạo `Order_Details` + trừ tồn kho `Products` → 3 write phải **atomic**. Nếu 1 bước lỗi, toàn bộ phải rollback.
 
 ```php
-<!-- Mỗi view chỉ hiển thị dữ liệu Controller truyền vào, KHÔNG query DB -->
-<div class="card product-card">
-  <h5><?= htmlspecialchars($product['product_name']) ?></h5>
-  <span class="badge bg-<?= $statusClass ?>"><?= $statusLabel ?></span>
-</div>
+public function createOrder(int $userId, array $items): int
+{
+    $this->pdo->beginTransaction();
+    try {
+        $orderId = $this->insertOrder($userId);
+
+        foreach ($items as $item) {
+            // Trừ tồn kho có điều kiện — xem mục 3.2
+            $this->decreaseStock($item['product_id'], $item['quantity']);
+            $this->insertOrderDetail($orderId, $item);
+        }
+
+        $this->pdo->commit();
+        return $orderId;
+    } catch (\Throwable $e) {
+        $this->pdo->rollBack();
+        throw $e;
+    }
+}
 ```
 
-- **Luôn** dùng `htmlspecialchars()` (hoặc tương đương) khi in dữ liệu người dùng ra HTML để tránh XSS
-- Ưu tiên component có sẵn của Bootstrap (card, badge, modal, table) trước khi viết CSS custom
-- Style riêng của dự án đặt trong `public/assets/css/custom.css`, không sửa trực tiếp Bootstrap gốc
+### 3.2 Chống race condition khi trừ tồn kho (bắt buộc)
+
+**KHÔNG** làm theo kiểu "check rồi update" (kiểm tra còn hàng, sau đó mới trừ) — 2 request cùng lúc sẽ cùng pass check và làm âm kho:
+
+```php
+// ❌ Sai — race condition
+$stock = $this->getStock($productId);
+if ($stock >= $qty) {
+    $this->updateStock($productId, $stock - $qty);
+}
+```
+
+**Đúng** — dùng UPDATE có điều kiện, để MySQL tự đảm bảo tính atomic ở mức row, rồi kiểm tra `rowCount()`:
+
+```php
+// ✅ Đúng — UPDATE có điều kiện, atomic ở tầng DB
+$stmt = $this->pdo->prepare(
+    'UPDATE products SET quantity = quantity - :qty
+     WHERE product_id = :id AND quantity >= :qty'
+);
+$stmt->execute(['qty' => $qty, 'id' => $productId]);
+
+if ($stmt->rowCount() === 0) {
+    // Hoặc sản phẩm không tồn tại, hoặc không đủ hàng
+    throw new InsufficientStockException("Sản phẩm #{$productId} không đủ tồn kho");
+}
+```
+
+Nếu cần đọc số lượng trước khi tính toán phức tạp hơn (VD: áp dụng nhiều điều kiện), dùng `SELECT ... FOR UPDATE` trong cùng transaction để khóa row:
+
+```php
+$stmt = $this->pdo->prepare('SELECT quantity FROM products WHERE product_id = :id FOR UPDATE');
+```
+
+### 3.3 Isolation level
+
+- Dùng mức mặc định của InnoDB (`REPEATABLE READ`) — đủ cho quy mô dự án, không cần chỉnh trừ khi có lý do cụ thể (phải ghi comment giải thích nếu đổi)
 
 ---
 
-## 3. Git Workflow
+## 4. Upload File (bắt buộc — Product image)
 
-### 3.1 Branch Strategy
+SRS yêu cầu Product có trường Hình ảnh. Quy tắc bắt buộc:
 
-```
-main                       ← luôn chạy được, chỉ merge từ develop khi release
-├── develop                ← nhánh tích hợp chung
-│   ├── feat/<module>            # Tính năng mới
-│   ├── fix/<module>-<bug>       # Sửa lỗi
-│   └── refactor/<scope>         # Refactor
-```
-
-### 3.2 Branch Naming
-
-```
-feat/dangky-dangnhap        # Đăng ký / đăng nhập
-feat/quanly-sanpham         # Admin quản lý sản phẩm
-feat/gio-hang               # Giỏ hàng
-feat/dat-hang               # Đặt hàng
-feat/quanly-donhang         # Quản lý đơn hàng
-feat/dashboard              # Thống kê
-fix/cart-tong-tien-sai      # Sửa lỗi tính sai tổng tiền giỏ hàng
-```
-
-### 3.3 Commit Message
-
-Format: `<type>(<module>): <mô tả ngắn>`
-
-```
-feat(auth): thêm chức năng đăng nhập
-feat(product): CRUD sản phẩm cho admin
-feat(order): tạo đơn hàng và trừ tồn kho
-fix(cart): sửa lỗi tính sai tổng tiền
-refactor(order): tách logic tính subtotal ra Model
-test(product): thêm test cho ràng buộc giá khuyến mãi
-chore: cập nhật schema.sql
-```
-
-Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
-
-### 3.4 Pull Request
-
-- Mỗi PR vào `develop` phải có **ít nhất 1 người khác review approve** (không tự merge PR của chính mình)
-- PR description nêu: thay đổi gì, tại sao, test thế nào (mô tả các case đã thử)
-- Không merge nếu code lỗi cú pháp hoặc chưa test luồng chính
-- Nếu đổi `database/schema.sql` → ghi rõ trong PR để cả nhóm biết cần re-import DB local
-
-### 3.5 Đồng bộ môi trường & format code
-
-- Dùng chung `.editorconfig` (indent, charset) để VS Code / PhpStorm tạo code giống nhau
-- Chạy PHP CS Fixer (hoặc PHP_CodeSniffer) trước khi commit để format nhất quán, kể cả code do AI coding assistant (Copilot/Cursor/Claude...) sinh ra
-- Không commit `.env`, chỉ commit `.env.example`
-- Không commit `vendor/` nếu dùng Composer (thêm vào `.gitignore`)
-
----
-
-## 4. Quy tắc kiến trúc
-
-### 4.1 Ranh giới MVC
-
-- **View** không được gọi Model hay truy vấn DB trực tiếp — chỉ nhận biến từ Controller
-- **Controller** không viết SQL trực tiếp — chỉ gọi method public của Model, nhận kết quả, truyền cho View
-- **Model** không `echo`/render HTML, không biết gì về Controller hay View
-- Giao tiếp giữa các Controller/Model của module khác nhau qua **method public**, không truy cập thuộc tính/biến private của class khác
+- Giới hạn định dạng: chỉ nhận `jpg`, `jpeg`, `png`, `webp` — kiểm tra bằng **MIME type thật** (`finfo_file()`), không chỉ tin đuôi file
+- Giới hạn dung lượng (VD: tối đa 2MB), reject nếu vượt
+- **Đổi tên file** khi lưu (VD: `uniqid() . '.' . $ext`) — không giữ tên gốc người dùng upload, tránh path traversal và tránh ghi đè file
+- Lưu file vào thư mục **ngoài vùng thực thi PHP trực tiếp** hoặc thư mục `public/uploads/` có cấu hình chặn thực thi script (`.htaccess`: `php_flag engine off` hoặc tương đương) — để tránh trường hợp upload file `.php` giả dạng ảnh rồi truy cập trực tiếp gây RCE
+- Validate kích thước ảnh (width/height) nếu cần chuẩn hóa hiển thị
 
 ```php
 // ✅ Đúng
-$products = (new ProductModel())->getAllActive();
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$mime = finfo_file($finfo, $tmpPath);
+$allowed = ['image/jpeg', 'image/png', 'image/webp'];
 
-// ❌ Sai — Controller tự viết SQL
-$products = $pdo->query("SELECT * FROM products")->fetchAll();
+if (!in_array($mime, $allowed, true)) {
+    throw new ValidationException('image', 'Định dạng ảnh không hợp lệ');
+}
+if (filesize($tmpPath) > 2 * 1024 * 1024) {
+    throw new ValidationException('image', 'Ảnh vượt quá 2MB');
+}
+
+$newName = uniqid('product_', true) . '.' . pathinfo($originalName, PATHINFO_EXTENSION);
+move_uploaded_file($tmpPath, PRODUCT_IMAGE_DIR . '/' . $newName);
 ```
-
-### 4.2 Data Flow
-
-```
-[Request] → Router → Controller (validate) → Model (business rule + DB) → Controller → View → [Response HTML]
-```
-
-- Dữ liệu chảy một chiều: Controller → Model → Controller → View
-- View không được gọi ngược lại Controller trong lúc render (chỉ gửi request mới qua form/link)
-
-### 4.3 Cấu hình
-
-- Toàn bộ hằng số, ngưỡng (VD: `MIN_PASSWORD_LENGTH`, số sản phẩm/trang) đặt trong `config/config.php`
-- Thông tin kết nối DB đặt trong `.env` (không commit), đọc qua `config/database.php`
-- **KHÔNG** hardcode magic number rải rác trong Controller/Model
-
-### 4.4 Bảo mật (bắt buộc)
-
-- Mọi truy vấn SQL dùng prepared statement (PDO/mysqli bind param) — không nối chuỗi từ `$_GET`/`$_POST`
-- Mật khẩu lưu bằng `password_hash()`, so sánh bằng `password_verify()` — không lưu plaintext, không tự viết hàm hash
-- Mọi dữ liệu người dùng in ra HTML phải qua `htmlspecialchars()` để tránh XSS
-- Route Admin phải kiểm tra session/role trước khi xử lý (không dựa vào việc ẩn link trên UI)
-- CSRF token cho các form thay đổi dữ liệu (thêm/sửa/xóa)
 
 ---
 
-## 5. Business Rules bắt buộc tuân thủ (theo SRS mục 3.2.3)
+## 5. Session & Authentication Security (bắt buộc)
+
+- Sau khi login thành công → gọi `session_regenerate_id(true)` (chống session fixation)
+- Cookie session bắt buộc set flags: `HttpOnly`, `Secure` (khi có HTTPS), `SameSite=Lax`
+- Session timeout: tự động hết hạn sau X phút không hoạt động (lưu `last_activity` trong session, kiểm tra mỗi request)
+- **Rate limit đăng nhập**: giới hạn số lần thử sai (VD: 5 lần/15 phút theo IP hoặc theo email) — lưu đếm trong bảng `login_attempts` hoặc cache đơn giản, không cần Redis cho quy mô đồ án
+- Mật khẩu: `password_hash()` / `password_verify()` — không tự viết hàm hash, không lưu plaintext
+- Route Admin: middleware kiểm tra session + role **ở tầng Controller base class**, không lặp lại check ở từng action riêng lẻ
+
+```php
+abstract class AdminController extends BaseController
+{
+    public function __construct()
+    {
+        if (!Auth::check() || Auth::user()['role'] !== 'admin') {
+            throw new UnauthorizedException();
+        }
+    }
+}
+```
+
+---
+
+## 6. Git Workflow
+
+### 6.1 Branch Strategy
+```
+main       ← luôn chạy được, chỉ merge từ develop khi release, bảo vệ bằng branch protection
+develop    ← nhánh tích hợp chung
+├── feat/<module>
+├── fix/<module>-<bug>
+└── refactor/<scope>
+```
+
+### 6.2 Commit Message
+Format: `<type>(<module>): <mô tả ngắn>` — types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
+
+### 6.3 Pull Request — bắt buộc qua CI trước khi review thủ công
+
+Branch `develop` và `main` bật **branch protection**: không cho merge nếu:
+- [ ] CI (lint + PHPStan + PHPUnit) chưa pass
+- [ ] Chưa có ít nhất 1 reviewer khác approve (không tự merge PR của chính mình)
+- [ ] PR chưa điền template (mục 6.4)
+
+### 6.4 PR Template bắt buộc (đặt tại `.github/PULL_REQUEST_TEMPLATE.md`)
+
+```markdown
+## Thay đổi gì
+## Tại sao
+## Đã test thế nào (liệt kê case cụ thể)
+## Checklist bảo mật (tick trước khi xin review)
+- [ ] Mọi SQL dùng prepared statement
+- [ ] Mọi output HTML qua htmlspecialchars()
+- [ ] Không có transaction thiếu rollback ở thao tác nhiều bước
+- [ ] Có thay đổi schema? → đã thêm migration mới, chưa sửa migration cũ
+```
+
+### 6.5 CI Pipeline (`.github/workflows/ci.yml`) — chạy tự động, không phụ thuộc ý thức con người
+
+```yaml
+name: CI
+on: [pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: shop_giay_test
+        ports: ["3306:3306"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+      - run: composer install
+      - run: vendor/bin/php-cs-fixer fix --dry-run --diff
+      - run: vendor/bin/phpstan analyse --level=5 app/
+      - run: php database/migrate.php   # chạy migration lên DB test
+      - run: vendor/bin/phpunit
+```
+
+---
+
+## 7. Database Migration (thay cho 1 file schema.sql tĩnh)
+
+Vấn đề của 1 file `schema.sql` duy nhất: 3 người cùng sửa → conflict, không biết ai chạy version nào, không rollback được.
+
+Thay bằng thư mục migration đánh số, mỗi thay đổi DB là 1 file mới, không sửa lại file cũ:
+
+```
+database/migrations/
+├── 001_create_users_table.sql
+├── 002_create_categories_table.sql
+├── 003_create_brands_table.sql
+├── 004_create_products_table.sql
+├── 005_create_orders_table.sql
+├── 006_create_order_details_table.sql
+├── 007_add_status_to_users.sql       ← thay đổi sau này = file mới
+└── migrate.php                        ← script chạy tuần tự migration chưa apply
+```
+
+Quy tắc:
+- `migrate.php` lưu danh sách migration đã chạy vào bảng `migrations` (tên file + timestamp), chỉ chạy các file chưa có trong bảng đó
+- **Không bao giờ sửa nội dung 1 file migration đã merge vào `develop`** — nếu sai, tạo migration mới để sửa (VD: `008_fix_products_price_column.sql`)
+- Mỗi PR đổi schema → migration mới nằm trong cùng PR, review cùng lúc với code dùng nó
+
+---
+
+## 8. Quy tắc kiến trúc (MVC)
+
+- **View**: chỉ nhận biến từ Controller, không query DB, không chứa business logic
+- **Controller**: validate input, gọi method public của Model, không viết SQL trực tiếp, không chứa business rule (chỉ điều phối)
+- **Model**: chứa toàn bộ business rule + truy vấn DB, không echo/render HTML, không biết Controller/View
+- Giao tiếp giữa module khác nhau qua **method public**, không đụng thuộc tính private của class khác
+- Toàn bộ hằng số/ngưỡng đặt trong `config/config.php`, không hardcode magic number
+- Ưu tiên **constructor injection** cho Model/Service (VD: `new ProductController($pdo)`), tránh `new PDO(...)` rải rác nhiều nơi — dễ test, dễ mock
+
+```php
+// ✅ Đúng — dependency injection
+class ProductController
+{
+    public function __construct(private ProductModel $productModel) {}
+}
+
+// ❌ Sai — tạo dependency ngay trong class, khó test
+class ProductController
+{
+    public function index()
+    {
+        $model = new ProductModel(new PDO(...)); // hardcode, khó mock khi test
+    }
+}
+```
+
+---
+
+## 9. Performance cơ bản (bắt buộc ở mức tối thiểu)
+
+- Index bắt buộc cho: mọi cột FK (`category_id`, `brand_id`, `user_id`, `order_id`, `product_id`), cột dùng để tìm kiếm (`product_name` — dùng `FULLTEXT` hoặc ít nhất index thường nếu chỉ `LIKE 'x%'`)
+- Danh sách sản phẩm / đơn hàng **bắt buộc phân trang** (`LIMIT` + `OFFSET`, hoặc keyset pagination nếu data lớn) — không `SELECT *` toàn bộ bảng
+- Không N+1 query: khi hiển thị danh sách đơn hàng kèm tên khách hàng, dùng `JOIN` một lần thay vì query riêng trong vòng lặp
+
+---
+
+## 10. Business Rules bắt buộc (theo SRS mục 3.2.3)
 
 ### USERS
 - Email duy nhất, mật khẩu tối thiểu 6 ký tự
 - Chỉ 2 vai trò: Admin, Customer
-- Tài khoản bị khóa (`status = locked`) không được đăng nhập
+- Tài khoản `status = locked` không được đăng nhập
 
 ### CATEGORIES / BRANDS
-- Tên không được để trống, tên thương hiệu phải duy nhất
-- Không xóa danh mục/thương hiệu nếu còn sản phẩm thuộc về nó — kiểm tra ràng buộc này ở Model trước khi `DELETE`
+- Tên không trống, tên thương hiệu duy nhất
+- Không xóa nếu còn sản phẩm thuộc về nó (check ở Model trước `DELETE`)
 
 ### PRODUCTS
-- Mã sản phẩm duy nhất
-- Giá bán > 0; giá khuyến mãi ≤ giá bán
-- Số lượng tồn kho không được âm
-- Mỗi sản phẩm thuộc đúng 1 danh mục và 1 thương hiệu (FK bắt buộc)
+- Mã sản phẩm duy nhất; giá bán > 0; giá khuyến mãi ≤ giá bán
+- Tồn kho không âm (đảm bảo bằng UPDATE có điều kiện — mục 3.2)
+- Thuộc đúng 1 danh mục và 1 thương hiệu
 
 ### ORDERS
-- Mỗi đơn hàng thuộc về 1 khách hàng, có ít nhất 1 sản phẩm
-- Tổng tiền = tổng chi tiết đơn hàng − giảm giá
-- Trạng thái chỉ chuyển theo đúng luồng: `Pending → Confirmed → Completed` hoặc `Pending → Cancelled` — **không cho phép nhảy trạng thái khác trong Model**
+- Thuộc 1 khách hàng, có ít nhất 1 sản phẩm
+- Tổng tiền = tổng chi tiết − giảm giá
+- Trạng thái chỉ chuyển: `Pending → Confirmed → Completed` hoặc `Pending → Cancelled` — validate transition trong Model, throw `InvalidOrderTransitionException` nếu sai luồng
 
 ### ORDER_DETAILS
-- Số lượng mua > 0
-- Đơn giá lưu tại thời điểm đặt hàng, không đổi theo giá sản phẩm sau này
+- Số lượng > 0; đơn giá lưu tại thời điểm đặt hàng, không đổi theo giá sau này
 - `Subtotal = Quantity × Price`
 
+> **Khi SRS thay đổi** (thêm rule mới, VD: mã giảm giá): cập nhật mục này **trong cùng PR** với code hiện thực rule đó — không để rule ở SRS và code lệch nhau.
+
 ---
 
-## 6. Testing Rules
+## 11. Testing Rules
 
-- Mỗi Model chứa business rule (Product, Order, OrderDetail) **bắt buộc** có test PHPUnit cho: happy path, giá trị biên (giá = 0, số lượng = 0, tồn kho âm), trường hợp lỗi
-- Test đặt trong `tests/`, không dùng dữ liệu production, dùng fixture riêng
+- Mỗi Model có business rule **bắt buộc** PHPUnit test: happy path, boundary (giá=0, số lượng=0, tồn kho vừa đủ/vừa thiếu), error case
+- Test transaction: giả lập lỗi giữa chừng (VD: mock exception ở bước insert order_detail) → assert rằng order và stock đều **rollback**, không tạo dữ liệu rác
+- Test race condition (ít nhất 1 test): 2 lần gọi `decreaseStock` liên tiếp cho cùng sản phẩm khi tồn kho = 1 → 1 lần thành công, 1 lần throw `InsufficientStockException`
 - Tên test: `test_<method>_<scenario>`
-
-```php
-public function test_calculateTotalAmount_appliesDiscountCorrectly(): void { ... }
-public function test_updateOrderStatus_rejectsInvalidTransition(): void { ... }
-public function test_createProduct_rejectsSalePriceHigherThanPrice(): void { ... }
-```
-
-- Trước khi merge PR: chạy thủ công luồng chính liên quan (VD: sửa Cart → test lại thêm/sửa/xóa/đặt hàng)
+- CI chạy test tự động trên mọi PR (mục 6.5) — không dựa vào việc dev tự chạy tay
 
 ---
 
-## 7. Quy tắc UI (Bootstrap)
+## 12. Quy tắc UI (Bootstrap)
 
-- Ngôn ngữ hiển thị: **Tiếng Việt**
-- Trạng thái đơn hàng dùng màu Bootstrap rõ ràng:
+- Ngôn ngữ: Tiếng Việt
+- Trạng thái đơn hàng:
 
-| Trạng thái | Màu (Bootstrap) | Label |
+| Trạng thái | Màu | Label |
 |---|---|---|
 | Pending | `bg-secondary` | Chờ xử lý |
 | Confirmed | `bg-info` | Đã xác nhận |
 | Completed | `bg-success` | Hoàn thành |
 | Cancelled | `bg-danger` | Đã hủy |
 
-- Responsive: dùng grid Bootstrap (`container`, `row`, `col-*`), test tối thiểu ở kích thước mobile và desktop
-- Form luôn có validate phía client (HTML5 required/pattern) **và** validate lại phía server (không tin client)
+- Responsive bằng grid Bootstrap, test tối thiểu mobile + desktop
+- Form: validate HTML5 phía client **và** validate lại phía server (không tin client)
+- Mọi output dữ liệu người dùng ra HTML qua `htmlspecialchars()`
 
 ---
 
-## 8. Agent Role Definitions
+## 13. Definition of Done (DoD) — 1 feature coi như hoàn thành khi
 
-> Khi nhiều người trong nhóm sử dụng nhiều AI coding assistant khác nhau (Copilot, Cursor, Claude, Gemini...), mỗi agent cần được gán đúng **vai trò (role)** để sinh code nhất quán, đúng chuẩn và phù hợp với nhiệm vụ đang thực hiện. Người dùng **phải khai báo role** ở đầu cuộc hội thoại hoặc trong system prompt của AI assistant.
-
-### 8.1 Danh sách Role
-
-| Role | Emoji | Mô tả ngắn | Ai nên dùng |
-|---|---|---|---|
-| PHP Architect | 🏗️ | Thiết kế kiến trúc, Core, schema DB | Minh (Trưởng nhóm) |
-| Security Reviewer | 🔒 | Rà soát bảo mật, phát hiện lỗ hổng | Tất cả (khi review) |
-| Feature Developer | 🛒 | Viết logic nghiệp vụ (Model/Controller/View) | Hưng, Thảo |
-| QA Engineer | 🧪 | Viết test, tìm edge case, kiểm thử | Thảo |
-| Code Reviewer | 📝 | Review PR, kiểm tra convention | Tất cả (khi review PR) |
-| UI Developer | 🎨 | Viết View, Bootstrap, JS, responsive | Hưng |
-
-### 8.2 Chi tiết từng Role
-
-#### 🏗️ PHP Architect
-
-**Mục tiêu:** Đảm bảo kiến trúc dự án **dễ mở rộng, tách lớp rõ ràng, không tạo nợ kỹ thuật**.
-
-Khi nhận role này, agent phải:
-- Luôn nghĩ "nếu thêm 1 module mới, cần sửa bao nhiêu file?" — càng ít càng tốt
-- Ưu tiên **Dependency Injection** thay vì hardcode `new ClassName()` rải rác
-- Thiết kế interface/abstract class trước khi viết implementation
-- Không cho phép Controller chứa logic nghiệp vụ — phải đẩy xuống Model
-- Khi thay đổi `database/schema.sql`, phải cập nhật tài liệu và thông báo nhóm
-- Đặt mọi hằng số, ngưỡng trong `config/config.php` — không hardcode magic number
-
-```
-Prompt mẫu: "Bạn là PHP Architect cho dự án Shop Giày (PHP Core MVC). 
-Hãy thiết kế [module/feature] với ưu tiên: mở rộng dễ, tách lớp rõ, bảo mật cao."
-```
+- [ ] Đúng acceptance criteria tương ứng trong SRS (mục 2.x)
+- [ ] Business rule liên quan (mục 10) được validate ở Model, có test PHPUnit
+- [ ] Không có thao tác nhiều bước thiếu transaction
+- [ ] CI pass (lint, PHPStan, PHPUnit)
+- [ ] Đã qua ít nhất 1 review approve
+- [ ] Nếu có UI: đã tự kiểm tra responsive mobile/desktop, escape XSS
+- [ ] Nếu đổi schema: có migration mới, đã cập nhật trong PR
 
 ---
 
-#### 🔒 Security Reviewer
+## 14. Agent Role Definitions (dùng khi làm việc với AI coding assistant)
 
-**Mục tiêu:** Chủ động phát hiện và ngăn chặn **mọi lỗ hổng bảo mật** trước khi code được merge.
+> Khai báo role ở đầu cuộc hội thoại / system prompt. Mỗi cuộc hội thoại dùng **1 role chính**, tránh loãng focus.
+> **Lưu ý:** role chỉ là công cụ hỗ trợ tư duy, **không thay thế CI/PR checklist** ở mục 6.4 và 6.5 — checklist bảo mật vẫn phải tick thật trong PR dù đã "hỏi" Security Reviewer.
 
-Khi nhận role này, agent phải:
-- Quét mọi truy vấn SQL → đảm bảo 100% dùng **prepared statement** (PDO bind param)
-- Kiểm tra mọi output ra HTML → đảm bảo có `htmlspecialchars()` chống XSS
-- Kiểm tra mật khẩu → phải dùng `password_hash()` / `password_verify()`
-- Kiểm tra mọi route Admin → phải có kiểm tra session + role, không dựa vào ẩn link UI
-- Kiểm tra mọi form thay đổi dữ liệu → phải có CSRF token
-- **KHÔNG** bỏ qua lỗi bằng `@` hoặc `catch` rỗng
-- Đánh dấu mức độ nghiêm trọng: 🔴 Critical / 🟡 Warning / 🟢 Info
+| Role | Mô tả | Ai dùng |
+|---|---|---|
+| 🏗️ PHP Architect | Thiết kế kiến trúc, migration, dependency injection | Minh |
+| 🔒 Security Reviewer | Rà bảo mật: SQL injection, XSS, upload, session, race condition | Chạy bổ sung sau mỗi feature, bất kể ai code |
+| 🛒 Feature Developer | Code Model/Controller/View đúng business rule | Hưng, Thảo |
+| 🧪 QA Engineer | Viết test, nghĩ edge case, test transaction/race condition | Thảo |
+| 🎨 UI Developer | View/Bootstrap/JS, responsive, escape XSS | Hưng |
 
-```
-Prompt mẫu: "Bạn là Security Reviewer cho dự án PHP. 
-Hãy review đoạn code/file sau và liệt kê mọi lỗ hổng bảo mật theo mức độ nghiêm trọng."
-```
+> Đã bỏ role "Code Reviewer" riêng (trùng việc với PR checklist ở mục 6.4) — review PR dùng checklist cố định thay vì role mơ hồ, tránh tình trạng "tưởng người khác check rồi".
 
----
-
-#### 🛒 Feature Developer
-
-**Mục tiêu:** Viết code nghiệp vụ **đúng business rule**, đúng convention, đúng ranh giới MVC.
-
-Khi nhận role này, agent phải:
-- Đọc kỹ business rules ở mục 5 trước khi viết bất kỳ dòng code nào
-- Validate input ở **Controller**, validate business rule ở **Model** (defense in depth)
-- Dữ liệu không hợp lệ → `throw` custom Exception, **KHÔNG** âm thầm trả `false`/`null`
-- Tuân thủ naming: PascalCase cho class, camelCase cho method/variable, snake_case cho DB
-- Mọi method public trong Model/Controller **bắt buộc** có PHPDoc
-- Comment nghiệp vụ bằng **tiếng Việt**, comment kỹ thuật bằng tiếng Anh
-- View chỉ nhận biến từ Controller — **KHÔNG** query DB trong View
+### 🏗️ PHP Architect
+- Ưu tiên dependency injection, tách interface trước khi code
+- Thiết kế migration mới khi đổi schema, không sửa migration cũ
+- Đảm bảo thêm module mới sửa càng ít file càng tốt
 
 ```
-Prompt mẫu: "Bạn là Feature Developer cho dự án Shop Giày (PHP Core MVC).
-Hãy viết [chức năng] tuân thủ business rules trong AGENTS.md mục 5."
+Prompt mẫu: "Bạn là PHP Architect dự án Shop Giày. Thiết kế [module] với DI,
+migration riêng, và cách trừ tồn kho an toàn với race condition."
 ```
 
----
-
-#### 🧪 QA Engineer
-
-**Mục tiêu:** Viết test **bao phủ mọi kịch bản**, đặc biệt là edge case và trường hợp lỗi.
-
-Khi nhận role này, agent phải:
-- Viết PHPUnit test cho mọi Model chứa business rule
-- Bao gồm 3 loại test: **happy path**, **giá trị biên** (boundary), **trường hợp lỗi** (error)
-- Tên test: `test_<method>_<scenario>` (VD: `test_createProduct_rejectsSalePriceHigherThanPrice`)
-- Test đặt trong `tests/`, dùng fixture riêng, **KHÔNG** dùng dữ liệu production
-- Chủ động nghĩ ra kịch bản mà developer có thể bỏ sót:
-  - Giá = 0, giá âm, giá khuyến mãi > giá bán
-  - Số lượng = 0, tồn kho âm sau khi trừ
-  - Email trùng, mật khẩu < 6 ký tự
-  - Chuyển trạng thái đơn hàng sai luồng (VD: Completed → Pending)
-  - Xóa danh mục/thương hiệu khi còn sản phẩm con
+### 🔒 Security Reviewer
+Checklist bắt buộc quét:
+- [ ] SQL: 100% prepared statement
+- [ ] Output HTML: 100% qua htmlspecialchars()
+- [ ] Mật khẩu: password_hash/verify
+- [ ] Session: regenerate_id sau login, cookie HttpOnly/Secure/SameSite
+- [ ] Upload: kiểm MIME thật, giới hạn size, đổi tên file, thư mục chặn thực thi script
+- [ ] Transaction: thao tác nhiều bước có rollback đầy đủ
+- [ ] Trừ tồn kho: dùng UPDATE có điều kiện, không "check rồi update"
+- Đánh dấu mức độ: 🔴 Critical / 🟡 Warning / 🟢 Info
 
 ```
-Prompt mẫu: "Bạn là QA Engineer cho dự án Shop Giày.
-Hãy viết PHPUnit test cho [Model/method], bao gồm happy path, boundary và error cases."
+Prompt mẫu: "Bạn là Security Reviewer. Review đoạn code sau theo checklist
+đầy đủ ở AGENTS.md mục 14, liệt kê lỗi theo mức độ nghiêm trọng."
 ```
 
----
+### 🛒 Feature Developer
+- Đọc business rule mục 10 trước khi viết code
+- Validate ở Controller + Model (defense in depth)
+- Thao tác nhiều bước → bọc transaction (mục 3)
+- PHPDoc đầy đủ, comment nghiệp vụ bằng tiếng Việt
 
-#### 📝 Code Reviewer
+### 🧪 QA Engineer
+- Test happy path + boundary + error cho mọi Model có business rule
+- **Bắt buộc** có test giả lập lỗi giữa transaction (assert rollback đúng)
+- **Bắt buộc** có test race condition cho trừ tồn kho
 
-**Mục tiêu:** Đóng vai **reviewer nghiêm khắc**, kiểm tra code trước khi merge vào `develop`.
+### 🎨 UI Developer
+- Ưu tiên component Bootstrap có sẵn
+- htmlspecialchars() cho mọi output, validate HTML5 + server-side
+- Responsive test mobile + desktop
 
-Khi nhận role này, agent phải kiểm tra theo checklist sau:
-
-**Convention:**
-- [ ] Tên file/class/method/variable đúng quy tắc (mục 2.1, 2.2)
-- [ ] PHPDoc đầy đủ cho method public (mục 2.3)
-- [ ] Comment giải thích **tại sao**, không giải thích **cái gì** (mục 2.4)
-
-**Kiến trúc MVC:**
-- [ ] View không gọi Model / không query DB trực tiếp
-- [ ] Controller không viết SQL trực tiếp
-- [ ] Model không echo/render HTML
-- [ ] Không hardcode magic number — dùng config
-
-**Bảo mật:**
-- [ ] Mọi SQL dùng prepared statement
-- [ ] Mọi output HTML dùng `htmlspecialchars()`
-- [ ] Mật khẩu dùng `password_hash()` / `password_verify()`
-- [ ] Route Admin kiểm tra session/role
-- [ ] Form có CSRF token
-
-**Business Rule:**
-- [ ] Ràng buộc nghiệp vụ đặt trong Model (mục 5)
-- [ ] Trạng thái đơn hàng chỉ chuyển đúng luồng
-
-```
-Prompt mẫu: "Bạn là Code Reviewer cho dự án Shop Giày.
-Hãy review [file/PR] theo checklist trong AGENTS.md mục 8.2 và liệt kê mọi vấn đề tìm thấy."
-```
-
----
-
-#### 🎨 UI Developer
-
-**Mục tiêu:** Viết View/HTML/JS **đẹp, responsive, an toàn XSS**, ưu tiên Bootstrap có sẵn.
-
-Khi nhận role này, agent phải:
-- Ưu tiên dùng component Bootstrap 5 (card, badge, modal, table, form) trước khi viết CSS custom
-- CSS custom đặt trong `public/assets/css/custom.css`, class đặt tên kebab-case có prefix module
-- Ngôn ngữ hiển thị: **Tiếng Việt**
-- Luôn dùng `htmlspecialchars()` khi in dữ liệu người dùng ra HTML
-- Form luôn có validate HTML5 (required, pattern) + validate lại phía server
-- Dùng grid Bootstrap (`container`, `row`, `col-*`) đảm bảo responsive mobile + desktop
-- JS đặt theo module trong `public/assets/js/`, dùng camelCase cho biến/hàm
-- Trạng thái đơn hàng dùng đúng màu quy ước (mục 7)
-
-```
-Prompt mẫu: "Bạn là UI Developer cho dự án Shop Giày (Bootstrap 5, server-side render).
-Hãy viết View cho [trang/chức năng] bằng tiếng Việt, responsive, escape XSS."
-```
-
-### 8.3 Quy tắc sử dụng Role
-
-1. **Mỗi cuộc hội thoại chỉ dùng 1 role chính** — không trộn lẫn nhiều role để tránh agent bị "loãng" focus
-2. **Có thể chuyển role giữa các cuộc hội thoại** — VD: Hưng dùng `Feature Developer` khi code, chuyển sang `Code Reviewer` khi review PR của Thảo
-3. **Role `Security Reviewer` nên chạy bổ sung** sau khi hoàn thành feature — paste code đã viết vào 1 cuộc hội thoại mới với role Security để "tự review"
-4. **Khi không chắc dùng role nào**, mặc định dùng `Feature Developer` — đây là role an toàn nhất cho công việc hàng ngày
-5. **Prompt role phải đặt ở đầu cuộc hội thoại** hoặc trong system prompt/custom instructions của AI assistant để có hiệu lực xuyên suốt
+### Quy tắc dùng role
+1. Không trộn nhiều role trong 1 cuộc hội thoại
+2. `Security Reviewer` chạy bổ sung sau mỗi feature — không thay thế PR checklist ở mục 6.4
+3. Mặc định dùng `Feature Developer` khi không chắc chọn role nào
+4. Đặt role ở đầu cuộc hội thoại hoặc system prompt để có hiệu lực xuyên suốt
