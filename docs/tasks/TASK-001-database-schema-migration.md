@@ -1,7 +1,7 @@
 # TASK-001: Database Schema & Migration Setup
 
 ## 1. Thông tin chung
-- **Trạng thái:** To Do
+- **Trạng thái:** Done
 - **Người được giao:** Phí Văn Minh (Trưởng nhóm)
 - **Role AI khuyên dùng:** 🏗️ PHP Architect
 - **Ngày tạo:** 2026-07-22
