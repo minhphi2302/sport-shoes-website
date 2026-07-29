@@ -6,17 +6,17 @@ class Router
 {
     private array $routes = [];
 
-    public function get(string $path, string|array $action): void
+    public function get(string $path, string|array|callable $action): void
     {
         $this->addRoute('GET', $path, $action);
     }
 
-    public function post(string $path, string|array $action): void
+    public function post(string $path, string|array|callable $action): void
     {
         $this->addRoute('POST', $path, $action);
     }
 
-    private function addRoute(string $method, string $path, string|array $action): void
+    private function addRoute(string $method, string $path, string|array|callable $action): void
     {
         $this->routes[] = [
             'method' => $method,
@@ -29,13 +29,13 @@ class Router
     {
         // Lấy đường dẫn bỏ qua query string
         $path = parse_url($uri, PHP_URL_PATH);
-        
+
         // Cắt bỏ phần subfolder nếu có (VD: /sport-shoes-website/public)
         $scriptName = dirname($_SERVER['SCRIPT_NAME']);
         if ($scriptName !== '/' && str_starts_with($path, $scriptName)) {
             $path = substr($path, strlen($scriptName));
         }
-        
+
         if ($path === '' || $path === false) {
             $path = '/';
         }
@@ -61,7 +61,7 @@ class Router
         exit;
     }
 
-    private function executeAction(string|array $action, array $params = []): mixed
+    private function executeAction(string|array|callable $action, array $params = []): mixed
     {
         if (is_callable($action)) {
             return call_user_func_array($action, $params);
