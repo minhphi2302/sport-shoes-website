@@ -164,12 +164,11 @@ h1, h2, h3, h4, h5, h6 {
     position: relative;
 }
 
-.nav-link-custom::after {
+.nav-link-custom::before {
     content: '';
     position: absolute;
     bottom: 2px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 14px; /* Align with left padding */
     width: 0;
     height: 3px;
     background-color: var(--anta-red);
@@ -181,9 +180,18 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--anta-red) !important;
 }
 
-.nav-link-custom:hover::after,
-.nav-link-custom.active::after {
-    width: 70%;
+.nav-link-custom:hover::before,
+.nav-link-custom.active::before {
+    width: calc(100% - 28px); /* Width minus left and right padding */
+}
+
+/* Remove hover red color for specific links */
+.nav-link-custom.no-red-hover:hover {
+    color: #111111 !important;
+}
+
+.nav-link-custom.no-red-hover:hover::before {
+    width: 0 !important;
 }
 
 /* Anta Style Dropdown Styling */
@@ -651,7 +659,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .product-title:hover {
-    color: var(--anta-red);
+    color: var(--primary-black);
 }
 
 .product-rating {
