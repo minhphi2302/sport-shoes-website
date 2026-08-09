@@ -18,9 +18,10 @@ try {
     $productSql = "
     INSERT INTO products (sku, name, description, price, sale_price, quantity, category_id, brand_id, status) VALUES
     ('NK-RN-001', 'Giày Nike Air Zoom Pegasus Nữ', 'Giày chạy êm ái', 3000000.00, 2500000.00, 50, 1, 1, 'active'),
-    ('AD-RN-003', 'Giày Adidas Ultraboost 22 Nam', 'Giày chạy siêu nhẹ', 3500000.00, 3200000.00, 30, 1, 2, 'active'),
-    ('NK-RN-005', 'Giày Nike React Infinity Run Nam', 'Giày chạy chống chấn thương', 3200000.00, 2800000.00, 40, 1, 1, 'active'),
-    ('NK-RN-006', 'Giày Nike React Infinity Run Nữ', 'Giày chạy chống chấn thương 1', 200000.00, 80000.00, 0, 1, 1, 'active');
+    ('AD-RN-002', 'Giày Adidas Ultraboost 22 Nam', 'Giày chạy siêu nhẹ', 3500000.00, 3200000.00, 30, 1, 2, 'active'),
+    ('NK-RN-003', 'Giày Nike React Infinity Run Nam', 'Giày chạy chống chấn thương', 3200000.00, 2800000.00, 40, 1, 1, 'active'),
+    ('NK-RN-004', 'Giày Nike React Infinity Run Nữ', 'Giày chạy chống chấn thương 1', 200000.00, 80000.00, 0, 1, 1, 'active');
+    ('NK-RN-005', 'Giày Nike React Infinity Run Nam', 'Giày chạy chống chấn thương 1234', 20000.00, 8000.00, 0, 1, 1, 'active');
     ";
     $pdo->exec($productSql);
     echo "=> Đã nạp products thành công!\n";
