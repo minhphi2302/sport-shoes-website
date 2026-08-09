@@ -76,36 +76,34 @@ require __DIR__ . '/layouts/header.php';
     <div class="container">
         <h2 class="section-title text-center text-md-start">Thương hiệu</h2>
         <div class="row g-4">
-            <div class="col-6 col-md-4 col-lg-2">
-                <a href="<?= base_url('products?brand_id=1') ?>" class="brand-card">
-                    <img src="<?= base_url('public/image/brand/nike.jpg') ?>" alt="Nike" class="brand-logo-img">
-                    <h6 class="brand-name-text">NIKE</h6>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-2">
-                <a href="<?= base_url('products?brand_id=2') ?>" class="brand-card">
-                    <img src="<?= base_url('public/image/brand/adidas.png') ?>" alt="Adidas" class="brand-logo-img">
-                    <h6 class="brand-name-text">ADIDAS</h6>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-2">
-                <a href="<?= base_url('products?brand_id=3') ?>" class="brand-card">
-                    <img src="<?= base_url('public/image/brand/asics.jpg') ?>" alt="Anta" class="brand-logo-img">
-                    <h6 class="brand-name-text">ASICS</h6>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-2">
-                <a href="<?= base_url('products?brand_id=4') ?>" class="brand-card">
-                    <img src="<?= base_url('public/image/brand/puma.png') ?>" alt="Puma" class="brand-logo-img">
-                    <h6 class="brand-name-text">PUMA</h6>
-                </a>
-            </div>
-            <div class="col-6 col-md-4 col-lg-2">
-                <a href="<?= base_url('products?brand_id=5') ?>" class="brand-card">
-                    <img src="<?= base_url('public/image/brand/conver.png') ?>" alt="Converse" class="brand-logo-img">
-                    <h6 class="brand-name-text">CONVERSE</h6>
-                </a>
-            </div>
+            <?php if (!empty($brands)): ?>
+                <?php foreach ($brands as $brand): ?>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <a href="<?= base_url('products?brand_id=' . $brand['brand_id']) ?>" class="brand-card">
+                            <?php 
+                                $logo = !empty($brand['logo_url']) ? trim($brand['logo_url']) : '';
+                                // Nếu người dùng chỉ nhập tên file (ví dụ: nike.jpg) thay vì đường dẫn đầy đủ
+                                if (!empty($logo) && strpos($logo, '/') === false) {
+                                    $logo = 'public/image/brand/' . $logo;
+                                }
+                                
+                                if (empty($logo)) {
+                                    $brandSlug = strtolower(str_replace(' ', '', $brand['name']));
+                                    $jpgPath = 'public/image/brand/' . $brandSlug . '.jpg';
+                                    $pngPath = 'public/image/brand/' . $brandSlug . '.png';
+                                    if (file_exists(__DIR__ . '/../../../' . $jpgPath)) {
+                                        $logo = $jpgPath;
+                                    } else {
+                                        $logo = $pngPath; // Default fallback to png
+                                    }
+                                }
+                            ?>
+                            <img src="<?= base_url(htmlspecialchars($logo)) ?>" alt="<?= htmlspecialchars($brand['name']) ?>" class="brand-logo-img">
+                            <h6 class="brand-name-text"><?= htmlspecialchars(mb_strtoupper($brand['name'])) ?></h6>
+                        </a>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
             <div class="col-6 col-md-4 col-lg-2">
                 <a href="<?= base_url('products') ?>" class="brand-card bg-dark text-white">
                     <i class="fa-solid fa-arrow-right text-red fs-4 mb-2"></i>
@@ -155,9 +153,16 @@ require __DIR__ . '/layouts/header.php';
 <!-- 4. SẢN PHẨM NỔI BẬT & BÁN CHẠY -->
 <section class="py-5">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="section-title mb-0">Sản phẩm nổi bật</h2>
-            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-outline-dark-custom btn-sm">Xem tất cả sản phẩm <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4">
+            <h2 class="section-title mb-3 mb-lg-0 text-uppercase fw-bold" style="font-size: 1.5rem;">GIÀY SNEAKER</h2>
+            <div class="d-flex flex-wrap gap-2">
+                <?php if (!empty($brands)): ?>
+                    <?php foreach ($brands as $b): ?>
+                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products?brand_id=<?= $b['brand_id'] ?>" class="btn btn-brand-filter bg-transparent border btn-sm px-3 py-2 text-dark fw-semibold text-uppercase" style="font-size: 0.85rem;">GIÀY <?= htmlspecialchars($b['name']) ?></a>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-brand-filter bg-transparent border btn-sm px-3 py-2 text-dark fw-semibold text-uppercase" style="font-size: 0.85rem;">GIÀY CHÍNH HÃNG KHÁC</a>
+            </div>
         </div>
 
         <div class="row g-4">
@@ -165,42 +170,48 @@ require __DIR__ . '/layouts/header.php';
                 <?php foreach ($featuredProducts as $product): ?>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="product-card">
-                            <?php if (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
-                                <?php 
-                                    $discountPercent = round((($product['price'] - $product['sale_price']) / $product['price']) * 100); 
-                                ?>
-                                <span class="product-badge-sale">-<?= $discountPercent ?>%</span>
-                            <?php endif; ?>
-
                             <div class="product-img-wrapper">
+                                <?php 
+                                    $isNew = isset($product['created_at']) && (strtotime($product['created_at']) > strtotime('-7 days'));
+                                    $hasSale = (($product['sale_price'] ?? 0) > 0 && $product['sale_price'] < $product['price']);
+                                ?>
+                                <?php if ($isNew): ?>
+                                    <div class="badge-ribbon badge-ribbon-black">NEW</div>
+                                <?php endif; ?>
+                                <?php if ($hasSale): ?>
+                                    <?php 
+                                        $discountPercent = round((($product['price'] - $product['sale_price']) / $product['price']) * 100); 
+                                    ?>
+                                    <div class="badge-ribbon badge-ribbon-red" <?= $isNew ? 'style="left: 52px;"' : '' ?>>-<?= $discountPercent ?>%</div>
+                                <?php endif; ?>
+
                                 <?php 
                                     $fallbackImg = 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif';
                                     $imgSrc = !empty($product['image_url']) ? $product['image_url'] : $fallbackImg;
                                 ?>
-                                <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>">
+                                    <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                                </a>
                                 <div class="product-actions-overlay">
                                     <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="btn-action-icon" title="Xem chi tiết"><i class="fa-regular fa-eye"></i></a>
-                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-action-icon" title="Thêm vào giỏ"><i class="fa-solid fa-bag-shopping"></i></a>
+                                    <?php if (($product['quantity'] ?? 50) > 0): ?>
+                                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-action-icon" title="Thêm vào giỏ"><i class="fa-solid fa-bag-shopping"></i></a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
                             <div class="product-body">
-                                <span class="product-brand-tag"><?= htmlspecialchars($product['brand_name'] ?? 'Chính Hãng') ?></span>
                                 <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="product-title"><?= htmlspecialchars($product['name']) ?></a>
-                                <div class="product-rating">
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star"></i>
-                                    <i class="fa-solid fa-star-half-stroke"></i>
-                                    <span class="text-muted ms-1 fs-7">(4.8)</span>
-                                </div>
                                 <div class="product-price-box">
-                                    <?php if (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
+                                    <?php if (($product['sale_price'] ?? 0) > 0 && $product['sale_price'] < $product['price']): ?>
                                         <span class="product-price"><?= number_format($product['sale_price'], 0, ',', '.') ?>đ</span>
                                         <span class="product-price-old"><?= number_format($product['price'], 0, ',', '.') ?>đ</span>
                                     <?php else: ?>
                                         <span class="product-price"><?= number_format($product['price'], 0, ',', '.') ?>đ</span>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($product['quantity']) && $product['quantity'] <= 0): ?>
+                                        <span class="badge bg-danger rounded-1 ms-2 p-1 px-2 fw-medium" style="font-size: 0.75rem;">Hết hàng</span>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -253,19 +264,19 @@ require __DIR__ . '/layouts/header.php';
 </section>
 
 <!-- 5. BANNER KHUYẾN MÃI LARGE -->
-<section class="py-5 bg-dark text-white my-4 position-relative overflow-hidden">
+<section class="py-5 bg-dark text-white my-4 position-relative overflow-hidden" style="--promo-color: #ff006a;">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
-                <span class="badge bg-red fs-6 mb-2">ƯU ĐÃI KHỦNG THÁNG NÀY</span>
+                <span class="badge fs-6 mb-2 text-white border-0" style="background-color: var(--promo-color);">ƯU ĐÃI KHỦNG THÁNG NÀY</span>
                 <h2 class="display-5 fw-bold text-uppercase text-white mb-3">SĂN GIÀY HIỆU - SIÊU SALE NỬA GIÁ</h2>
                 <p class="fs-5 text-secondary mb-4">
-                    Nhập mã <strong class="text-white border px-2 py-1 rounded border-danger">SPORTSHOES2026</strong> giảm ngay 20% cho đơn hàng đầu tiên từ 1.500.000đ.
+                    Nhập mã <strong class="border px-2 py-1 rounded" style="border-color: var(--promo-color) !important; color: var(--promo-color) !important;">ANTA2026</strong> giảm ngay 20% cho đơn hàng đầu tiên từ 1.500.000đ.
                 </p>
-                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products?sale=1" class="btn btn-red btn-lg px-4 py-3"><i class="fa-solid fa-bolt me-2"></i> MUA NGAY KẺO LỠ</a>
+                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products?sale=1" class="btn btn-lg px-4 py-3 text-white border-0 fw-bold shadow-sm" style="background-color: var(--promo-color); transition: all 0.3s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'"><i class="fa-solid fa-bolt me-2"></i> MUA NGAY KẺO LỠ</a>
             </div>
             <div class="col-lg-6 d-none d-lg-block text-center">
-                <img src="https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=600&q=80" alt="Promo Shoe" class="img-fluid rounded-4 shadow-lg border border-secondary" style="max-height: 350px; object-fit: cover;">
+                <img src="public/image/khuyen_mai.png" alt="Promo Shoe" class="img-fluid rounded-4 shadow-lg border border-2" style="max-height: 350px; object-fit: cover; border-color: var(--promo-color) !important;">
             </div>
         </div>
     </div>
