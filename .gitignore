@@ -1,4 +1,76 @@
+# ==========================================
+# 1. Environment & Sensitive Credentials
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# ==========================================
+# 2. Dependencies
+# ==========================================
 /vendor/
-/.env
 /node_modules/
+
+# ==========================================
+# 3. Storage, Cache & Log Files
+# ==========================================
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+*.log
+
+# ==========================================
+# 4. Temporary & Scratch Scripts
+# ==========================================
+scratch.php
+scratch*.php
+/scratch/
+/tmp/
+/temp/
+*.tmp
+
+# ==========================================
+# 5. User Uploads (Ignore uploaded media except placeholders)
+# ==========================================
+/public/uploads/products/*
+!/public/uploads/products/.htaccess
+/public/uploads/brands/*
+!/public/uploads/brands/.htaccess
+!/public/uploads/default-product.jpg
+!/public/uploads/.htaccess
+
+# ==========================================
+# 6. IDEs, Editors & Tool Configurations
+# ==========================================
+.vscode/
+.idea/
+.gemini/
+*.suo
+*.user
+*.userosscache
+*.sln
+*.swp
+*~
+
+# ==========================================
+# 7. OS Generated Files
+# ==========================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# 8. Testing & Static Analysis Cache
+# ==========================================
+.phpunit.result.cache
+.php-cs-fixer.cache
+.phpstan.cache
