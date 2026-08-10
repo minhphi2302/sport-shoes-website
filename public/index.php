@@ -78,5 +78,11 @@ $router->get('/admin/customers/{id}',                    [App\Controllers\Admin\
 $router->post('/admin/customers/{id}/toggle-status',     [App\Controllers\Admin\CustomerAdminController::class, 'toggleStatus']);
 $router->post('/admin/customers/{id}/delete',            [App\Controllers\Admin\CustomerAdminController::class, 'delete']);
 
+$router->get('/admin/attributes', [App\Controllers\Admin\AttributeAdminController::class, 'index']);
+$router->post('/admin/attributes/sizes', [App\Controllers\Admin\AttributeAdminController::class, 'storeSize']);
+$router->get('/admin/attributes/sizes/{id}/delete', [App\Controllers\Admin\AttributeAdminController::class, 'deleteSize']);
+$router->post('/admin/attributes/colors', [App\Controllers\Admin\AttributeAdminController::class, 'storeColor']);
+$router->get('/admin/attributes/colors/{id}/delete', [App\Controllers\Admin\AttributeAdminController::class, 'deleteColor']);
+
 // ── Dispatch ─────────────────────────────────────────────────
 $router->resolve($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);

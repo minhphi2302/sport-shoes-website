@@ -27,7 +27,7 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-6 position-relative">
                             <label class="form-label fw-semibold">Mã sản phẩm (SKU) *</label>
-                            <input type="text" class="form-control" name="sku" value="<?= htmlspecialchars($product['sku'] ?? '') ?>" placeholder="VD: NIKE-AF1">
+                            <input type="text" class="form-control text-uppercase" name="sku" value="<?= htmlspecialchars($product['sku'] ?? '') ?>" placeholder="VD: NIKE-AF1" style="text-transform: uppercase;">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Tổng số lượng</label>
@@ -51,30 +51,18 @@
                         <textarea class="form-control" name="description" rows="4"><?= htmlspecialchars($product['description'] ?? '') ?></textarea>
                     </div>
 
-                        <!-- BULK UPDATE VARIANTS (Nâng cấp với Checkbox đa chọn) -->
+                        <!-- BULK UPDATE VARIANTS (Lọc theo SKU) -->
                         <div class="card border-info mb-3">
                             <div class="card-header bg-info text-white fw-bold py-2">
                                 <i class="bi bi-magic me-1"></i> Cập nhật nhanh hàng loạt (Gom nhóm)
                             </div>
                             <div class="card-body bg-light p-3">
-                                <!-- Hàng 1: Điều kiện lọc (Checkbox) -->
-                                <div class="fw-bold text-secondary mb-2 small">1. BỘ LỌC (Tích chọn để lọc nhiều giá trị, không tích = Lọc tất cả)</div>
+                                <!-- Hàng 1: Điều kiện lọc (SKU) -->
+                                <div class="fw-bold text-secondary mb-2 small">1. BỘ LỌC (Nhập mã SKU hoặc một phần SKU để lọc, bỏ trống = Lọc tất cả)</div>
                                 <div class="row g-3 mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label small fw-semibold text-primary mb-1">Lọc theo Mẫu:</label>
-                                        <div id="filter-models" class="border rounded p-2 bg-white" style="max-height: 150px; overflow-y: auto; font-size: 0.85rem;">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-semibold text-primary mb-1">Lọc Đối tượng & Size (Tham chiếu bảng dưới):</label>
-                                        <div id="filter-gender-sizes" class="border rounded p-2 bg-white" style="max-height: 150px; overflow-y: auto; font-size: 0.85rem;">
-                                            <!-- Dynamically generated -->
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label small fw-semibold text-primary mb-1">Lọc Màu sắc:</label>
-                                        <div id="filter-colors" class="border rounded p-2 bg-white" style="max-height: 150px; overflow-y: auto; font-size: 0.85rem;">
-                                        </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label small fw-semibold text-primary mb-1">Lọc theo Mã SKU (Ví dụ: -40, hoặc Đỏ, hoặc 1 phần mã bất kỳ):</label>
+                                        <input type="text" class="form-control form-control-sm" id="filter-sku" placeholder="Nhập mã SKU hoặc một phần SKU cần lọc...">
                                     </div>
                                 </div>
 
@@ -82,10 +70,10 @@
                                 <div class="fw-bold text-secondary mb-2 small mt-3">2. GÁN GIÁ TRỊ MỚI (Bỏ trống = Giữ nguyên)</div>
                                 <div class="row g-2 align-items-end mb-2">
                                     <div class="col-md-3">
-                                        <label class="form-label small mb-1">Mẫu mới & Đ/c Giá</label>
+                                        <label class="form-label small mb-1">Mẫu mới & Giá Mẫu (VNĐ)</label>
                                         <div class="input-group input-group-sm">
                                             <input type="text" class="form-control" id="bulk-model-input" list="datalist-models" placeholder="Tên mẫu mới">
-                                            <input type="number" class="form-control" id="bulk-model-delta" placeholder="± Giá" style="max-width: 80px;">
+                                            <input type="number" class="form-control" id="bulk-model-price" placeholder="Giá mẫu" style="max-width: 80px;">
                                         </div>
                                         <datalist id="datalist-models"></datalist>
                                     </div>
@@ -99,18 +87,18 @@
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label small mb-1">Size mới & Đ/c Giá</label>
+                                        <label class="form-label small mb-1">Size mới & Giảm giá (%)</label>
                                         <div class="input-group input-group-sm">
                                             <input type="text" class="form-control" id="bulk-size-input" list="datalist-sizes" placeholder="VD: 40">
-                                            <input type="number" class="form-control" id="bulk-size-delta" placeholder="± Giá" style="max-width: 80px;">
+                                            <input type="number" class="form-control" id="bulk-size-percent" placeholder="0" min="0" max="100" style="max-width: 60px;">
                                         </div>
                                         <datalist id="datalist-sizes"></datalist>
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label small mb-1">Màu sắc mới & Đ/c Giá</label>
+                                        <label class="form-label small mb-1">Màu sắc mới & Giảm giá (%)</label>
                                         <div class="input-group input-group-sm">
                                             <input type="text" class="form-control" id="bulk-color-input" list="datalist-colors" placeholder="Tên màu">
-                                            <input type="number" class="form-control" id="bulk-color-delta" placeholder="± Giá" style="max-width: 80px;">
+                                            <input type="number" class="form-control" id="bulk-color-percent" placeholder="0" min="0" max="100" style="max-width: 60px;">
                                         </div>
                                         <datalist id="datalist-colors"></datalist>
                                     </div>
@@ -135,6 +123,12 @@
 
                         <!-- BẢNG HIỂN THỊ DANH SÁCH BIẾN THỂ -->
                         <div id="variant-global-error" class="text-danger fw-bold mb-2" style="display: none;"></div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold mb-0">Danh sách biến thể</h6>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="btn-clear-all-variants">
+                                <i class="bi bi-trash me-1"></i> Xóa tất cả
+                            </button>
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle" id="variants-table">
                                 <thead class="table-dark">
@@ -249,118 +243,29 @@
 <!-- JAVASCRIPT XỬ LÝ MA TRẬN BIẾN THỂ VÀ TÍNH GIÁ TỰ ĐỘNG -->
 <script src="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/assets/js/admin_product.js"></script>
 <script>
+<?php
+$dynamicSizeMapping = ['Nam' => [], 'Nữ' => [], 'Trẻ em' => []];
+if (isset($sizes)) {
+    foreach ($sizes as $sz) {
+        if (isset($dynamicSizeMapping[$sz['gender']])) {
+            $dynamicSizeMapping[$sz['gender']][] = $sz['name'];
+        }
+    }
+}
+?>
 document.addEventListener('DOMContentLoaded', function() {
-    // Bulk Edit Variants Logic (Upgraded with Checkboxes & Dynamic Sizes)
+    // Bulk Edit Variants Logic (Upgraded with SKU Filter)
     const uniqueModels = new Set();
-    const uniqueGenders = new Set();
-    const uniqueSizes = new Set();
     const uniqueColors = new Set();
-    const existingGenderSizes = [];
 
-    // Scan table to find existing unique values
+    // Scan table to find existing unique values for datalists
     document.querySelectorAll('#variants-table tbody tr').forEach(row => {
         const m = row.querySelector('input[name="variant_models[]"]');
-        const g = row.querySelector('select[name="variant_genders[]"]');
-        const s = row.querySelector('input[name="variant_raw_sizes[]"]');
         const c = row.querySelector('input[name="variant_colors[]"]');
         
         if (m && m.value.trim() !== '') uniqueModels.add(m.value.trim());
-        if (g && g.value.trim() !== '') uniqueGenders.add(g.value.trim());
         if (c && c.value.trim() !== '') uniqueColors.add(c.value.trim());
-        
-        if (g && s && s.value.trim() !== '') {
-            const genderVal = g.value.trim();
-            const sizeVal = s.value.trim();
-            const combinedSize = genderVal + ' - ' + sizeVal;
-            uniqueSizes.add(combinedSize);
-            existingGenderSizes.push({ gender: genderVal, size: sizeVal, combined: combinedSize });
-        }
     });
-
-    const createCheckboxes = (containerId, items, groupName) => {
-        const container = document.getElementById(containerId);
-        container.innerHTML = '';
-        if (items.length === 0) {
-            container.innerHTML = '<span class="text-muted small">Không có dữ liệu</span>';
-            return;
-        }
-        items.forEach(val => {
-            const div = document.createElement('div');
-            div.className = 'form-check mb-1 filter-checkbox-wrapper';
-            const safeVal = val.replace(/"/g, '&quot;');
-            div.innerHTML = `
-                <input class="form-check-input filter-checkbox" type="checkbox" data-group="${groupName}" value="${safeVal}" id="chk_${groupName}_${safeVal}">
-                <label class="form-check-label text-truncate w-100" for="chk_${groupName}_${safeVal}" title="${safeVal}" style="cursor: pointer;">
-                    ${safeVal}
-                </label>
-            `;
-            container.appendChild(div);
-        });
-    };
-
-    createCheckboxes('filter-models', Array.from(uniqueModels), 'model');
-    createCheckboxes('filter-colors', Array.from(uniqueColors), 'color');
-
-    // Dynamically build Gender and Size group
-    const genderSizeMap = {};
-    existingGenderSizes.forEach(item => {
-        if (!genderSizeMap[item.gender]) genderSizeMap[item.gender] = new Set();
-        genderSizeMap[item.gender].add(item.size);
-    });
-
-    const gsContainer = document.getElementById('filter-gender-sizes');
-    gsContainer.innerHTML = '';
-    
-    if (Object.keys(genderSizeMap).length === 0) {
-        gsContainer.innerHTML = '<span class="text-muted small">Không có dữ liệu</span>';
-    } else {
-        Object.keys(genderSizeMap).forEach(gen => {
-            const sizes = Array.from(genderSizeMap[gen]).sort((a, b) => {
-                let na = parseInt(a), nb = parseInt(b);
-                if (!isNaN(na) && !isNaN(nb)) return na - nb;
-                return a.localeCompare(b);
-            });
-            const safeGen = gen.replace(/"/g, '&quot;');
-            
-            let sizeHtml = '';
-            sizes.forEach(sz => {
-                const safeSz = sz.replace(/"/g, '&quot;');
-                sizeHtml += `
-                    <div class="form-check form-check-inline me-2 mb-1">
-                        <input class="form-check-input filter-size-cb" type="checkbox" data-gender="${safeGen}" value="${safeSz}" id="chk_s_${safeGen}_${safeSz}">
-                        <label class="form-check-label" for="chk_s_${safeGen}_${safeSz}" style="cursor:pointer;">${safeSz}</label>
-                    </div>
-                `;
-            });
-
-            const row = document.createElement('div');
-            row.className = 'd-flex align-items-start mb-2 pb-2 border-bottom filter-gender-row';
-            row.innerHTML = `
-                <div class="form-check me-3" style="min-width: 90px;">
-                    <input class="form-check-input filter-gender-cb" type="checkbox" value="${safeGen}" id="chk_g_${safeGen}">
-                    <label class="form-check-label fw-bold text-dark" for="chk_g_${safeGen}" style="cursor:pointer;">${safeGen}</label>
-                </div>
-                <div class="size-group-container" id="sizes_for_${safeGen}" style="display: none; flex: 1; flex-wrap: wrap;">
-                    ${sizeHtml}
-                </div>
-            `;
-            gsContainer.appendChild(row);
-        });
-
-        // Add event listeners to show/hide sizes when gender is checked
-        gsContainer.querySelectorAll('.filter-gender-cb').forEach(cb => {
-            cb.addEventListener('change', function() {
-                const sizeContainer = document.getElementById(`sizes_for_${this.value.replace(/"/g, '&quot;')}`);
-                if (this.checked) {
-                    sizeContainer.style.display = 'flex';
-                } else {
-                    sizeContainer.style.display = 'none';
-                    // Uncheck all sizes inside
-                    sizeContainer.querySelectorAll('input').forEach(scb => scb.checked = false);
-                }
-            });
-        });
-    }
 
     // Populate datalists for "GÁN GIÁ TRỊ MỚI"
     const dModels = document.getElementById('datalist-models');
@@ -370,11 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
     uniqueColors.forEach(val => { dColors.appendChild(new Option(val, val)); });
 
     // Dynamic standard sizes for "Gán giá trị mới"
-    const standardSizes = {
-        'Nam': ['38','39','40','41','42','43','44','45'],
-        'Nữ': ['35','36','37','38','39'],
-        'Trẻ em': ['28','29','30','31','32','33','34']
-    };
+    const standardSizes = <?= json_encode($dynamicSizeMapping ?? ['Nam' => [], 'Nữ' => [], 'Trẻ em' => []]) ?>;
     const bulkGenderInput = document.getElementById('bulk-gender-input');
     const dSizes = document.getElementById('datalist-sizes');
     
@@ -400,65 +301,54 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnBulkApply = document.getElementById('btn-bulk-apply');
     if (btnBulkApply) {
         btnBulkApply.addEventListener('click', function() {
-            const getCheckedValues = (selector) => {
-                const checkboxes = document.querySelectorAll(selector);
-                return Array.from(checkboxes).map(cb => cb.value);
-            };
-
-            const fModels = getCheckedValues('.filter-checkbox[data-group="model"]:checked');
-            const fColors = getCheckedValues('.filter-checkbox[data-group="color"]:checked');
-            
-            const checkedGenderCbs = document.querySelectorAll('.filter-gender-cb:checked');
-            const fGenderLogic = {}; 
-            checkedGenderCbs.forEach(gCb => {
-                const gen = gCb.value;
-                const sizeCbs = document.querySelectorAll(`.filter-size-cb[data-gender="${gen}"]:checked`);
-                fGenderLogic[gen] = Array.from(sizeCbs).map(sCb => sCb.value);
-            });
-            const isGenderFilterActive = checkedGenderCbs.length > 0;
+            const filterSku = document.getElementById('filter-sku').value.trim().toLowerCase();
 
             const newModel = document.getElementById('bulk-model-input').value.trim();
-            const deltaModel = parseFloat(document.getElementById('bulk-model-delta').value) || 0;
+            const newModelPriceInput = document.getElementById('bulk-model-price').value;
+            const newModelPrice = newModelPriceInput !== '' ? parseFloat(newModelPriceInput) : null;
             
             const newGender = document.getElementById('bulk-gender-input').value;
             
             const newSize = document.getElementById('bulk-size-input').value.trim();
-            const deltaSize = parseFloat(document.getElementById('bulk-size-delta').value) || 0;
+            const pctSize = parseFloat(document.getElementById('bulk-size-percent').value) || 0;
             
             const newColor = document.getElementById('bulk-color-input').value.trim();
-            const deltaColor = parseFloat(document.getElementById('bulk-color-delta').value) || 0;
+            const pctColor = parseFloat(document.getElementById('bulk-color-percent').value) || 0;
             
             const newPrice = document.getElementById('bulk-price-input').value;
             const newQty = document.getElementById('bulk-qty-input').value;
 
-            if (newModel === '' && newGender === '' && newSize === '' && newColor === '' && newPrice === '' && newQty === '' && deltaModel === 0 && deltaSize === 0 && deltaColor === 0) {
-                alert('Vui lòng nhập ít nhất 1 giá trị mới hoặc nhập điều chỉnh giá để áp dụng!');
+            if (newModel === '' && newGender === '' && newSize === '' && newColor === '' && newPrice === '' && newQty === '' && newModelPrice === null && pctSize === 0 && pctColor === 0) {
+                if (typeof window.showMatrixNotice === 'function') {
+                    window.showMatrixNotice('Vui lòng nhập ít nhất 1 giá trị mới hoặc nhập điều chỉnh giá để áp dụng!');
+                }
                 return;
+            }
+
+            const basePrice = parseFloat(document.getElementById('base_price').value) || 0;
+            if (newModelPrice !== null) {
+                if (newModelPrice > basePrice) {
+                    if (typeof window.showMatrixNotice === 'function') {
+                        window.showMatrixNotice('Lỗi: Giá của biến thể mẫu không được phép lớn hơn Giá bán mặc định!');
+                    }
+                    return;
+                }
+                if (newModelPrice < 0) {
+                    if (typeof window.showMatrixNotice === 'function') {
+                        window.showMatrixNotice('Lỗi: Giá mẫu không được là số âm!');
+                    }
+                    return;
+                }
             }
 
             let count = 0;
             document.querySelectorAll('#variants-table tbody tr').forEach(row => {
-                const model = row.querySelector('input[name="variant_models[]"]').value.trim();
-                const gender = row.querySelector('select[name="variant_genders[]"]').value.trim();
-                const size = row.querySelector('input[name="variant_raw_sizes[]"]').value.trim();
-                const color = row.querySelector('input[name="variant_colors[]"]').value.trim();
+                const skuInput = row.querySelector('input[name="variant_skus[]"]');
+                const rowSku = skuInput ? skuInput.value.trim().toLowerCase() : '';
 
-                const matchModel = fModels.length === 0 || fModels.includes(model);
-                const matchColor = fColors.length === 0 || fColors.includes(color);
+                const matchSku = filterSku === '' || rowSku.includes(filterSku);
 
-                let matchGenderSize = true;
-                if (isGenderFilterActive) {
-                    if (fGenderLogic.hasOwnProperty(gender)) {
-                        const allowedSizes = fGenderLogic[gender];
-                        if (allowedSizes.length > 0 && !allowedSizes.includes(size)) {
-                            matchGenderSize = false;
-                        }
-                    } else {
-                        matchGenderSize = false;
-                    }
-                }
-
-                if (matchModel && matchGenderSize && matchColor) {
+                if (matchSku) {
                     if (newModel !== '') row.querySelector('input[name="variant_models[]"]').value = newModel;
                     if (newGender !== '') row.querySelector('select[name="variant_genders[]"]').value = newGender;
                     if (newSize !== '') row.querySelector('input[name="variant_raw_sizes[]"]').value = newSize;
@@ -467,13 +357,36 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     const priceInput = row.querySelector('input[name="variant_prices[]"]');
                     if (newPrice !== '') {
+                        if (parseFloat(newPrice) <= 0) {
+                            if (typeof window.showMatrixNotice === 'function') {
+                                window.showMatrixNotice('Lỗi: Giá mới không được <= 0!');
+                            }
+                            return;
+                        }
                         priceInput.value = newPrice;
                     } else {
                         let currentPrice = parseFloat(priceInput.value) || 0;
-                        currentPrice = currentPrice + deltaModel + deltaSize + deltaColor;
-                        if (currentPrice < 0) currentPrice = 0;
-                        if (deltaModel !== 0 || deltaSize !== 0 || deltaColor !== 0) {
-                            priceInput.value = currentPrice;
+                        
+                        // Nếu có thay đổi giá mẫu, dùng giá mẫu mới làm gốc, ngược lại dùng giá hiện tại
+                        let baseForPct = newModelPrice !== null ? newModelPrice : currentPrice;
+                        // Tính giá sau khi giảm giá size
+                        let priceAfterSize = baseForPct * (1 - (pctSize / 100));
+                        // Lấy giá sau khi giảm size tính tiếp giảm màu
+                        currentPrice = priceAfterSize * (1 - (pctColor / 100));
+                        
+                        if (currentPrice > basePrice) {
+                            currentPrice = basePrice;
+                        }
+                        
+                        if (currentPrice <= 0) {
+                            if (typeof window.showMatrixNotice === 'function') {
+                                window.showMatrixNotice('Lỗi: Có biến thể bị tính giá <= 0 sau khi áp dụng Giảm giá. Vui lòng kiểm tra lại!');
+                            }
+                            return;
+                        }
+                        
+                        if (newModelPrice !== null || pctSize !== 0 || pctColor !== 0) {
+                            priceInput.value = Math.round(currentPrice);
                         }
                     }
                     
@@ -485,16 +398,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             window.updateTotalQuantity();
-            alert('Đã cập nhật hàng loạt thành công cho ' + count + ' biến thể khớp điều kiện!');
+            if (typeof window.showMatrixNotice === 'function') {
+                window.showMatrixNotice('Đã cập nhật hàng loạt thành công cho ' + count + ' biến thể khớp điều kiện!', 'success');
+            }
             
             // Clear inputs
             document.getElementById('bulk-model-input').value = '';
-            document.getElementById('bulk-model-delta').value = '';
+            document.getElementById('bulk-model-price').value = '';
             document.getElementById('bulk-gender-input').value = '';
             document.getElementById('bulk-size-input').value = '';
-            document.getElementById('bulk-size-delta').value = '';
+            document.getElementById('bulk-size-percent').value = '';
             document.getElementById('bulk-color-input').value = '';
-            document.getElementById('bulk-color-delta').value = '';
+            document.getElementById('bulk-color-percent').value = '';
             document.getElementById('bulk-price-input').value = '';
             document.getElementById('bulk-qty-input').value = '';
         });

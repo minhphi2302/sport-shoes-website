@@ -6,15 +6,18 @@ use App\Core\AdminController;
 use App\Models\Brand;
 use App\Exceptions\CannotDeleteException;
 use App\Exceptions\ValidationException;
+use App\Core\FileUploader;
 
 class BrandController extends AdminController
 {
     private Brand $brandModel;
+    private FileUploader $fileUploader;
 
     public function __construct()
     {
         parent::__construct();
         $this->brandModel = new Brand();
+        $this->fileUploader = new FileUploader();
     }
 
     public function index(): void
@@ -33,10 +36,20 @@ class BrandController extends AdminController
             }
 
             try {
-                $this->brandModel->create([
+                $data = [
                     'name' => $name,
                     'description' => trim($_POST['description'] ?? '')
-                ]);
+                ];
+                
+                if (!empty($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
+                    $uploadDir = __DIR__ . '/../../../public/uploads/brands';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
+                    $data['image_url'] = 'brands/' . $this->fileUploader->uploadImage($_FILES['image'], $uploadDir, 'brand_');
+                }
+
+                $this->brandModel->create($data);
                 $_SESSION['success'] = 'Thêm thương hiệu thành công';
                 $this->redirect('/admin/brands');
             } catch (ValidationException $e) {
@@ -66,10 +79,26 @@ class BrandController extends AdminController
             }
 
             try {
-                $this->brandModel->update($brandId, [
+                $data = [
                     'name' => $name,
-                    'description' => trim($_POST['description'] ?? '')
-                ]);
+                    'description' => trim($_POST['description'] ?? ''),
+                    'image_url' => $brand['image_url'] ?? null
+                ];
+
+                if (!empty($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
+                    $uploadDir = __DIR__ . '/../../../public/uploads/brands';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
+                    $data['image_url'] = 'brands/' . $this->fileUploader->uploadImage($_FILES['image'], $uploadDir, 'brand_');
+                    
+                    if (!empty($brand['image_url'])) {
+                        $oldPath = __DIR__ . '/../../../public/uploads/' . $brand['image_url'];
+                        if (file_exists($oldPath)) @unlink($oldPath);
+                    }
+                }
+
+                $this->brandModel->update($brandId, $data);
                 $_SESSION['success'] = 'Cập nhật thương hiệu thành công';
                 $this->redirect('/admin/brands');
             } catch (ValidationException $e) {

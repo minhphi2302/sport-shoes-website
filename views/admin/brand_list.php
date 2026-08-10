@@ -29,6 +29,7 @@
             <thead class="table-light">
                 <tr>
                     <th class="ps-4">ID</th>
+                    <th>Hình ảnh</th>
                     <th>Tên thương hiệu</th>
                     <th>Mô tả</th>
                     <th class="pe-4 text-end">Hành động</th>
@@ -38,6 +39,13 @@
                 <?php foreach ($brands as $brand): ?>
                 <tr>
                     <td class="ps-4"><?= $brand['brand_id'] ?></td>
+                    <td>
+                        <?php if (!empty($brand['image_url'])): ?>
+                            <img src="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/uploads/<?= htmlspecialchars($brand['image_url']) ?>" alt="<?= htmlspecialchars($brand['name']) ?>" style="height: 40px; object-fit: contain;">
+                        <?php else: ?>
+                            <span class="text-muted small">Không có</span>
+                        <?php endif; ?>
+                    </td>
                     <td class="fw-semibold"><?= htmlspecialchars($brand['name']) ?></td>
                     <td class="text-muted text-truncate" style="max-width: 250px;"><?= htmlspecialchars($brand['description']) ?></td>
                     <td class="pe-4 text-end">

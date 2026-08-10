@@ -6,18 +6,21 @@ use App\Core\Controller;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Brand;
+use App\Models\Size;
 
 class ProductController extends Controller
 {
     private Product $productModel;
     private Category $categoryModel;
     private Brand $brandModel;
+    private Size $sizeModel;
 
     public function __construct()
     {
         $this->productModel = new Product();
         $this->categoryModel = new Category();
         $this->brandModel = new Brand();
+        $this->sizeModel = new Size();
     }
 
     public function home(): void
@@ -73,10 +76,12 @@ class ProductController extends Controller
         }
 
         $variants = $this->productModel->getVariants((int)$id);
+        $sizes = $this->sizeModel->all();
 
         $this->view('client/product_detail', [
             'product' => $product,
-            'variants' => $variants
+            'variants' => $variants,
+            'sizes' => $sizes
         ]);
     }
 }
