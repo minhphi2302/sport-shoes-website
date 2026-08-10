@@ -31,11 +31,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 err.innerText = message;
                 input.parentElement.appendChild(err);
 
-                // Tự động ẩn lỗi ô nhập sau 3 giây (3000ms)
+                // Tự động ẩn lỗi ô nhập sau 5 giây (5000ms)
                 setTimeout(() => {
                     input.classList.remove('is-invalid');
                     err.remove();
-                }, 3000);
+                }, 5000);
             };
 
             const name = document.querySelector('input[name="name"]');
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     firstInvalid = vModelInput;
                     row.style.transition = "background-color 0.5s";
                     row.style.backgroundColor = "#f8d7da"; // highlight red
-                    setTimeout(() => { row.style.backgroundColor = ""; }, 3000);
+                    setTimeout(() => { row.style.backgroundColor = ""; }, 5000);
                     return;
                 }
                 seenVariants.add(uniqueKey);
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 4. Tự động ẩn các thông báo alert trên trang sau 3 giây
+    // 4. Tự động ẩn các thông báo alert trên trang sau 5 giây
     document.querySelectorAll('.alert:not(#matrix-error-alert)').forEach(alertEl => {
         setTimeout(() => {
             alertEl.style.transition = 'opacity 0.5s ease-out';
@@ -223,6 +223,6 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 alertEl.style.display = 'none';
             }, 500);
-        }, 3000);
+        }, 5000);
     });
 });

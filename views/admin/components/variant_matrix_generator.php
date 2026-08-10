@@ -112,7 +112,7 @@
 </div>
 <script>
 let matrixNoticeTimer = null;
-window.showMatrixNotice = function(msg, type = 'danger', duration = 3000) {
+window.showMatrixNotice = function(msg, type = 'danger', duration = 5000) {
     const alertBox = document.getElementById('matrix-error-alert');
     const textSpan = document.getElementById('matrix-error-text');
     if (alertBox && textSpan) {
@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 isDuplicate = true;
                                 row.style.transition = "background-color 0.5s";
                                 row.style.backgroundColor = "#f8d7da";
-                                setTimeout(() => { row.style.backgroundColor = ""; }, 3000);
+                                setTimeout(() => { row.style.backgroundColor = ""; }, 5000);
                             }
                         });
 
