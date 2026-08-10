@@ -142,16 +142,20 @@ class CheckoutController extends Controller
     private function getCartData(array $cart): array
     {
         $cartItems = [];
-        foreach ($cart as $productId => $item) {
+        foreach ($cart as $cartKey => $item) {
+            $productId = $item['product_id'] ?? $cartKey;
             $product = $this->productModel ? $this->productModel->getProductById((int)$productId) : null;
             if ($product) {
                 $price = ($product['sale_price'] ?? 0) > 0 ? $product['sale_price'] : $product['price'];
                 $cartItems[] = [
                     'product_id' => $product['product_id'],
                     'name' => $product['name'],
+                    'sku' => $product['sku'] ?? '',
                     'image_url' => !empty($product['image_url']) ? $product['image_url'] : 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif',
                     'price' => $price,
                     'quantity' => $item['quantity'],
+                    'size' => $item['size'] ?? 41,
+                    'color' => $item['color'] ?? 'Black',
                 ];
             }
         }

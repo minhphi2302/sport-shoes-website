@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style CSS (ANTA Theme) -->
     <link rel="stylesheet" href="<?= base_url('assets/css/style.css?v=' . time()) ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/custom.css?v=' . time()) ?>">
 </head>
 <body>
 
@@ -19,7 +20,7 @@
     <div class="top-bar" id="topAnnouncementBar">
         <div class="container position-relative text-center d-flex justify-content-center align-items-center py-1">
             <a href="<?= base_url('products') ?>" class="announcement-text fw-bold">
-                <i class="fa-solid fa-truck-fast me-2 text-red"></i> MIỄN PHÍ GIAO HÀNG TOÀN QUỐC CHO ĐƠN HÀNG TỪ 1.000.000Đ
+                <i class="fa-solid fa-truck-fast me-2 text-red"></i> MIỄN PHÍ GIAO HÀNG TOÀN QUỐC CHO ĐƠN HÀNG TỪ 500.000VNĐ
             </a>
             <button type="button" class="btn-close-topbar" id="closeTopBarBtn" title="Đóng thông báo">
                 <i class="fa-solid fa-xmark"></i>
@@ -45,13 +46,17 @@
 
                 if (link && menu) {
                     link.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        // Close other opened dropdowns
-                        document.querySelectorAll('.custom-dropdown-menu.show').forEach(function(m) {
-                            if (m !== menu) m.classList.remove('show');
-                        });
-                        // Toggle current dropdown menu open/close
-                        menu.classList.toggle('show');
+                        // On mobile, prevent navigation and toggle menu
+                        if (window.innerWidth < 992) {
+                            e.preventDefault();
+                            // Close other opened dropdowns
+                            document.querySelectorAll('.custom-dropdown-menu.show').forEach(function(m) {
+                                if (m !== menu) m.classList.remove('show');
+                            });
+                            // Toggle current dropdown menu open/close
+                            menu.classList.toggle('show');
+                        }
+                        // On desktop, do not prevent default, allow navigation!
                     });
                 }
             });
@@ -93,8 +98,13 @@
                     <li class="nav-item">
                         <a class="nav-link nav-link-custom <?= ($currentPage ?? '') === 'home' ? 'active' : '' ?>" href="<?= base_url('/') ?>">Trang chủ</a>
                     </li>
+                    <?php
+                        $isProducts = ($currentPage ?? '') === 'products' && empty($_GET['category_id']) && empty($_GET['brand_id']);
+                        $isCategory = !empty($_GET['category_id']);
+                        $isBrand = !empty($_GET['brand_id']);
+                    ?>
                     <li class="nav-item dropdown dropdown-hover">
-                        <a class="nav-link nav-link-custom dropdown-toggle <?= ($currentPage ?? '') === 'products' ? 'active' : '' ?>" href="<?= base_url('products') ?>">
+                        <a class="nav-link nav-link-custom no-red-hover dropdown-toggle <?= $isProducts ? 'active' : '' ?>" href="<?= base_url('products') ?>">
                             Sản phẩm <i class="fa-solid fa-chevron-down ms-1 dropdown-icon"></i>
                         </a>
                         <ul class="dropdown-menu custom-dropdown-menu">
@@ -104,7 +114,7 @@
                         </ul>
                     </li>
                     <li class="nav-item dropdown dropdown-hover">
-                        <a class="nav-link nav-link-custom dropdown-toggle" href="<?= base_url('products') ?>">
+                        <a class="nav-link nav-link-custom dropdown-toggle <?= $isCategory ? 'active' : '' ?>" href="<?= base_url('products') ?>">
                             Danh mục<i class="fa-solid fa-chevron-down ms-1 dropdown-icon"></i>
                         </a>
                         <ul class="dropdown-menu custom-dropdown-menu">
@@ -114,7 +124,7 @@
                         </ul>
                     </li>
                     <li class="nav-item dropdown dropdown-hover">
-                        <a class="nav-link nav-link-custom dropdown-toggle" href="<?= base_url('products?brand_id=1') ?>">
+                        <a class="nav-link nav-link-custom dropdown-toggle <?= $isBrand ? 'active' : '' ?>" href="<?= base_url('products') ?>">
                             Thương hiệu <i class="fa-solid fa-chevron-down ms-1 dropdown-icon"></i>
                         </a>
                         <ul class="dropdown-menu custom-dropdown-menu">
@@ -124,12 +134,43 @@
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link nav-link-custom text-red" href="<?= base_url('products?sale=1') ?>">Khuyến mãi</a>
+                        <a class="nav-link nav-link-custom" href="<?= base_url('/#sieu-khuyen-mai') ?>">Khuyến mãi</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link nav-link-custom" href="#contact-footer">Liên hệ</a>
                     </li>
                 </ul>
+                
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const navLinks = document.querySelectorAll('.nav-link-custom');
+                        
+                        function updateActiveNav() {
+                            const hash = window.location.hash;
+                            if (hash) {
+                                navLinks.forEach(link => {
+                                    if (link.getAttribute('href') && link.getAttribute('href').includes(hash)) {
+                                        navLinks.forEach(l => l.classList.remove('active'));
+                                        link.classList.add('active');
+                                    }
+                                });
+                            }
+                        }
+                        
+                        updateActiveNav();
+                        window.addEventListener('hashchange', updateActiveNav);
+                        
+                        navLinks.forEach(link => {
+                            link.addEventListener('click', function() {
+                                const href = this.getAttribute('href');
+                                if (href && href.includes('#')) {
+                                    navLinks.forEach(l => l.classList.remove('active'));
+                                    this.classList.add('active');
+                                }
+                            });
+                        });
+                    });
+                </script>
 
                 <!-- Search Form -->
                 <form class="d-flex me-3 my-2 my-lg-0 search-box-group" action="<?= base_url('products') ?>" method="GET">

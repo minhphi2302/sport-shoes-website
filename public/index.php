@@ -46,6 +46,7 @@ if (!function_exists('base_url')) {
 use App\Core\Router;
 use App\Controllers\ProductController;
 use App\Controllers\CartController;
+use App\Controllers\CheckoutController;
 use App\Controllers\AuthController;
 
 $router = new Router();
@@ -72,8 +73,9 @@ $router->get('/cart/remove/{id}', [CartController::class, 'remove']);
 $router->get('/cart/clear', [CartController::class, 'clear']);
 
 // Thanh toán & Đặt hàng
-$router->get('/checkout', [CartController::class, 'checkout']);
-$router->post('/checkout/process', [CartController::class, 'processCheckout']);
+$router->get('/checkout', [CheckoutController::class, 'index']);
+$router->post('/checkout/process', [CheckoutController::class, 'process']);
+$router->get('/checkout/success', [CheckoutController::class, 'success']);
 
 // Đăng nhập & Đăng ký
 $router->get('/login', [AuthController::class, 'login']);

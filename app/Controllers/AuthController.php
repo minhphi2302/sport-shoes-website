@@ -158,9 +158,14 @@ class AuthController extends Controller
             return;
         }
 
+        $userId = $_SESSION['user']['id'];
+        $orderModel = new \App\Models\Order();
+        $orders = $orderModel->getOrdersByUserId($userId);
+
         $this->view('client/account', [
             'title' => 'Tài khoản của tôi — Anta',
-            'currentPage' => 'account'
+            'currentPage' => 'account',
+            'orders' => $orders
         ]);
     }
 

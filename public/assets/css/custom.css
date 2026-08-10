@@ -251,4 +251,344 @@ body {
     fill: #ffffff;
 }
 
-/* Out of stock button removed cursor modification */
+.btn-out-of-stock:hover {
+    width: 150px
+}
+
+
+/* --- Promotion Tags (Badge Ribbon) --- */
+.badge-ribbon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 6px 0 10px 0;
+    color: white;
+    font-weight: 700;
+    font-size: 0.75rem;
+    z-index: 10;
+    text-align: center;
+    clip-path: polygon(0 0, 100% 0, 100% 80%, 50% 100%, 0 80%);
+    width: 36px;
+}
+.badge-ribbon-red {
+    background-color: #cc0000;
+}
+.badge-ribbon-black {
+    background-color: #000000;
+}
+
+/* --- New Hover Actions --- */
+.product-center-action {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+.product-card:hover .product-center-action {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+.search-icon-btn {
+    width: 48px;
+    height: 48px;
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    font-size: 1.2rem;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+.search-icon-btn:hover {
+    transform: scale(1.1);
+}
+
+.product-bottom-right-action {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    z-index: 10;
+}
+.cart-icon-btn {
+    width: 38px;
+    height: 38px;
+    background-color: #4a4a4a !important;
+    color: #ffffff !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    text-decoration: none;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.cart-icon-btn:hover {
+    background-color: #222222 !important;
+    transform: scale(1.1);
+}
+
+/* --- Brand Filter Buttons --- */
+.btn-brand-filter {
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    border-color: #dee2e6 !important;
+}
+.btn-brand-filter:hover, .btn-brand-filter:focus {
+    border-width: 2px;
+    background-image: none !important;
+}
+.custom-floating > .form-control.is-invalid:focus {
+    box-shadow: none !important;
+}
+
+/* ---------------------------------------------------
+   3. STYLES CHO TRANG SẢN PHẨM (PRODUCT LIST)
+--------------------------------------------------- */
+.color-dot {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    margin-right: 10px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+}
+.btn-check:checked + .color-dot {
+    border: 2px solid #e63946;
+    box-shadow: 0 0 0 2px #fff inset;
+}
+
+/* --- Nút Thêm vào giỏ hàng kiểu mới (Expanding Pill) --- */
+.btn-cart-hover {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between; /* Push text to left and icon to right */
+    background-color: #424040;
+    color: #ffffff;
+    height: 32px; /* Chiều cao hẹp lại */
+    border-radius: 16px;
+    padding: 0;
+    text-decoration: none;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    border: none;
+    cursor: pointer;
+    width: 32px; /* Bắt đầu là hình tròn tương ứng */
+    position: absolute; /* Thay đổi thành absolute để cố định vị trí */
+    right: 10px; /* Cố định mép phải */
+    bottom: 10px; /* Cách mép dưới 10px */
+    z-index: 20;
+}
+.btn-cart-hover .cart-text {
+    font-size: 12px; /* Nhỏ hơn nữa */
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    opacity: 0;
+    max-width: 0; /* Dùng max-width thay vì width để animate mượt */
+    padding-left: 0;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    color: #ffffff;
+}
+.btn-cart-hover .cart-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    flex-shrink: 0;
+}
+.btn-cart-hover .cart-icon-wrapper i {
+    color: #ffffff;
+    transition: color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    font-size: 1.1rem;
+}
+/* Hover effect */
+.btn-cart-hover:hover {
+    width: 140px; /* Nới rộng ra để hiển thị đủ chữ */
+    background-color: #424040;
+    color: #ffffff;
+}
+.btn-cart-hover:hover .cart-text {
+    opacity: 1;
+    max-width: 100px; /* Cung cấp không gian cho chữ */
+    padding-left: 12px;
+    padding-right: 2px;
+}
+.btn-cart-hover:hover .cart-icon-wrapper {
+    background-color: #ffffff;
+    width: 28px;
+    height: 28px;
+    margin-right: 2px;
+}
+.btn-cart-hover:hover .cart-icon-wrapper svg,
+.btn-cart-hover:hover .cart-icon-wrapper i {
+    color: #0066cc; /* Màu xanh của icon khi hover */
+}
+/* SVG mask background for the custom bag icon */
+.btn-cart-hover .bag-bg-circle {
+    fill: #424040;
+    transition: fill 0.3s ease;
+}
+.btn-cart-hover:hover .bag-bg-circle {
+    fill: #ffffff;
+}
+
+.btn-out-of-stock:hover {
+    width: 150px
+}
+
+
+/* --- Promotion Tags (Badge Ribbon) --- */
+.badge-ribbon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 6px 0 10px 0;
+    color: white;
+    font-weight: 700;
+    font-size: 0.75rem;
+    z-index: 10;
+    text-align: center;
+    clip-path: polygon(0 0, 100% 0, 100% 80%, 50% 100%, 0 80%);
+    width: 36px;
+}
+.badge-ribbon-red {
+    background-color: #cc0000;
+}
+.badge-ribbon-black {
+    background-color: #000000;
+}
+
+/* --- New Hover Actions --- */
+.product-center-action {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+.product-card:hover .product-center-action {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+.search-icon-btn {
+    width: 48px;
+    height: 48px;
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    font-size: 1.2rem;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+.search-icon-btn:hover {
+    transform: scale(1.1);
+}
+
+.product-bottom-right-action {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    z-index: 10;
+}
+.cart-icon-btn {
+    width: 38px;
+    height: 38px;
+    background-color: #4a4a4a !important;
+    color: #ffffff !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    text-decoration: none;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.cart-icon-btn:hover {
+    background-color: #222222 !important;
+    transform: scale(1.1);
+}
+
+/* --- Brand Filter Buttons --- */
+.btn-brand-filter {
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    border-color: #dee2e6 !important;
+}
+.btn-brand-filter:hover, .btn-brand-filter:focus {
+    border-color: #cc0000 !important;
+    color: #cc0000 !important;
+    background-color: #ffffff !important;
+}
+.btn-brand-filter.active {
+    background-color: #aa0000 !important;
+    color: #ffffff !important;
+    border-color: #aa0000 !important;
+}
+
+/* Custom Toast Notification */
+.custom-toast {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 290px;
+    background-color: #388e3c;
+    color: white;
+    border-radius: 4px;
+    z-index: 10000;
+    transform: translateY(-50px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+.custom-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+.custom-toast .toast-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background-color: #cddc39; /* Yellow green */
+    width: 100%;
+}
+.custom-toast.show .toast-progress {
+    animation: toast-progress 3s linear forwards;
+}
+@keyframes toast-progress {
+    0% { width: 100%; }
+    100% { width: 0%; }
+}
+.custom-toast .toast-content {
+    padding: 10px 12px;
+}
+.custom-toast .toast-icon i {
+    font-size: 1.4rem;
+}
+.custom-toast .btn-close {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}

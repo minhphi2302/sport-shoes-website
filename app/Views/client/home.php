@@ -202,7 +202,7 @@ require __DIR__ . '/layouts/header.php';
                                                 </span>
                                             </a>
                                             <?php else: ?>
-                                            <a href="javascript:void(0)" class="btn-cart-hover position-absolute out-of-stock" style="bottom: 10px; right: 10px;" title="Tạm hết hàng">
+                                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-cart-hover position-absolute btn-out-of-stock" style="bottom: 10px; right: 10px;" title="Tạm hết hàng">
                                                 <span class="cart-text">Tạm hết hàng</span>
                                                 <span class="cart-icon-wrapper">
                                                 <svg class="custom-bag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
@@ -217,7 +217,10 @@ require __DIR__ . '/layouts/header.php';
                                             <?php endif; ?>
                                         </div>
                                         <div class="card-body px-2 py-3 text-start">
-                                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="text-dark text-decoration-none fw-semibold d-block mb-2" style="font-size: 0.95rem; line-height: 1.4;"><?= htmlspecialchars($product['name']) ?></a>
+                                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="text-dark text-decoration-none fw-semibold d-block mb-1" style="font-size: 0.95rem; line-height: 1.4;"><?= htmlspecialchars($product['name']) ?></a>
+                                                <?php if (!empty($product['sku'])): ?> 
+                                                <div class="text-muted mb-2" style="font-size: 0.85rem;"><?= htmlspecialchars($product['sku']) ?></div>
+                                            <?php endif; ?> 
                                             <div class="d-flex justify-content-start align-items-baseline gap-2 flex-wrap">
                                                 <span class="text-danger fw-bold" style="font-size: 1.1rem;"><?= number_format($product['sale_price'], 0, ',', '.') ?>đ</span>
                                                 <span class="text-muted text-decoration-line-through" style="font-size: 0.85rem;"><?= number_format($product['price'], 0, ',', '.') ?>đ</span>
@@ -323,7 +326,7 @@ require __DIR__ . '/layouts/header.php';
                                         </span>
                                     </a>
                                 <?php else: ?>
-                                    <a href="javascript:void(0)" class="btn-cart-hover out-of-stock" title="Tạm hết hàng">
+                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-cart-hover btn-out-of-stock" title="Tạm hết hàng">
                                         <span class="cart-text">Tạm hết hàng</span>
                                         <span class="cart-icon-wrapper">
                                             <svg class="custom-bag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
@@ -339,7 +342,10 @@ require __DIR__ . '/layouts/header.php';
                             </div>
 
                             <div class="product-body">
-                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="product-title"><?= htmlspecialchars($product['name']) ?></a>
+                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="product-title mb-1"><?= htmlspecialchars($product['name']) ?></a>
+                                <?php if (!empty($product['sku'])): ?>
+                                    <div class="text-muted mb-2" style="font-size: 0.85rem;"><?= htmlspecialchars($product['sku']) ?></div>
+                                <?php endif; ?>
                                 <div class="product-price-box">
                                     <?php if (($product['sale_price'] ?? 0) > 0 && $product['sale_price'] < $product['price']): ?>
                                         <span class="product-price"><?= number_format($product['sale_price'], 0, ',', '.') ?>đ</span>
@@ -393,7 +399,7 @@ require __DIR__ . '/layouts/header.php';
                                         </span>
                                     </a>
                                 <?php else: ?>
-                                    <a href="javascript:void(0)" class="btn-cart-hover out-of-stock" title="Tạm hết hàng">
+                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-cart-hover btn-out-of-stock" title="Tạm hết hàng">
                                         <span class="cart-text">Tạm hết hàng</span>
                                         <span class="cart-icon-wrapper">
                                             <svg class="custom-bag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
@@ -409,7 +415,10 @@ require __DIR__ . '/layouts/header.php';
                             </div>
                             <div class="product-body">
                                 <span class="product-brand-tag"><?= $dp['brand'] ?></span>
-                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $dp['id'] ?>" class="product-title"><?= $dp['name'] ?></a>
+                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $dp['id'] ?>" class="product-title mb-1"><?= $dp['name'] ?></a>
+                                <?php if (!empty($dp['sku'])): ?>
+                                    <div class="text-muted mb-2" style="font-size: 0.85rem;"><?= htmlspecialchars($dp['sku']) ?></div>
+                                <?php endif; ?>
                                 <div class="product-rating">
                                     <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
                                 </div>
@@ -444,14 +453,14 @@ require __DIR__ . '/layouts/header.php';
                 <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products?sale=1" class="btn btn-lg px-4 py-3 text-white border-0 fw-bold shadow-sm" style="background-color: var(--promo-color); transition: all 0.3s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'"><i class="fa-solid fa-bolt me-2"></i> MUA NGAY KẺO LỠ</a>
             </div>
             <div class="col-lg-6 d-none d-lg-block text-center">
-                <img src="public/image/khuyen_mai.png" alt="Promo Shoe" class="img-fluid rounded-4 shadow-lg border border-2" style="max-height: 350px; object-fit: cover; border-color: var(--promo-color) !important;">
-            </div>
+                <img src="<?= base_url('image/khuyen_mai.png') ?>" alt="Promo Shoe" class="img-fluid rounded-4 shadow-lg border border-2" style="max-height: 350px; object-fit: cover; border-color: var(--promo-color) !important;"> 
+            </div> 
         </div>
     </div>
 </section>
 
 <!-- 6. GIỚI THIỆU CỬA HÀNG & ĐÁNH GIÁ KHÁCH HÀNG -->
-<section class="py-5" style="background-color: #fff; color: #333;">
+<section id="about-brand" class="py-5" style="background-color: #fff; color: #333;">
     <div class="container py-4">
         <div class="row justify-content-center">
             <div class="col-lg-10 col-xl-9 text-center">

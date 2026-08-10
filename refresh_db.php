@@ -17,11 +17,13 @@ try {
     require __DIR__ . '/database/migrate.php';
     echo ob_get_clean();
 
-    // 3. Chạy file seeder.php
+    // 3. Chạy file seed.sql
     echo "\n3. Bắt đầu nạp dữ liệu (Seeder):\n";
-    ob_start();
-    require __DIR__ . '/database/seeder.php';
-    echo ob_get_clean();
+    $seedSql = file_get_contents(__DIR__ . '/database/seed.sql');
+    if ($seedSql) {
+        $pdo->exec($seedSql);
+        echo "=> Đã nạp dữ liệu từ seed.sql thành công!\n";
+    }
     
     echo "\n=> HOÀN TẤT LÀM MỚI DATABASE!\n";
 } catch (Exception $e) {

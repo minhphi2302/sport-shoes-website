@@ -1,3 +1,4 @@
+<?php if (empty($_GET['home'])): ?>
 <!-- Top Filter & Sorting Bar -->
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center bg-light p-3 rounded-3 mb-4 border">
     <div class="mb-2 mb-md-0">
@@ -21,46 +22,70 @@
         </select>
     </div>
 </div>
+<?php endif; ?>
 
 <!-- PRODUCT GRID -->
 <div class="row g-4">
     <?php if (!empty($products)): ?>
         <?php foreach ($products as $product): ?>
-            <div class="col-6 col-md-4">
+            <div class="col-6 col-md-4 <?= !empty($_GET['home']) ? 'col-lg-3' : '' ?>">
                 <div class="product-card">
-                    <?php if (($product['quantity'] ?? 50) <= 0): ?>
-                        <span class="product-badge-sale bg-secondary text-white border-0" style="left: 10px; right: auto;">HẾT HÀNG</span>
-                    <?php elseif (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
-                        <?php $discountPercent = round((($product['price'] - $product['sale_price']) / $product['price']) * 100); ?>
-                        <span class="product-badge-sale">-<?= $discountPercent ?>%</span>
-                    <?php endif; ?>
-
                     <div class="product-img-wrapper">
+                        <?php 
+                            $isNew = isset($product['created_at']) && (strtotime($product['created_at']) > strtotime('-7 days'));
+                            $hasSale = (($product['sale_price'] ?? 0) > 0 && $product['sale_price'] < $product['price']);
+                        ?>
+                        <?php if ($isNew): ?>
+                            <div class="badge-ribbon badge-ribbon-black">NEW</div>
+                        <?php endif; ?>
+                        <?php if ($hasSale): ?>
+                            <?php $discountPercent = round((($product['price'] - $product['sale_price']) / $product['price']) * 100); ?>
+                            <div class="badge-ribbon badge-ribbon-red" <?= $isNew ? 'style="left: 43px;"' : '' ?>><small>-</small><?= $discountPercent ?>%</div>
+                        <?php endif; ?>
+
                         <?php 
                             $fallbackImg = 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif';
                             $imgSrc = !empty($product['image_url']) ? $product['image_url'] : $fallbackImg;
                         ?>
-                        <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
-                        <div class="product-actions-overlay">
-                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="btn-action-icon" title="Xem chi tiết"><i class="fa-regular fa-eye"></i></a>
-                            <?php if (($product['quantity'] ?? 50) > 0): ?>
-                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-action-icon" title="Thêm vào giỏ"><i class="fa-solid fa-bag-shopping"></i></a>
-                            <?php endif; ?>
+                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="d-block position-absolute w-100 h-100" style="top:0; left:0; z-index: 5;">
+                            <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                        </a>
+                        <!-- Center search button for viewing detail -->
+                        <div class="product-center-action">
+                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </a>
                         </div>
+                        
+                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-cart-hover <?= (($product['quantity'] ?? 50) <= 0) ? 'btn-out-of-stock' : '' ?>" title="<?= (($product['quantity'] ?? 50) <= 0) ? 'Tạm hết hàng' : 'Thêm vào giỏ' ?>">
+                            <span class="cart-text"><?= (($product['quantity'] ?? 50) <= 0) ? 'Tạm hết hàng' : 'Thêm vào giỏ' ?></span>
+                            <span class="cart-icon-wrapper">
+                                <svg class="custom-bag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                                    <path d="M9 6V4a3 3 0 0 1 6 0v2"></path>
+                                    <rect x="4" y="6" width="16" height="14" rx="2"></rect>
+                                    <circle cx="18" cy="18" r="5" class="bag-bg-circle" stroke="none"></circle>
+                                    <circle cx="18" cy="18" r="4"></circle>
+                                    <path d="M18 15v6m-3-3h6"></path>
+                                </svg>
+                            </span>
+                        </a>
                     </div>
 
                     <div class="product-body">
-                        <span class="product-brand-tag"><?= htmlspecialchars($product['brand_name'] ?? 'Chính Hãng') ?></span>
-                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="product-title"><?= htmlspecialchars($product['name']) ?></a>
-                        <div class="product-rating">
-                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i>
-                        </div>
+                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="product-title mb-1"><?= htmlspecialchars($product['name']) ?></a>
+                        <?php if (!empty($product['sku'])): ?>
+                            <div class="text-muted mb-2" style="font-size: 0.85rem;"><?= htmlspecialchars($product['sku']) ?></div>
+                        <?php endif; ?>
                         <div class="product-price-box">
-                            <?php if (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
+                            <?php if (($product['sale_price'] ?? 0) > 0 && $product['sale_price'] < $product['price']): ?>
                                 <span class="product-price"><?= number_format($product['sale_price'], 0, ',', '.') ?>đ</span>
                                 <span class="product-price-old"><?= number_format($product['price'], 0, ',', '.') ?>đ</span>
                             <?php else: ?>
                                 <span class="product-price"><?= number_format($product['price'], 0, ',', '.') ?>đ</span>
+                            <?php endif; ?>
+                            
+                            <?php if (($product['quantity'] ?? 50) <= 0): ?>
+                                <span class="badge bg-danger rounded-1 ms-2 p-1 px-2 fw-medium" style="font-size: 0.75rem;">Hết hàng</span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -77,6 +102,7 @@
     <?php endif; ?>
 </div>
 
+<?php if (empty($_GET['home'])): ?>
 <!-- PHÂN TRANG -->
 <?php if (isset($totalPages) && $totalPages > 1): ?>
     <nav class="mt-5" aria-label="Product listing pagination">
@@ -94,4 +120,5 @@
             </li>
         </ul>
     </nav>
+<?php endif; ?>
 <?php endif; ?>

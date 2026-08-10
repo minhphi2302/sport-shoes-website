@@ -34,11 +34,15 @@ class ProductController extends Controller
     public function home(): void
     {
         $featuredProducts = $this->productModel ? $this->productModel->getFeaturedProducts(8) : [];
+        $saleProducts = $this->productModel ? $this->productModel->getProductsFiltered(['sale' => true], 1, 8) : [];
+        $brands = $this->brandModel ? $this->brandModel->getAllBrands() : [];
 
         $this->view('client/home', [
             'title' => 'Trang chủ — Anta Store',
             'currentPage' => 'home',
-            'featuredProducts' => $featuredProducts
+            'featuredProducts' => $featuredProducts,
+            'saleProducts' => $saleProducts,
+            'brands' => $brands
         ]);
     }
 
@@ -56,7 +60,9 @@ class ProductController extends Controller
             'gender' => $_GET['gender'] ?? null,
             'sale' => $_GET['sale'] ?? null,
             'search' => $_GET['search'] ?? null,
-            'sort' => $_GET['sort'] ?? 'newest'
+            'sort' => $_GET['sort'] ?? 'newest',
+            'size' => $_GET['size'] ?? null,
+            'color' => $_GET['color'] ?? null
         ];
 
         $products = $this->productModel ? $this->productModel->getProductsFiltered($filters, $page, $perPage) : [];
@@ -65,6 +71,11 @@ class ProductController extends Controller
 
         $categories = $this->categoryModel ? $this->categoryModel->getAllCategories() : [];
         $brands = $this->brandModel ? $this->brandModel->getAllBrands() : [];
+
+        // Fetch dynamic filters
+        $availableSizes = $this->productModel ? $this->productModel->getAllAvailableSizes() : [];
+        $availableColors = $this->productModel ? $this->productModel->getAllAvailableColors() : [];
+        $availableGenders = $this->productModel ? $this->productModel->getAllAvailableGenders() : [];
 
         // Check if AJAX request
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
@@ -80,6 +91,9 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => $categories,
             'brands' => $brands,
+            'availableSizes' => $availableSizes,
+            'availableColors' => $availableColors,
+            'availableGenders' => $availableGenders,
             'currentPageNum' => $page,
             'totalPages' => $totalPages,
             'totalProducts' => $totalProducts
@@ -113,12 +127,14 @@ class ProductController extends Controller
         }
 
         $relatedProducts = $this->productModel ? $this->productModel->getRelatedProducts($product['category_id'] ?? 1, $id, 4) : [];
+        $variants = $this->productModel ? $this->productModel->getProductVariants($id) : [];
 
         $this->view('client/product_detail', [
             'title' => ($product['name'] ?? 'Chi tiết sản phẩm') . ' — Anta',
             'currentPage' => 'products',
             'product' => $product,
-            'relatedProducts' => $relatedProducts
+            'relatedProducts' => $relatedProducts,
+            'variants' => $variants
         ]);
     }
 }

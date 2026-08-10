@@ -23,7 +23,7 @@ require __DIR__ . '/layouts/header.php';
             foreach ($cartItems as $item) {
                 $totalAmount += $item['price'] * $item['quantity'];
             }
-            $freeShipThreshold = 1000000;
+            $freeShipThreshold = 500000;
             $progress = min(100, ($totalAmount / $freeShipThreshold) * 100);
             $remaining = max(0, $freeShipThreshold - $totalAmount);
         ?>
@@ -56,8 +56,9 @@ require __DIR__ . '/layouts/header.php';
                                 <th>Sản phẩm</th>
                                 <th class="text-center">Số lượng</th>
                                 <th class="text-center">Size</th>
+                                <th class="text-center">Màu sắc</th>
+                                <th class="text-center">Giới tính</th>
                                 <th class="text-center">Đơn giá</th>
-                                <th class="text-center">Thành tiền</th>
                                 <th class="text-center">Thao tác</th>
                             </tr>
                         </thead>
@@ -73,27 +74,39 @@ require __DIR__ . '/layouts/header.php';
                                         <div class="d-flex align-items-center">
                                             <img src="<?= htmlspecialchars(base_url($item['image_url'])) ?>" width="70" height="70" class="rounded me-3 object-fit-cover border" alt="<?= htmlspecialchars($item['name']) ?>">
                                             <div>
-                                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $item['product_id'] ?>" class="fw-bold text-dark text-decoration-none d-block mb-1"><?= htmlspecialchars($item['name']) ?></a>
-                                                <span class="badge bg-light text-dark border">Chính Hãng</span>
+                                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $item['product_id'] ?>" class="fw-bold text-dark text-decoration-none d-block mb-1"><?= htmlspecialchars($item['name']) ?> <span class="text-muted fw-normal" style="font-size: 0.85rem;">(SKU: <?= htmlspecialchars($item['sku'] ?? 'N/A') ?>)</span></a> 
                                             </div>
                                         </div>
                                     </td>
                                     <td class="text-center align-middle">
                                         <div class="quantity-selector mx-auto" style="width: 48px;">
-                                            <input type="number" name="quantity[<?= $item['product_id'] ?>]" class="form-control text-center cart-update-btn shadow-none fw-semibold bg-light px-1" style="border-radius: 6px; border: 1px solid #e9ecef; height: 30px; font-size: 0.85rem;" value="<?= $item['quantity'] ?>" min="1">
+                                            <input type="number" name="quantity[<?= $item['cart_key'] ?>]" class="form-control text-center cart-update-btn shadow-none fw-semibold bg-light px-1" style="border-radius: 6px; border: 1px solid #e9ecef; height: 30px; font-size: 0.85rem;" value="<?= $item['quantity'] ?>" min="1">
                                         </div>
                                     </td>
                                     <td class="text-center align-middle">
-                                        <select name="size[<?= $item['product_id'] ?>]" class="form-select form-select-sm cart-update-btn shadow-none mx-auto fw-semibold bg-light" style="width: 48px; border-radius: 6px; border: 1px solid #e9ecef; height: 30px; font-size: 0.85rem; cursor: pointer; padding: 0 14px 0 6px; text-align: center; background-position: right 3px center; background-size: 8px 6px;">
-                                            <?php foreach([39, 40, 41, 42, 43, 44] as $s): ?>
-                                                <option value="<?= $s ?>" <?= ($item['size'] ?? 41) == $s ? 'selected' : '' ?>><?= $s ?></option>
+                                        <select name="size[<?= $item['cart_key'] ?>]" class="form-select form-select-sm cart-update-btn shadow-none mx-auto fw-semibold bg-light" style="width: 44px; border-radius: 6px; border: 1px solid #e9ecef; height: 28px; font-size: 0.8rem; cursor: pointer; padding: 0 12px 0 4px; text-align: center; background-position: right 4px center; background-size: 6px 4px; margin: 0 auto;">
+                                            <?php foreach($item['available_sizes'] as $s): ?>
+                                                <option value="<?= htmlspecialchars((string)$s) ?>" <?= ($item['size'] ?? 41) == $s ? 'selected' : '' ?>><?= htmlspecialchars((string)$s) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <select name="color[<?= $item['cart_key'] ?>]" class="form-select form-select-sm cart-update-btn shadow-none mx-auto fw-semibold bg-light" style="width: 66px; border-radius: 6px; border: 1px solid #e9ecef; height: 28px; font-size: 0.8rem; cursor: pointer; padding: 0 12px 0 4px; text-align: center; background-position: right 4px center; background-size: 6px 4px; margin: 0 auto;">
+                                            <?php foreach($item['available_colors'] as $c): ?>
+                                                <option value="<?= htmlspecialchars((string)$c) ?>" <?= ($item['color'] ?? 'Black') == $c ? 'selected' : '' ?>><?= htmlspecialchars((string)$c) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <select name="gender[<?= $item['cart_key'] ?>]" class="form-select form-select-sm cart-update-btn shadow-none mx-auto fw-semibold bg-light" style="width: 62px; border-radius: 6px; border: 1px solid #e9ecef; height: 28px; font-size: 0.8rem; cursor: pointer; padding: 0 12px 0 4px; text-align: center; background-position: right 4px center; background-size: 6px 4px; margin: 0 auto;">
+                                            <?php foreach($item['available_genders'] as $g): ?>
+                                                <option value="<?= htmlspecialchars($g) ?>" <?= ($item['gender'] ?? 'male') == $g ? 'selected' : '' ?>><?= $g == 'male' ? 'Nam' : ($g == 'female' ? 'Nữ' : ucfirst($g)) ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </td>
                                     <td class="fw-bold text-center"><?= number_format($item['price'], 0, ',', '.') ?>đ</td>
-                                    <td class="fw-bold text-red text-center"><?= number_format($itemSubtotal, 0, ',', '.') ?>đ</td>
                                     <td class="text-center">
-                                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/remove/<?= $item['product_id'] ?>" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="fa-solid fa-trash-can"></i></a>
+                                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/remove/<?= $item['cart_key'] ?>" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="fa-solid fa-trash-can"></i></a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -133,14 +146,18 @@ require __DIR__ . '/layouts/header.php';
                     </div>
                     <div class="d-flex justify-content-between mb-3">
                         <span class="text-secondary">Phí vận chuyển:</span>
-                        <span class="text-success fw-semibold">MIỄN PHÍ</span>
+                        <?php if (isset($shippingFee) && $shippingFee > 0): ?>
+                            <span class="fw-semibold text-dark"><?= number_format($shippingFee, 0, ',', '.') ?>đ</span>
+                        <?php else: ?>
+                            <span class="text-success fw-semibold">MIỄN PHÍ</span>
+                        <?php endif; ?>
                     </div>
 
                     <hr>
 
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <span class="fw-bold fs-5">TỔNG TIỀN:</span>
-                        <span class="fw-extrabold fs-4 text-red"><?= number_format($totalAmount, 0, ',', '.') ?>đ</span>
+                        <span class="fw-extrabold fs-4 text-red"><?= number_format($finalAmount ?? $totalAmount, 0, ',', '.') ?>đ</span>
                     </div>
 
                     <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/checkout" class="btn btn-red w-100 py-3 fw-bold fs-6">

@@ -18,11 +18,19 @@ require __DIR__ . '/layouts/header.php';
 <div class="container pb-5">
     <h2 class="section-title mb-4">Thanh toán & Đặt hàng</h2>
 
+    <?php if (isset($_SESSION['checkout_error'])): ?>
+        <div class="alert alert-danger shadow-sm rounded-3">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            <?= htmlspecialchars($_SESSION['checkout_error']) ?>
+        </div>
+        <?php unset($_SESSION['checkout_error']); ?>
+    <?php endif; ?>
+
     <form action="<?= ($_ENV['APP_URL'] ?? '') ?>/checkout/process" method="POST" id="checkoutForm" novalidate>
         <div class="row g-5">
             
             <!-- CỘT TRÁI: THÔNG TIN GIAO HÀNG & THANH TOÁN -->
-            <div class="col-lg-7">
+            <div class="col-lg-8">
                 
                 <?php if (empty($_SESSION['user'])): ?>
                 <div class="d-flex justify-content-between align-items-center bg-white border shadow-sm p-3 mb-4 rounded-3">
@@ -169,7 +177,7 @@ require __DIR__ . '/layouts/header.php';
             </div>
 
             <!-- CỘT PHẢI: TÓM TẮT ĐƠN HÀNG -->
-            <div class="col-lg-5">
+            <div class="col-lg-4">
                 <div class="summary-card shadow-sm sticky-top" style="top: 100px; z-index: 1000;">
                     <h5 class="fw-bold mb-3 border-bottom pb-2">ĐƠN HÀNG CỦA BẠN</h5>
 
@@ -181,7 +189,7 @@ require __DIR__ . '/layouts/header.php';
                                     <img src="<?= htmlspecialchars(base_url($item['image_url'])) ?>" width="55" height="55" class="rounded me-3 object-fit-cover border" alt="<?= htmlspecialchars($item['name']) ?>">
                                     <div class="flex-grow-1">
                                         <h6 class="mb-0 fs-7 fw-bold"><?= htmlspecialchars($item['name']) ?></h6>
-                                        <small class="text-muted">Size: <?= $item['size'] ?? '41' ?> | SL: <?= $item['quantity'] ?></small>
+                                        <small class="text-muted">SKU: <?= htmlspecialchars($item['sku'] ?? 'N/A') ?> | Size: <?= $item['size'] ?? '41' ?> | SL: <?= $item['quantity'] ?></small>
                                     </div>
                                     <span class="fw-bold fs-7"><?= number_format($item['price'] * $item['quantity'], 0, ',', '.') ?>đ</span>
                                 </div>
@@ -198,14 +206,18 @@ require __DIR__ . '/layouts/header.php';
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-secondary">Phí vận chuyển:</span>
-                        <span class="text-success fw-bold">MIỄN PHÍ</span>
+                        <?php if (isset($shippingFee) && $shippingFee > 0): ?>
+                            <span class="fw-semibold text-dark"><?= number_format($shippingFee, 0, ',', '.') ?>đ</span>
+                        <?php else: ?>
+                            <span class="text-success fw-bold">MIỄN PHÍ</span>
+                        <?php endif; ?>
                     </div>
 
                     <hr>
 
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <span class="fw-bold fs-5">TỔNG CỘNG:</span>
-                        <span class="fw-extrabold fs-3 text-red"><?= number_format($totalAmount ?? 0, 0, ',', '.') ?>đ</span>
+                        <span class="fw-extrabold fs-3 text-red"><?= number_format($finalAmount ?? $totalAmount ?? 0, 0, ',', '.') ?>đ</span>
                     </div>
 
                     <button type="submit" class="btn btn-red w-100 py-3 fw-bold fs-6 shadow">
@@ -221,91 +233,8 @@ require __DIR__ . '/layouts/header.php';
     </form>
 </div>
 
-<?php
-require __DIR__ . '/layouts/footer.php';
-?>
 
-<style>
-body {
-    background-color: #f8f9fa; /* Nền xám nhạt nhẹ giống screenshot */
-}
-.address-dropdown .list-group-item {
-    cursor: pointer;
-    border: none;
-    padding: 10px 20px;
-    transition: background-color 0.2s;
-}
-.address-dropdown .list-group-item:hover {
-    background-color: #f8f9fa;
-}
-.address-dropdown .nav-tabs .nav-link {
-    border: none;
-    border-bottom: 2px solid transparent;
-    font-size: 0.95rem;
-}
-.address-dropdown .nav-tabs .nav-link.active {
-    border-bottom: 2px solid #e60012;
-    color: #e60012 !important;
-    font-weight: 600;
-}
-.custom-checkout-input {
-    border-radius: 6px;
-    border: 1px solid #ced4da;
-    font-size: 1rem;
-    transition: all 0.2s;
-}
-.custom-checkout-input:focus {
-    border-color: #ff6b6b;
-    box-shadow: 0 0 0 0.15rem rgba(230, 0, 18, 0.15);
-}
-.custom-checkout-input:focus ~ label {
-    color: #8c98a4 !important; /* Không đổi sang màu cam khi focus, giữ nguyên màu xám mờ */
-}
-.form-floating > label {
-    color: #8c98a4 !important; /* Làm mờ chữ label */
-    font-weight: 400 !important;
-}
-.form-floating > .form-control:focus ~ label,
-.form-floating > .form-control:not(:placeholder-shown) ~ label {
-    transform: scale(0.85) translateY(-0.6rem) translateX(0.15rem); /* Tùy chỉnh vị trí floating */
-}
 
-/* Ẩn hiện luân phiên giữa Placeholder (dài) và Label (ngắn) */
-.custom-floating > .form-control::placeholder {
-    color: transparent !important;
-}
-.custom-floating > .form-control:placeholder-shown:not(:focus) ~ label {
-    opacity: 0 !important;
-}
-.custom-floating > .form-control:placeholder-shown:not(:focus)::placeholder {
-    color: #8c98a4 !important;
-    opacity: 1 !important;
-}
-
-/* Fix lỗi nền xanh (blue) khi trình duyệt tự động điền (Autofill) */
-.custom-checkout-input:-webkit-autofill,
-.custom-checkout-input:-webkit-autofill:hover, 
-.custom-checkout-input:-webkit-autofill:focus, 
-.custom-checkout-input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 50px white inset !important;
-    -webkit-text-fill-color: #212529 !important;
-    transition: background-color 5000s ease-in-out 0s;
-}
-
-/* Ẩn thanh dọc (vr) khi nút xóa (clear-btn) bị ẩn */
-.clear-btn[style*="display: none"] ~ .vr {
-    display: none !important;
-}
-
-.custom-checkout-input.is-invalid {
-    border-color: #dc3545 !important;
-    border-width: 2px;
-    background-image: none !important;
-}
-.custom-floating > .form-control.is-invalid:focus {
-    box-shadow: none !important;
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -517,3 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<?php
+require __DIR__ . '/layouts/footer.php';
+?>

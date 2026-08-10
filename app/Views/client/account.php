@@ -32,7 +32,7 @@ $address = $user['address'] ?? 'Chưa có';
                     <a href="#info" class="nav-link text-dark fw-bold px-0 active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info-pane" type="button" role="tab" aria-controls="info-pane" aria-selected="true" onclick="changeActiveTab(this)">Thông tin tài khoản</a>
                 </li>
                 <li class="mb-3 nav-item" role="presentation">
-                    <a href="#address" class="nav-link text-dark px-0" id="address-tab" data-bs-toggle="tab" data-bs-target="#address-pane" type="button" role="tab" aria-controls="address-pane" aria-selected="false" onclick="changeActiveTab(this)">Sổ địa chỉ (1)</a>
+                    <a href="#address" class="nav-link text-dark px-0" id="address-tab" data-bs-toggle="tab" data-bs-target="#address-pane" type="button" role="tab" aria-controls="address-pane" aria-selected="false" onclick="changeActiveTab(this)">Địa chỉ (1)</a>
                 </li>
                 <li class="nav-item">
                     <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/logout" class="nav-link text-primary px-0">Đăng xuất</a>
@@ -46,26 +46,56 @@ $address = $user['address'] ?? 'Chưa có';
             <!-- Tab: Thông tin tài khoản -->
             <div class="tab-pane fade show active" id="info-pane" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
                 <h5 class="fw-bold mb-4">TÀI KHOẢN</h5>
-                <p class="mb-3">Tên tài khoản: <span class="fw-bold"><?= htmlspecialchars($name) ?>!</span></p>
-                <p class="mb-3"><i class="fa-solid fa-house text-dark me-2"></i> Địa chỉ: , Vietnam</p>
-                <p class="mb-4"><i class="fa-solid fa-mobile-screen-button text-dark me-2"></i> Điện thoại:</p>
+                <p class="mb-3">Tên tài khoản: <span class="fw-bold" id="infoAddrName"><?= htmlspecialchars($name) ?></span>!</p>
+                <p class="mb-3"><i class="fa-solid fa-house text-dark me-2"></i> Địa chỉ: <span id="infoAddrDetail"><?= htmlspecialchars($address) ?></span></p>
+                <p class="mb-4"><i class="fa-solid fa-mobile-screen-button text-dark me-2"></i> Điện thoại: <span id="infoAddrPhone"><?= htmlspecialchars($phone) ?></span></p>
                 
                 <h5 class="fw-bold mb-3 mt-5">ĐƠN HÀNG CỦA BẠN</h5>
                 <div class="table-responsive">
                     <table class="table border-bottom">
                         <thead>
                             <tr class="align-middle">
-                                <th scope="col" class="border-0 bg-transparent text-dark py-3">Mã đơn hàng</th>
-                                <th scope="col" class="border-0 bg-transparent text-dark py-3">Ngày đặt</th>
-                                <th scope="col" class="border-0 bg-transparent text-dark py-3">Thành tiền</th>
-                                <th scope="col" class="border-0 bg-transparent text-dark py-3 text-center">TT thanh toán</th>
-                                <th scope="col" class="border-0 bg-transparent text-dark py-3 text-center">TT vận chuyển</th>
+                                <th scope="col" class="border-0 bg-transparent text-dark py-3 text-center">Mã đơn hàng</th>
+                                <th scope="col" class="border-0 bg-transparent text-dark py-3 text-center">Ngày đặt</th>
+                                <th scope="col" class="border-0 bg-transparent text-dark py-3 text-center">Thành tiền</th>
+                                <th scope="col" class="border-0 bg-transparent text-dark py-3 text-center">Phương thức thanh toán</th>
+                                <th scope="col" class="border-0 bg-transparent text-dark py-3 text-center">Trạng Thái</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td colspan="5" class="py-4">Không có đơn hàng nào.</td>
-                            </tr>
+                            <?php if (!empty($orders)): ?>
+                                <?php foreach ($orders as $order): ?>
+                                    <tr class="align-middle">
+                                        <td class="fw-bold text-dark py-3 text-center">#<?= str_pad($order['order_id'], 5, '0', STR_PAD_LEFT) ?></td>
+                                        <td class="text-secondary py-3 text-center"><?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></td>
+                                        <td class="fw-bold text-red py-3 text-center"><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</td>
+                                        <td class="py-3 text-center">
+                                            <?php if ($order['payment_method'] === 'COD'): ?>
+                                                <span class="badge bg-secondary rounded-pill">COD</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-success rounded-pill"><?= htmlspecialchars($order['payment_method']) ?></span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="py-3 text-center">
+                                            <?php
+                                                $status = $order['status'] ?? 'pending';
+                                                $statusBadge = match($status) {
+                                                    'pending' => '<span class="badge bg-secondary rounded-pill">Chờ xử lý</span>',
+                                                    'confirmed' => '<span class="badge bg-info rounded-pill">Đã xác nhận</span>',
+                                                    'completed' => '<span class="badge bg-success rounded-pill">Hoàn thành</span>',
+                                                    'cancelled' => '<span class="badge bg-danger rounded-pill">Đã hủy</span>',
+                                                    default => '<span class="badge bg-secondary rounded-pill">Chờ xử lý</span>'
+                                                };
+                                                echo $statusBadge;
+                                            ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="py-4 text-center text-muted">Không có đơn hàng nào.</td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -209,6 +239,10 @@ async function saveAddress() {
             document.getElementById('displayAddrName').innerText = newName;
             document.getElementById('displayAddrPhone').innerText = newPhone ? newPhone : 'Chưa có';
             document.getElementById('displayAddrDetail').innerText = newDetail ? newDetail : 'Chưa có';
+            
+            document.getElementById('infoAddrName').innerText = newName;
+            document.getElementById('infoAddrPhone').innerText = newPhone ? newPhone : 'Chưa có';
+            document.getElementById('infoAddrDetail').innerText = newDetail ? newDetail : 'Chưa có';
             
             if (isDefault) {
                 document.getElementById('displayAddrDefault').style.display = 'inline';

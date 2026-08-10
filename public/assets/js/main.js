@@ -41,18 +41,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (badge) {
                         badge.textContent = data.cartCount;
                     }
-                    // Show modal instead of alert
-                    const modalEl = document.getElementById('addToCartModal');
-                    if (modalEl) {
-                        document.getElementById('modalProductImage').src = data.productImage;
-                        document.getElementById('modalProductName').textContent = data.productName;
-                        document.getElementById('modalTotalAmount').textContent = data.totalAmount + 'đ';
-                        document.getElementById('modalTotalQuantity').textContent = `(${data.cartCount}) sản phẩm`;
-                        
-                        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                        modal.show();
+                    // Show Toast
+                    if (typeof showCartToast === 'function') {
+                        showCartToast(data.message, 'success');
                     } else {
                         alert(data.message);
+                    }
+                } else {
+                    // Show Error Toast
+                    if (typeof showCartToast === 'function') {
+                        showCartToast(data.message || 'Có lỗi xảy ra.', 'error');
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra.');
                     }
                 }
             })
@@ -92,19 +92,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (badge) {
                         badge.textContent = data.cartCount;
                     }
-                    // Show modal instead of alert
-                    const modalEl = document.getElementById('addToCartModal');
-                    if (modalEl) {
-                        document.getElementById('modalProductImage').src = data.productImage;
-                        document.getElementById('modalProductName').textContent = data.productName;
-                        document.getElementById('modalProductSize').textContent = data.productSize ? data.productSize : '';
-                        document.getElementById('modalTotalAmount').textContent = data.totalAmount + 'đ';
-                        document.getElementById('modalTotalQuantity').textContent = `(${data.cartCount}) sản phẩm`;
-                        
-                        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                        modal.show();
+                    // Show Toast
+                    if (typeof showCartToast === 'function') {
+                        showCartToast(data.message, 'success');
                     } else {
                         alert(data.message);
+                    }
+                } else {
+                    // Show Error Toast
+                    if (typeof showCartToast === 'function') {
+                        showCartToast(data.message || 'Có lỗi xảy ra.', 'error');
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra.');
                     }
                 }
             })

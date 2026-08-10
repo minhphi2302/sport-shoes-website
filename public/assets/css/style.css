@@ -783,10 +783,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-back-to-top:hover {
-    background-color: var(--primary-black) !important;
-    color: #ffffff;
+    background-color: #ffffff !important;
+    color: var(--anta-red) !important;
+    border-color: var(--anta-red);
     transform: translateY(-4px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 6px 20px rgba(230, 0, 18, 0.3);
 }
 
 

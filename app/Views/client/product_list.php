@@ -64,51 +64,52 @@ require __DIR__ . '/layouts/header.php';
                     
 
             
+                    <!-- Giới tính -->
+                    <div class="filter-group">
+                        <h6 class="filter-title"><i class="fa-solid fa-venus-mars me-2 text-red"></i> Giới tính</h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="gender" value="" id="gender_all" <?= empty($_GET['gender']) ? 'checked' : '' ?> onchange="this.form.submit()">
+                            <label class="form-check-label" for="gender_all">Tất cả</label>
+                        </div>
+                        <?php 
+                        $genders = $availableGenders ?? ['male', 'female'];
+                        $genderLabels = ['male' => 'Nam', 'female' => 'Nữ'];
+                        foreach ($genders as $g): 
+                            $label = $genderLabels[$g] ?? ucfirst($g);
+                        ?>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="gender" value="<?= $g ?>" id="gender_<?= $g ?>" <?= (isset($_GET['gender']) && $_GET['gender'] == $g) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                <label class="form-check-label" for="gender_<?= $g ?>"><?= $label ?></label>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+            
                     <!-- Chọn Size Giày -->
                     <div class="filter-group">
                         <h6 class="filter-title"><i class="fa-solid fa-shoe-prints me-2 text-red"></i> Kích thước (Size)</h6>
-                        <div class="size-btn-group">
-                            <?php $sizes = [38, 39, 40, 41, 42, 43, 44]; ?>
-                            <?php foreach ($sizes as $s): ?>
+                        <div class="size-btn-group flex-wrap gap-2 d-flex">
+                            <?php 
+                            $sizes = $availableSizes ?? [38, 39, 40, 41, 42, 43, 44]; 
+                            foreach ($sizes as $s): 
+                            ?>
                                 <input type="radio" class="btn-check" name="size" id="size_<?= $s ?>" value="<?= $s ?>" autocomplete="off" <?= (isset($_GET['size']) && $_GET['size'] == $s) ? 'checked' : '' ?> onchange="this.form.submit()">
                                 <label class="btn btn-outline-dark" for="size_<?= $s ?>"><?= $s ?></label>
                             <?php endforeach; ?>
                         </div>
                     </div>
-                
 
-                    <!-- Lọc Màu Sắc -->
-                    <style>
-                        .color-dot {
-                            display: inline-block;
-                            width: 25px;
-                            height: 25px;
-                            border-radius: 50%;
-                            margin-right: 10px;
-                            cursor: pointer;
-                            border: 1px solid #ccc;
-                        }
-                        .btn-check:checked + .color-dot {
-                            border: 2px solid #e63946;
-                            box-shadow: 0 0 0 2px #fff inset;
-                        }
-                    </style>
+                    <!-- Màu sắc -->
                     <div class="filter-group">
                         <h6 class="filter-title"><i class="fa-solid fa-palette me-2 text-red"></i> Màu sắc</h6>
-                        <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
                             <?php 
-                            $colors = [
-                                'den' => ['hex' => '#000000', 'name' => 'Đen'],
-                                'trang' => ['hex' => '#ffffff', 'name' => 'Trắng'],
-                                'do' => ['hex' => '#e63946', 'name' => 'Đỏ'],
-                                'xanh' => ['hex' => '#0056b3', 'name' => 'Xanh Dương'],
-                                'xam' => ['hex' => '#6c757d', 'name' => 'Xám']
-                            ];
-                            foreach ($colors as $val => $c): 
-                                $isChecked = (isset($_GET['color']) && $_GET['color'] == $val) ? 'checked' : '';
+                            $colors = $availableColors ?? ['Đen', 'Trắng', 'Đỏ'];
+                            foreach ($colors as $c): 
+                                $isChecked = (isset($_GET['color']) && $_GET['color'] == $c) ? 'checked' : '';
+                                $colorId = 'color_' . md5((string)$c);
                             ?>
-                                <input type="radio" class="btn-check color-radio" name="color" id="color_<?= $val ?>" value="<?= $val ?>" <?= $isChecked ?> autocomplete="off">
-                                <label class="color-dot" for="color_<?= $val ?>" style="background-color: <?= $c['hex'] ?>;" title="<?= $c['name'] ?>"></label>
+                                <input type="radio" class="btn-check" name="color" id="<?= $colorId ?>" value="<?= htmlspecialchars((string)$c) ?>" <?= $isChecked ?> autocomplete="off" onchange="this.form.submit()">
+                                <label class="btn btn-outline-dark btn-sm rounded-pill" for="<?= $colorId ?>"><?= htmlspecialchars((string)$c) ?></label>
                             <?php endforeach; ?>
                         </div>
                     </div>
@@ -215,5 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 </script>
+
+
 
 <?php require __DIR__ . '/layouts/footer.php'; ?>
