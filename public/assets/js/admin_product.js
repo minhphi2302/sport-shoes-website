@@ -30,6 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 err.className = 'invalid-feedback fw-bold';
                 err.innerText = message;
                 input.parentElement.appendChild(err);
+
+                // Tự động ẩn lỗi ô nhập sau 3 giây (3000ms)
+                setTimeout(() => {
+                    input.classList.remove('is-invalid');
+                    err.remove();
+                }, 3000);
             };
 
             const name = document.querySelector('input[name="name"]');
@@ -208,4 +214,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // 4. Tự động ẩn các thông báo alert trên trang sau 3 giây
+    document.querySelectorAll('.alert:not(#matrix-error-alert)').forEach(alertEl => {
+        setTimeout(() => {
+            alertEl.style.transition = 'opacity 0.5s ease-out';
+            alertEl.style.opacity = '0';
+            setTimeout(() => {
+                alertEl.style.display = 'none';
+            }, 500);
+        }, 3000);
+    });
 });

@@ -111,7 +111,8 @@
     </div>
 </div>
 <script>
-window.showMatrixNotice = function(msg, type = 'danger') {
+let matrixNoticeTimer = null;
+window.showMatrixNotice = function(msg, type = 'danger', duration = 3000) {
     const alertBox = document.getElementById('matrix-error-alert');
     const textSpan = document.getElementById('matrix-error-text');
     if (alertBox && textSpan) {
@@ -119,12 +120,25 @@ window.showMatrixNotice = function(msg, type = 'danger') {
         alertBox.className = `alert alert-${type} alert-dismissible fade show mb-3`;
         alertBox.style.display = 'block';
         alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (matrixNoticeTimer) {
+            clearTimeout(matrixNoticeTimer);
+        }
+        if (duration > 0) {
+            matrixNoticeTimer = setTimeout(function() {
+                window.hideMatrixNotice();
+            }, duration);
+        }
     }
 };
 
 window.hideMatrixNotice = function() {
     const alertBox = document.getElementById('matrix-error-alert');
     if (alertBox) alertBox.style.display = 'none';
+    if (matrixNoticeTimer) {
+        clearTimeout(matrixNoticeTimer);
+        matrixNoticeTimer = null;
+    }
 };
 
 document.addEventListener('DOMContentLoaded', function() {
