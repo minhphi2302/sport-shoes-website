@@ -8,18 +8,18 @@
 
 ## 1. Tech Stack
 
-| Layer | Công nghệ | Ghi chú |
-|-------|-----------|---------|
-| Ngôn ngữ backend | **PHP Core (không framework)** | PHP 8.1+ |
-| Database | **MySQL 8.0+**, engine **InnoDB bắt buộc** | InnoDB hỗ trợ transaction + row lock, MyISAM **không được dùng** |
-| Kiến trúc | **MVC (Model – View – Controller)** | Tự viết Router + Core |
-| Frontend | **HTML5, CSS3, JavaScript, Bootstrap 5** | Server-side render |
-| Quản lý phụ thuộc | **Composer** | PHPMailer, PHPUnit, PHPStan qua Composer |
-| Testing | **PHPUnit** | Test Model/business rules |
-| Static analysis | **PHPStan (level ≥ 5)** | Bắt lỗi type, null-safety trước khi chạy |
-| CI | **GitHub Actions** (hoặc GitLab CI) | Chạy lint + PHPStan + PHPUnit tự động trên mọi PR |
-| Migration | **Custom migration script** (`database/migrations/`, đánh số thứ tự) | Không dùng 1 file `schema.sql` tĩnh duy nhất |
-| Local env | **Docker Compose** (khuyến nghị) | Cố định PHP + MySQL version giữa 3 máy |
+| Layer             | Công nghệ                                                            | Ghi chú                                                          |
+| ----------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Ngôn ngữ backend  | **PHP Core (không framework)**                                       | PHP 8.1+                                                         |
+| Database          | **MySQL 8.0+**, engine **InnoDB bắt buộc**                           | InnoDB hỗ trợ transaction + row lock, MyISAM **không được dùng** |
+| Kiến trúc         | **MVC (Model – View – Controller)**                                  | Tự viết Router + Core                                            |
+| Frontend          | **HTML5, CSS3, JavaScript, Bootstrap 5**                             | Server-side render                                               |
+| Quản lý phụ thuộc | **Composer**                                                         | PHPMailer, PHPUnit, PHPStan qua Composer                         |
+| Testing           | **PHPUnit**                                                          | Test Model/business rules                                        |
+| Static analysis   | **PHPStan (level ≥ 5)**                                              | Bắt lỗi type, null-safety trước khi chạy                         |
+| CI                | **GitHub Actions** (hoặc GitLab CI)                                  | Chạy lint + PHPStan + PHPUnit tự động trên mọi PR                |
+| Migration         | **Custom migration script** (`database/migrations/`, đánh số thứ tự) | Không dùng 1 file `schema.sql` tĩnh duy nhất                     |
+| Local env         | **Docker Compose** (khuyến nghị)                                     | Cố định PHP + MySQL version giữa 3 máy                           |
 
 ---
 
@@ -244,6 +244,7 @@ abstract class AdminController extends BaseController
 ## 6. Git Workflow
 
 ### 6.1 Branch Strategy
+
 ```
 main       ← luôn chạy được, chỉ merge từ develop khi release, bảo vệ bằng branch protection
 develop    ← nhánh tích hợp chung
@@ -253,11 +254,13 @@ develop    ← nhánh tích hợp chung
 ```
 
 ### 6.2 Commit Message
+
 Format: `<type>(<module>): <mô tả ngắn>` — types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
 
 ### 6.3 Pull Request — bắt buộc qua CI trước khi review thủ công
 
 Branch `develop` và `main` bật **branch protection**: không cho merge nếu:
+
 - [ ] CI (lint + PHPStan + PHPUnit) chưa pass
 - [ ] Chưa có ít nhất 1 reviewer khác approve (không tự merge PR của chính mình)
 - [ ] PR chưa điền template (mục 6.4)
@@ -266,9 +269,13 @@ Branch `develop` và `main` bật **branch protection**: không cho merge nếu:
 
 ```markdown
 ## Thay đổi gì
+
 ## Tại sao
+
 ## Đã test thế nào (liệt kê case cụ thể)
+
 ## Checklist bảo mật (tick trước khi xin review)
+
 - [ ] Mọi SQL dùng prepared statement
 - [ ] Mọi output HTML qua htmlspecialchars()
 - [ ] Không có transaction thiếu rollback ở thao tác nhiều bước
@@ -294,11 +301,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: "8.1"
       - run: composer install
       - run: vendor/bin/php-cs-fixer fix --dry-run --diff
       - run: vendor/bin/phpstan analyse --level=5 app/
-      - run: php database/migrate.php   # chạy migration lên DB test
+      - run: php database/migrate.php # chạy migration lên DB test
       - run: vendor/bin/phpunit
 ```
 
@@ -323,6 +330,7 @@ database/migrations/
 ```
 
 Quy tắc:
+
 - `migrate.php` lưu danh sách migration đã chạy vào bảng `migrations` (tên file + timestamp), chỉ chạy các file chưa có trong bảng đó
 - **Không bao giờ sửa nội dung 1 file migration đã merge vào `develop`** — nếu sai, tạo migration mới để sửa (VD: `008_fix_products_price_column.sql`)
 - Mỗi PR đổi schema → migration mới nằm trong cùng PR, review cùng lúc với code dùng nó
@@ -368,25 +376,30 @@ class ProductController
 ## 10. Business Rules bắt buộc (theo SRS mục 3.2.3)
 
 ### USERS
+
 - Email duy nhất, mật khẩu tối thiểu 6 ký tự
 - Chỉ 2 vai trò: Admin, Customer
 - Tài khoản `status = locked` không được đăng nhập
 
 ### CATEGORIES / BRANDS
+
 - Tên không trống, tên thương hiệu duy nhất
 - Không xóa nếu còn sản phẩm thuộc về nó (check ở Model trước `DELETE`)
 
 ### PRODUCTS
+
 - Mã sản phẩm duy nhất; giá bán > 0; giá khuyến mãi ≤ giá bán
 - Tồn kho không âm (đảm bảo bằng UPDATE có điều kiện — mục 3.2)
 - Thuộc đúng 1 danh mục và 1 thương hiệu
 
 ### ORDERS
+
 - Thuộc 1 khách hàng, có ít nhất 1 sản phẩm
 - Tổng tiền = tổng chi tiết − giảm giá
 - Trạng thái chỉ chuyển: `Pending → Confirmed → Completed` hoặc `Pending → Cancelled` — validate transition trong Model, throw `InvalidOrderTransitionException` nếu sai luồng
 
 ### ORDER_DETAILS
+
 - Số lượng > 0; đơn giá lưu tại thời điểm đặt hàng, không đổi theo giá sau này
 - `Subtotal = Quantity × Price`
 
@@ -409,12 +422,12 @@ class ProductController
 - Ngôn ngữ: Tiếng Việt
 - Trạng thái đơn hàng:
 
-| Trạng thái | Màu | Label |
-|---|---|---|
-| Pending | `bg-secondary` | Chờ xử lý |
-| Confirmed | `bg-info` | Đã xác nhận |
-| Completed | `bg-success` | Hoàn thành |
-| Cancelled | `bg-danger` | Đã hủy |
+| Trạng thái | Màu            | Label       |
+| ---------- | -------------- | ----------- |
+| Pending    | `bg-secondary` | Chờ xử lý   |
+| Confirmed  | `bg-info`      | Đã xác nhận |
+| Completed  | `bg-success`   | Hoàn thành  |
+| Cancelled  | `bg-danger`    | Đã hủy      |
 
 - Responsive bằng grid Bootstrap, test tối thiểu mobile + desktop
 - Form: validate HTML5 phía client **và** validate lại phía server (không tin client)
@@ -439,17 +452,18 @@ class ProductController
 > Khai báo role ở đầu cuộc hội thoại / system prompt. Mỗi cuộc hội thoại dùng **1 role chính**, tránh loãng focus.
 > **Lưu ý:** role chỉ là công cụ hỗ trợ tư duy, **không thay thế CI/PR checklist** ở mục 6.4 và 6.5 — checklist bảo mật vẫn phải tick thật trong PR dù đã "hỏi" Security Reviewer.
 
-| Role | Mô tả | Ai dùng |
-|---|---|---|
-| 🏗️ PHP Architect | Thiết kế kiến trúc, migration, dependency injection | Minh |
+| Role                 | Mô tả                                                           | Ai dùng                                      |
+| -------------------- | --------------------------------------------------------------- | -------------------------------------------- |
+| 🏗️ PHP Architect     | Thiết kế kiến trúc, migration, dependency injection             | Minh                                         |
 | 🔒 Security Reviewer | Rà bảo mật: SQL injection, XSS, upload, session, race condition | Chạy bổ sung sau mỗi feature, bất kể ai code |
-| 🛒 Feature Developer | Code Model/Controller/View đúng business rule | Hưng, Thảo |
-| 🧪 QA Engineer | Viết test, nghĩ edge case, test transaction/race condition | Thảo |
-| 🎨 UI Developer | View/Bootstrap/JS, responsive, escape XSS | Hưng |
+| 🛒 Feature Developer | Code Model/Controller/View đúng business rule                   | Hưng, Thảo                                   |
+| 🧪 QA Engineer       | Viết test, nghĩ edge case, test transaction/race condition      | Thảo                                         |
+| 🎨 UI Developer      | View/Bootstrap/JS, responsive, escape XSS                       | Hưng                                         |
 
 > Đã bỏ role "Code Reviewer" riêng (trùng việc với PR checklist ở mục 6.4) — review PR dùng checklist cố định thay vì role mơ hồ, tránh tình trạng "tưởng người khác check rồi".
 
 ### 🏗️ PHP Architect
+
 - Ưu tiên dependency injection, tách interface trước khi code
 - Thiết kế migration mới khi đổi schema, không sửa migration cũ
 - Đảm bảo thêm module mới sửa càng ít file càng tốt
@@ -460,7 +474,9 @@ migration riêng, và cách trừ tồn kho an toàn với race condition."
 ```
 
 ### 🔒 Security Reviewer
+
 Checklist bắt buộc quét:
+
 - [ ] SQL: 100% prepared statement
 - [ ] Output HTML: 100% qua htmlspecialchars()
 - [ ] Mật khẩu: password_hash/verify
@@ -476,22 +492,26 @@ Prompt mẫu: "Bạn là Security Reviewer. Review đoạn code sau theo checkli
 ```
 
 ### 🛒 Feature Developer
+
 - Đọc business rule mục 10 trước khi viết code
 - Validate ở Controller + Model (defense in depth)
 - Thao tác nhiều bước → bọc transaction (mục 3)
 - PHPDoc đầy đủ, comment nghiệp vụ bằng tiếng Việt
 
 ### 🧪 QA Engineer
+
 - Test happy path + boundary + error cho mọi Model có business rule
 - **Bắt buộc** có test giả lập lỗi giữa transaction (assert rollback đúng)
 - **Bắt buộc** có test race condition cho trừ tồn kho
 
 ### 🎨 UI Developer
+
 - Ưu tiên component Bootstrap có sẵn
 - htmlspecialchars() cho mọi output, validate HTML5 + server-side
 - Responsive test mobile + desktop
 
 ### Quy tắc dùng role
+
 1. Không trộn nhiều role trong 1 cuộc hội thoại
 2. `Security Reviewer` chạy bổ sung sau mỗi feature — không thay thế PR checklist ở mục 6.4
 3. Mặc định dùng `Feature Developer` khi không chắc chọn role nào
@@ -504,6 +524,7 @@ Prompt mẫu: "Bạn là Security Reviewer. Review đoạn code sau theo checkli
 Nhằm tối ưu hóa việc phân công nhiệm vụ và đồng bộ thông tin trong nhóm (Minh, Hưng, Thảo), chúng ta áp dụng mô hình quản lý công việc lưu trữ dưới dạng File (Doc-as-Task) ngay trên repository này.
 
 ### Cấu trúc lưu trữ
+
 - `docs/templates/task_template.md`: Template chuẩn quy định những thông tin cần có của một task.
 - `docs/tasks/`: Thư mục chứa các file đặc tả nhiệm vụ (Task Spec). VD: `TASK-001-login.md`.
 

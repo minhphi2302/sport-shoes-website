@@ -31,9 +31,13 @@ class Router
         $path = parse_url($uri, PHP_URL_PATH);
 
         // Cắt bỏ phần subfolder nếu có (VD: /sport-shoes-website/public)
-        $scriptName = dirname($_SERVER['SCRIPT_NAME']);
+        $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+        $baseDir = preg_replace('#/public/?$#', '', $scriptName);
+
         if ($scriptName !== '/' && str_starts_with($path, $scriptName)) {
             $path = substr($path, strlen($scriptName));
+        } elseif ($baseDir !== '' && $baseDir !== '/' && str_starts_with($path, $baseDir)) {
+            $path = substr($path, strlen($baseDir));
         }
 
         if ($path === '' || $path === false) {
