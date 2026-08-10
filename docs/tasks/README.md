@@ -24,14 +24,14 @@ TASK-001, 002 → TASK-008 (Dashboard)     → Thảo
 
 | Task | Tên | Người phụ trách | Phụ thuộc | Ưu tiên | Trạng thái |
 |---|---|---|---|---|---|
-| [TASK-001](./TASK-001-database-schema-migration.md) | Database Schema & Migration | Minh | — | 🔴 CRITICAL | To Do |
-| [TASK-002](./TASK-002-authentication.md) | Đăng ký / Đăng nhập / Auth | Minh | 001 | 🔴 HIGH | To Do |
-| [TASK-003](./TASK-003-product-listing-ui.md) | Trang chủ & Danh sách sản phẩm | Hưng | 001 | 🟡 HIGH | To Do |
-| [TASK-004](./TASK-004-cart.md) | Giỏ hàng | Hưng | 001, 003 | 🟡 HIGH | To Do |
-| [TASK-005](./TASK-005-checkout-order.md) | Đặt hàng / Checkout | Hưng | 002, 004 | 🟡 MEDIUM | To Do |
-| [TASK-006](./TASK-006-order-management.md) | Lịch sử & Quản lý đơn hàng | Thảo | 002, 005 | 🟢 MEDIUM | To Do |
-| [TASK-007](./TASK-007-admin-product-management.md) | Admin CRUD Sản phẩm/Danh mục/Thương hiệu | Minh | 001, 002 | 🟡 HIGH | To Do |
-| [TASK-008](./TASK-008-dashboard-customer-mgmt.md) | Dashboard & Quản lý khách hàng | Thảo | 001, 002 | 🟢 LOW | To Do |
+| [TASK-001](./TASK-001-database-schema-migration.md) | Database Schema & Migration | Minh | — | 🔴 CRITICAL | Done |
+| [TASK-002](./TASK-002-authentication.md) | Đăng ký / Đăng nhập / Auth | Minh | 001 | 🔴 HIGH | Done |
+| [TASK-003](./TASK-003-product-listing-ui.md) | Trang chủ & Danh sách sản phẩm | Hưng | 001 | 🟡 HIGH | Done |
+| [TASK-004](./TASK-004-cart.md) | Giỏ hàng | Hưng | 001, 003 | 🟡 HIGH | Done |
+| [TASK-005](./TASK-005-checkout-order.md) | Đặt hàng / Checkout | Hưng | 002, 004 | 🟡 MEDIUM | Done |
+| [TASK-006](./TASK-006-order-management.md) | Lịch sử & Quản lý đơn hàng | Thảo | 002, 005 | 🟢 MEDIUM | Done |
+| [TASK-007](./TASK-007-admin-product-management.md) | Admin CRUD Sản phẩm/Danh mục/Thương hiệu | Minh | 001, 002 | 🟡 HIGH | Done |
+| [TASK-008](./TASK-008-dashboard-customer-mgmt.md) | Dashboard & Quản lý khách hàng | Thảo | 001, 002 | 🟢 LOW | Done |
 
 ---
 

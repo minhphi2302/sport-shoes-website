@@ -15,7 +15,7 @@ abstract class Controller
         // Giải nén mảng data thành các biến riêng lẻ
         extract($data);
         
-        $viewPath = __DIR__ . '/../Views/' . $view . '.php';
+        $viewPath = __DIR__ . '/../../views/' . $view . '.php';
         
         if (file_exists($viewPath)) {
             require $viewPath;
@@ -40,7 +40,17 @@ abstract class Controller
      */
     protected function redirect(string $url): void
     {
-        header("Location: " . ($_ENV['APP_URL'] ?? '') . $url);
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            header("Location: " . $url);
+            exit;
+        }
+
+        $baseUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
+        if (!str_starts_with($url, '/')) {
+            $url = '/' . $url;
+        }
+
+        header("Location: " . $baseUrl . $url);
         exit;
     }
 }
