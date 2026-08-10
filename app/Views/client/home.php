@@ -174,19 +174,19 @@ require __DIR__ . '/layouts/header.php';
                                         <?php 
                                             $discountPercent = round((($product['price'] - $product['sale_price']) / $product['price']) * 100); 
                                         ?>
-                                        <div class="badge-ribbon badge-ribbon-red">-<?= $discountPercent ?>%</div>
+                                        <div class="badge-ribbon badge-ribbon-red"><small>-</small><?= $discountPercent ?>%</div>
                                         <?php 
                                             $fallbackImg = 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif';
                                             $imgSrc = !empty($product['image_url']) ? $product['image_url'] : $fallbackImg;
                                         ?>
                                         <div class="position-relative">
-                                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="text-decoration-none">
+                                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="text-decoration-none d-block">
                                                 <div style="background-color: #f8f9fa;" class="text-center p-2">
                                                     <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" class="img-fluid" style="height: 190px; object-fit: contain; width: 100%;" alt="<?= htmlspecialchars($product['name']) ?>">
                                                 </div>
                                             </a>
-                                            <div class="product-actions-overlay">
-                                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="btn-action-icon" title="Xem chi tiết"><i class="fa-solid fa-magnifying-glass"></i></a>
+                                            <div class="product-center-action">
+                                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết"><i class="fa-solid fa-magnifying-glass"></i></a>
                                             </div>
                                             <?php if (($product['quantity'] ?? 50) > 0): ?>
                                             <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-cart-hover position-absolute" style="bottom: 10px; right: 10px;" title="Thêm vào giỏ">
@@ -268,16 +268,17 @@ require __DIR__ . '/layouts/header.php';
     <div class="container">
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4">
             <h2 class="section-title mb-3 mb-lg-0 text-uppercase fw-bold" style="font-size: 1.5rem;">GIÀY SNEAKER</h2>
-            <div class="d-flex flex-wrap gap-2">
+            <div class="d-flex flex-wrap gap-2" id="home-brand-filters">
                 <?php if (!empty($brands)): ?>
                     <?php foreach ($brands as $b): ?>
-                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products?brand_id=<?= $b['brand_id'] ?>" class="btn btn-brand-filter bg-transparent border btn-sm px-3 py-2 text-dark fw-semibold text-uppercase" style="font-size: 0.85rem;">GIÀY <?= htmlspecialchars($b['name']) ?></a>
+                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products?brand_id=<?= $b['brand_id'] ?>" class="btn btn-brand-filter bg-transparent border btn-sm px-3 py-2 text-dark fw-semibold text-uppercase" style="font-size: 0.85rem;" data-brand-id="<?= $b['brand_id'] ?>">GIÀY <?= htmlspecialchars($b['name']) ?></a>
                     <?php endforeach; ?>
                 <?php endif; ?>
-                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-brand-filter bg-transparent border btn-sm px-3 py-2 text-dark fw-semibold text-uppercase" style="font-size: 0.85rem;">GIÀY CHÍNH HÃNG KHÁC</a>
+                <a href="#" class="btn btn-brand-filter bg-transparent border btn-sm px-3 py-2 text-dark fw-semibold text-uppercase active" style="font-size: 0.85rem;" data-brand-id="">TẤT CẢ</a>
             </div>
         </div>
 
+        <div id="home-product-container">
         <div class="row g-4">
             <?php if (!empty($featuredProducts)): ?>
                 <?php foreach ($featuredProducts as $product): ?>
@@ -295,7 +296,7 @@ require __DIR__ . '/layouts/header.php';
                                     <?php 
                                         $discountPercent = round((($product['price'] - $product['sale_price']) / $product['price']) * 100); 
                                     ?>
-                                    <div class="badge-ribbon badge-ribbon-red" <?= $isNew ? 'style="left: 52px;"' : '' ?>>-<?= $discountPercent ?>%</div>
+                                    <div class="badge-ribbon badge-ribbon-red" <?= $isNew ? 'style="left: 43px;"' : '' ?>><small>-</small><?= $discountPercent ?>%</div>
                                 <?php endif; ?>
 
                                 <?php 
@@ -305,8 +306,8 @@ require __DIR__ . '/layouts/header.php';
                                 <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>">
                                     <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                                 </a>
-                                <div class="product-actions-overlay">
-                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="btn-action-icon" title="Xem chi tiết"><i class="fa-solid fa-magnifying-glass"></i></a>
+                                <div class="product-center-action">
+                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết"><i class="fa-solid fa-magnifying-glass"></i></a>
                                 </div>
                                 <?php if (($product['quantity'] ?? 50) > 0): ?>
                                     <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-cart-hover" title="Thêm vào giỏ">
@@ -367,11 +368,14 @@ require __DIR__ . '/layouts/header.php';
                 foreach ($demoProducts as $dp): ?>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="product-card">
-                            <?php if ($dp['sale']): ?>
-                                <span class="product-badge-sale">SALE</span>
-                            <?php endif; ?>
                             <div class="product-img-wrapper">
-                                <img src="<?= $dp['img'] ?>" alt="<?= $dp['name'] ?>">
+                                <?php if ($dp['sale']): ?>
+                                    <div class="badge-ribbon badge-ribbon-red">SALE</div>
+                                <?php endif; ?>
+                                
+                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $dp['id'] ?>" class="d-block position-absolute w-100 h-100" style="top:0; left:0; z-index: 5;">
+                                    <img src="<?= $dp['img'] ?>" alt="<?= $dp['name'] ?>">
+                                </a>
                                 <div class="product-actions-overlay">
                                     <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $dp['id'] ?>" class="btn-action-icon" title="Xem chi tiết"><i class="fa-solid fa-magnifying-glass"></i></a>
                                 </div>
@@ -423,7 +427,8 @@ require __DIR__ . '/layouts/header.php';
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
-    </div>
+        </div>
+        </div>
 </section>
 
 <!-- 5. BANNER KHUYẾN MÃI LARGE -->
@@ -446,48 +451,69 @@ require __DIR__ . '/layouts/header.php';
 </section>
 
 <!-- 6. GIỚI THIỆU CỬA HÀNG & ĐÁNH GIÁ KHÁCH HÀNG -->
-<section class="py-5">
-    <div class="container">
-        <div class="row g-5 align-items-center">
-            <div class="col-lg-6">
-                <h2 class="section-title">Về Sport Shoes Store</h2>
-                <p class="lead">Hệ thống phân phối giày thể thao chính hãng cao cấp hàng đầu.</p>
-                <p class="text-secondary">
-                    Chúng tôi mang đến những sản phẩm thể thao chất lượng đỉnh cao đến từ các thương hiệu hàng đầu thế giới như Nike, Adidas, Puma, Converse, New Balance. Cam kết mang đến trải nghiệm êm ái, nâng tầm phong cách sống năng động cho bạn.
+<section class="py-5" style="background-color: #fff; color: #333;">
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-9 text-center">
+                <h3 class="fw-bold mb-4 text-uppercase text-dark" style="font-size: 1.8rem; line-height: 1.4;">
+                     ANTA STORE – HIỆU NĂNG, PHONG CÁCH & ĐỔI MỚI
+                </h3>
+                
+                <p class="mb-4 text-secondary" style="line-height: 1.8; font-size: 1.05rem; text-align: justify;">
+                    Khám phá những đôi giày thể thao hiệu năng cao, ứng dụng công nghệ tiên tiến nhất để bạn chinh phục mọi giới hạn. Dù bạn là người đam mê chạy bộ, yêu thích bóng rổ hay đơn giản là theo đuổi lối sống năng động, ANTA Store luôn là điểm đến lý tưởng. Chúng tôi đồng hành để bạn tập luyện bền bỉ hơn, di chuyển linh hoạt hơn với những sản phẩm luôn theo kịp từng bước chân của bạn.
                 </p>
-                <div class="row g-3 mt-3">
-                    <div class="col-6">
-                        <div class="p-3 bg-light rounded text-center border">
-                            <h3 class="fw-bold text-red mb-0">10,000+</h3>
-                            <small class="text-muted">Khách hàng tin dùng</small>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="p-3 bg-light rounded text-center border">
-                            <h3 class="fw-bold text-red mb-0">100%</h3>
-                            <small class="text-muted">Chính hãng 100%</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Customer Reviews -->
-            <div class="col-lg-6">
-                <h2 class="section-title">Đánh giá từ khách hàng</h2>
-                <div class="card border-0 bg-light p-4 rounded-4 shadow-sm mb-3">
-                    <div class="d-flex align-items-center mb-3">
-                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" class="rounded-circle me-3" width="50" height="50" alt="Avatar">
-                        <div>
-                            <h6 class="fw-bold mb-0">Nguyễn Văn Anh</h6>
-                            <small class="text-warning"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></small>
-                        </div>
-                    </div>
-                    <p class="card-text text-secondary fst-italic">"Giày Nike Air Zoom đi cực kỳ êm chân, giao hàng thần tốc chỉ 1 ngày tại Hà Nội. Đóng gói cẩn thận 2 lớp hộp rất chu đáo!"</p>
+                
+                <p class="mb-5 text-secondary" style="line-height: 1.8; font-size: 1.05rem; text-align: justify;">
+                    Cửa hàng giày thể thao ANTA không chỉ là nơi mua sắm, mà còn là không gian để bạn nâng tầm phong cách và bứt phá giới hạn bản thân. Mỗi đôi giày đều được chế tác tỉ mỉ, chú trọng tuyệt đối vào độ êm ái, độ bền và chi tiết thiết kế. Dù bạn chơi môn thể thao nào, ANTA luôn sẵn sàng đồng hành – giúp bạn tự tin tỏa sáng và từng bước vươn tới đỉnh cao.
+                </p>
+                
+                <div class="mt-4">
+                    <img src="<?= base_url('image/logo.webp') ?>" alt="ANTA Logo" style="height: 45px; object-fit: contain;">
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const brandFilters = document.querySelectorAll('#home-brand-filters .btn-brand-filter');
+    const productContainer = document.getElementById('home-product-container');
+    
+    if (brandFilters.length > 0 && productContainer) {
+        brandFilters.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Active state
+                brandFilters.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const brandId = this.getAttribute('data-brand-id');
+                const baseUrl = '<?= ($_ENV['APP_URL'] ?? '') ?>';
+                const url = brandId ? `${baseUrl}/products?brand_id=${brandId}&home=1` : `${baseUrl}/products?home=1`;
+                
+                // Fetch new products
+                productContainer.style.opacity = '0.5';
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.text())
+                .then(html => {
+                    productContainer.innerHTML = html;
+                    productContainer.style.opacity = '1';
+                })
+                .catch(err => {
+                    console.error('Error fetching products:', err);
+                    productContainer.style.opacity = '1';
+                });
+            });
+        });
+    }
+});
+</script>
 
 <?php
 require __DIR__ . '/layouts/footer.php';
