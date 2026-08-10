@@ -83,6 +83,11 @@ $baseUrl = $_ENV['APP_URL'] ?? '';
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin/attributes') !== false ? 'active' : '' ?>" href="<?= htmlspecialchars($baseUrl) ?>/admin/attributes">
+                            <i class="bi bi-ui-checks-grid me-2"></i> Quản lý thuộc tính (Size/Màu)
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin/customers') !== false ? 'active' : '' ?>" href="<?= htmlspecialchars($baseUrl) ?>/admin/customers">
                             <i class="bi bi-people me-2"></i> Quản lý khách hàng
                         </a>

@@ -90,7 +90,17 @@
                             }
                             $uniqueModels = array_keys($uniqueModels);
                             $uniqueColors = array_keys($uniqueColors);
-                            $allSizes = ['28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','43','44','45'];
+                            $allSizes = [];
+                            $dynamicSizeMapping = ['Nam' => [], 'Nữ' => [], 'Trẻ em' => []];
+                            if (isset($sizes)) {
+                                foreach ($sizes as $sz) {
+                                    $allSizes[] = $sz['name'];
+                                    if (isset($dynamicSizeMapping[$sz['gender']])) {
+                                        $dynamicSizeMapping[$sz['gender']][] = $sz['name'];
+                                    }
+                                }
+                                $allSizes = array_unique($allSizes);
+                            }
                         ?>
                         <?php if (isset($variants) && !empty($variants)): ?>
                             <div class="mb-3">
@@ -186,11 +196,7 @@ var selectedState = {
 
 function updateSizeButtons() {
     var gender = selectedState.gender;
-    var sizeMapping = {
-        'Nam': ['39','40','41','42','43','44','45'],
-        'Nữ': ['35','36','37','38','39'],
-        'Trẻ em': ['28','29','30','31','32','33','34']
-    };
+    var sizeMapping = <?= json_encode($dynamicSizeMapping ?? ['Nam' => [], 'Nữ' => [], 'Trẻ em' => []]) ?>;
     var validSizes = sizeMapping[gender] || [];
     
     document.querySelectorAll('.opt-size').forEach(function(b) {

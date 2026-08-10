@@ -1,4 +1,16 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Tự động in hoa tất cả các ô nhập mã SKU
+    document.addEventListener('input', function(e) {
+        if (e.target.matches('input[name="sku"], input[name="variant_skus[]"]')) {
+            const start = e.target.selectionStart;
+            const end = e.target.selectionEnd;
+            e.target.value = e.target.value.toUpperCase();
+            if (start !== null && end !== null) {
+                e.target.setSelectionRange(start, end);
+            }
+        }
+    });
+
     // 1. Form Validation cho cả trang Thêm và Sửa Sản Phẩm
     const productForm = document.getElementById('product-form');
     if (productForm) {
@@ -28,9 +40,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const sku = document.querySelector('input[name="sku"]');
-            if (isValid && sku.value.trim().length === 0) {
+            if (sku) sku.value = sku.value.trim().toUpperCase();
+            if (isValid && sku && sku.value.length === 0) {
                 showError(sku, 'Vui lòng không để trống mã SKU.');
-            } else if (isValid && sku.value.trim().length > 50) {
+            } else if (isValid && sku && sku.value.length > 50) {
                 showError(sku, 'Mã SKU không được vượt quá 50 ký tự.');
             }
 
@@ -74,16 +87,54 @@ document.addEventListener('DOMContentLoaded', function() {
             if (variantGlobalError) variantGlobalError.style.display = 'none';
 
             if (isValid && variantRows.length === 0) {
-                if (variantGlobalError) {
-                    variantGlobalError.innerText = 'Vui lòng tạo ít nhất 1 biến thể sản phẩm (Mẫu, Size, Màu sắc).';
+                const msg = 'Vui lòng tạo ít nhất 1 biến thể sản phẩm (Mẫu, Size, Màu sắc).';
+                if (typeof window.showMatrixNotice === 'function') {
+                    window.showMatrixNotice(msg);
+                } else if (variantGlobalError) {
+                    variantGlobalError.innerText = msg;
                     variantGlobalError.style.display = 'block';
                 }
                 isValid = false;
                 firstInvalid = document.getElementById('variants-table');
             }
 
+            const basePriceInput = document.querySelector('input[name="price"]');
+            const basePriceVal = basePriceInput ? Number(basePriceInput.value) : 0;
+            
+            const seenVariants = new Set();
+
             variantRows.forEach(row => {
                 if (!isValid) return; // Chỉ báo lỗi đầu tiên
+                
+                // Validate duplicate variants
+                const vModelInput = row.querySelector('input[name="variant_models[]"]');
+                const vGenderInput = row.querySelector('select[name="variant_genders[]"]');
+                const vRawSizeInput = row.querySelector('input[name="variant_raw_sizes[]"]');
+                const vColorInput = row.querySelector('input[name="variant_colors[]"]');
+                
+                const vModel = vModelInput ? vModelInput.value.trim() : 'Mặc định';
+                const vGender = vGenderInput ? vGenderInput.value.trim() : '';
+                const vRawSize = vRawSizeInput ? vRawSizeInput.value.trim() : '';
+                const vColor = vColorInput ? vColorInput.value.trim() : '';
+                
+                const uniqueKey = `${vModel.toLowerCase()}-${vGender.toLowerCase()}-${vRawSize.toLowerCase()}-${vColor.toLowerCase()}`;
+                
+                if (seenVariants.has(uniqueKey)) {
+                    const msg = `Lỗi: Có biến thể bị trùng lặp (Mẫu: ${vModel}, Đối tượng: ${vGender}, Size: ${vRawSize}, Màu: ${vColor}). Không thể lưu!`;
+                    if (typeof window.showMatrixNotice === 'function') {
+                        window.showMatrixNotice(msg);
+                    } else if (variantGlobalError) {
+                        variantGlobalError.innerText = msg;
+                        variantGlobalError.style.display = 'block';
+                    }
+                    isValid = false;
+                    firstInvalid = vModelInput;
+                    row.style.transition = "background-color 0.5s";
+                    row.style.backgroundColor = "#f8d7da"; // highlight red
+                    setTimeout(() => { row.style.backgroundColor = ""; }, 3000);
+                    return;
+                }
+                seenVariants.add(uniqueKey);
                 
                 const vSku = row.querySelector('input[name="variant_skus[]"]');
                 const vPrice = row.querySelector('input[name="variant_prices[]"]');
@@ -91,8 +142,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (vSku && vSku.value.trim().length === 0) {
                     showError(vSku, 'Thiếu SKU');
-                } else if (vPrice && (vPrice.value.trim() === '' || Number(vPrice.value) < 0)) {
-                    showError(vPrice, 'Sai giá');
+                } else if (vPrice && (vPrice.value.trim() === '' || Number(vPrice.value) <= 0)) {
+                    showError(vPrice, 'Giá phải > 0');
                 } else if (vQty && (vQty.value.trim() === '' || Number(vQty.value) < 0 || !Number.isInteger(Number(vQty.value)))) {
                     showError(vQty, 'Sai SL');
                 }
@@ -133,5 +184,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         window.updateTotalQuantity();
+    }
+
+    // 3. Logic Xóa tất cả biến thể
+    const btnClearAll = document.getElementById('btn-clear-all-variants');
+    if (btnClearAll) {
+        btnClearAll.addEventListener('click', function() {
+            const tbody = document.querySelector('#variants-table tbody');
+            if (!tbody || tbody.querySelectorAll('tr').length === 0) {
+                if (typeof window.showMatrixNotice === 'function') {
+                    window.showMatrixNotice('Danh sách biến thể đang trống!');
+                }
+                return;
+            }
+            if (confirm('Bạn có chắc chắn muốn xóa toàn bộ biến thể có trong danh sách?')) {
+                tbody.innerHTML = '';
+                if (typeof window.hideMatrixNotice === 'function') {
+                    window.hideMatrixNotice();
+                }
+                if (typeof window.updateTotalQuantity === 'function') {
+                    window.updateTotalQuantity();
+                }
+            }
+        });
     }
 });

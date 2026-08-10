@@ -4,6 +4,13 @@
     
     <div class="card bg-light border-0 mb-3">
         <div class="card-body">
+            <!-- KHU VỰC HIỂN THỊ THÔNG BÁO / LỖI TRÊN CÁC Ô NHẬP VALUE -->
+            <div id="matrix-error-alert" class="alert alert-danger alert-dismissible fade show mb-3" style="display: none;">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span id="matrix-error-text" class="fw-bold"></span>
+                <button type="button" class="btn-close" onclick="document.getElementById('matrix-error-alert').style.display='none'"></button>
+            </div>
+
             <!-- 1. Nhập các Mẫu -->
             <div class="mb-3">
                 <label class="form-label fw-semibold">1. Mẫu giày (Tùy chọn) và Giá cộng thêm (VND)</label>
@@ -104,6 +111,22 @@
     </div>
 </div>
 <script>
+window.showMatrixNotice = function(msg, type = 'danger') {
+    const alertBox = document.getElementById('matrix-error-alert');
+    const textSpan = document.getElementById('matrix-error-text');
+    if (alertBox && textSpan) {
+        textSpan.innerText = msg;
+        alertBox.className = `alert alert-${type} alert-dismissible fade show mb-3`;
+        alertBox.style.display = 'block';
+        alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+};
+
+window.hideMatrixNotice = function() {
+    const alertBox = document.getElementById('matrix-error-alert');
+    if (alertBox) alertBox.style.display = 'none';
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const basePriceInput = document.getElementById('base_price');
 
@@ -142,9 +165,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnGenerate = document.getElementById('btn-generate-matrix');
     if (btnGenerate) {
         btnGenerate.addEventListener('click', function() {
+            window.hideMatrixNotice();
             const commonQty = document.getElementById('common_qty').value.trim();
             if (commonQty === '') {
-                alert('Vui lòng nhập Số lượng ở Bước 4 trước khi thêm!');
+                window.showMatrixNotice('Vui lòng nhập Số lượng ở Bước 4 trước khi thêm!');
                 document.getElementById('common_qty').focus();
                 return;
             }
@@ -153,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const skuCha = (skuInput ? skuInput.value.trim() : '') || 'SKU';
             const basePrice = basePriceInput ? (parseFloat(basePriceInput.value) || 0) : 0;
             if (isNaN(basePrice) || basePrice <= 0) {
-                alert('Vui lòng nhập Giá bán mặc định hợp lệ ở phần thông tin cơ bản trước khi tạo biến thể!');
+                window.showMatrixNotice('Vui lòng nhập Giá bán mặc định hợp lệ ở phần thông tin cơ bản trước khi tạo biến thể!');
                 if (basePriceInput) basePriceInput.focus();
                 return;
             }
@@ -174,12 +198,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Kiểm tra giá mẫu không được lớn hơn giá bán mặc định và không được âm
                     if (mPrice > basePrice) {
-                        alert('Lỗi: Giá của biến thể mẫu không được phép lớn hơn Giá bán mặc định!');
+                        window.showMatrixNotice('Lỗi: Giá của biến thể mẫu không được phép lớn hơn Giá bán mặc định!');
                         priceInput.focus();
                         hasError = true;
                         return;
                     } else if (mPrice < 0) {
-                        alert('Lỗi: Giá mẫu không được là số âm!');
+                        window.showMatrixNotice('Lỗi: Giá mẫu không được là số âm!');
                         priceInput.focus();
                         hasError = true;
                         return;
@@ -226,9 +250,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (hasError) return;
 
             if (selectedSizes.length === 0 || selectedColors.length === 0) {
-                alert('Vui lòng chọn ít nhất 1 Size và 1 Màu sắc!');
+                window.showMatrixNotice('Vui lòng chọn ít nhất 1 Size và 1 Màu sắc!');
                 return;
             }
+
+            let duplicateFound = false;
 
             // Sinh dữ liệu
             models.forEach(modelObj => {
@@ -247,13 +273,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         if (calculatedPrice <= 0) {
-                            alert(`Lỗi: Giá bán cuối cùng của biến thể (Mẫu: ${modelObj.name || 'Mặc định'}, Size: ${sizeObj.name}, Màu: ${colorObj.name}) phải lớn hơn 0. Vui lòng giảm bớt % giảm giá!`);
+                            window.showMatrixNotice(`Lỗi: Giá bán cuối cùng của biến thể (Mẫu: ${modelObj.name || 'Mặc định'}, Size: ${sizeObj.name}, Màu: ${colorObj.name}) phải lớn hơn 0. Vui lòng giảm bớt % giảm giá!`);
                             hasError = true;
                             return;
                         }
                         
                         const key = `${modelObj.name}-${sizeObj.name}-${colorObj.name}`;
-                        
+                        const genderPart = sizeObj.name.split(' - ')[0];
+                        const sizePart = sizeObj.name.split(' - ')[1] || sizeObj.name;
+                        const displayModel = modelObj.name ? modelObj.name : 'Mặc định';
+
                         // Rút gọn SKU nếu không có Mẫu
                         let variantSku = '';
                         if (modelObj.name) {
@@ -262,13 +291,39 @@ document.addEventListener('DOMContentLoaded', function() {
                             variantSku = `${skuCha}-${createSlug(colorObj.name)}-${createSlug(sizeObj.name)}`;
                         }
                         
-                        if (!document.querySelector(`tr[data-key="${key}"]`)) {
+                        // Kiểm tra xem biến thể đã tồn tại trong danh sách chưa
+                        let isDuplicate = false;
+                        const existingRows = document.querySelectorAll('#variants-table tbody tr');
+
+                        existingRows.forEach(row => {
+                            const rModelInput = row.querySelector('input[name="variant_models[]"]');
+                            const rGenderSelect = row.querySelector('select[name="variant_genders[]"]');
+                            const rSizeInput = row.querySelector('input[name="variant_raw_sizes[]"]');
+                            const rColorInput = row.querySelector('input[name="variant_colors[]"]');
+
+                            const rModel = rModelInput ? rModelInput.value.trim().toLowerCase() : 'mặc định';
+                            const rGender = rGenderSelect ? rGenderSelect.value.trim().toLowerCase() : '';
+                            const rSize = rSizeInput ? rSizeInput.value.trim().toLowerCase() : '';
+                            const rColor = rColorInput ? rColorInput.value.trim().toLowerCase() : '';
+
+                            const checkModel = displayModel.trim().toLowerCase();
+                            const checkGender = genderPart.trim().toLowerCase();
+                            const checkSize = sizePart.trim().toLowerCase();
+                            const checkColor = colorObj.name.trim().toLowerCase();
+
+                            if (rModel === checkModel && rGender === checkGender && rSize === checkSize && rColor === checkColor) {
+                                isDuplicate = true;
+                                row.style.transition = "background-color 0.5s";
+                                row.style.backgroundColor = "#f8d7da";
+                                setTimeout(() => { row.style.backgroundColor = ""; }, 3000);
+                            }
+                        });
+
+                        if (isDuplicate || document.querySelector(`tr[data-key="${key}"]`)) {
+                            duplicateFound = true;
+                        } else {
                             const tr = document.createElement('tr');
                             tr.setAttribute('data-key', key);
-                            
-                            const genderPart = sizeObj.name.split(' - ')[0];
-                            const sizePart = sizeObj.name.split(' - ')[1] || sizeObj.name;
-                            const displayModel = modelObj.name ? modelObj.name : 'Mặc định';
 
                             tr.innerHTML = `
                                 <td><input type="text" name="variant_skus[]" class="form-control form-control-sm" value="${variantSku}"></td>
@@ -294,6 +349,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (hasError) return;
+
+            if (duplicateFound) {
+                window.showMatrixNotice('Biến thể giày đã tồn tại!');
+            }
 
             // Bỏ chọn tất cả sau khi đã ném xuống bảng
             document.querySelectorAll('.chk-size:checked, .chk-color:checked').forEach(cb => cb.checked = false);

@@ -15,10 +15,20 @@
 
 <div class="card border-0 shadow-sm rounded-4">
     <div class="card-body p-4">
-        <form id="brand-form" action="" method="POST">
+        <form id="brand-form" action="" method="POST" enctype="multipart/form-data">
             <div class="mb-3 position-relative">
                 <label for="name" class="form-label fw-semibold">Tên thương hiệu</label>
                 <input type="text" class="form-control" id="name" name="name" value="<?= htmlspecialchars($brand['name'] ?? '') ?>">
+            </div>
+            
+            <div class="mb-3 position-relative">
+                <label for="image" class="form-label fw-semibold">Hình ảnh thương hiệu (Tùy chọn)</label>
+                <?php if (isset($brand) && !empty($brand['image_url'])): ?>
+                    <div class="mb-2">
+                        <img src="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/uploads/<?= htmlspecialchars($brand['image_url']) ?>" alt="Current image" class="img-thumbnail" style="max-height: 100px;">
+                    </div>
+                <?php endif; ?>
+                <input class="form-control" type="file" id="image" name="image" accept=".jpg,.jpeg,.png,.webp">
             </div>
             
             <div class="mb-4">

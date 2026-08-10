@@ -6,7 +6,7 @@ use App\Exceptions\ValidationException;
 
 class FileUploader
 {
-    public function uploadProductImage(array $file, string $uploadDir): string
+    public function uploadImage(array $file, string $uploadDir, string $prefix = 'img_'): string
     {
         if ($file['error'] !== UPLOAD_ERR_OK) {
             throw new ValidationException('image', 'Có lỗi khi upload file.');
@@ -29,7 +29,7 @@ class FileUploader
             'image/png'  => 'png',
             'image/webp' => 'webp',
         };
-        $newName = uniqid('product_', true) . '.' . $ext;
+        $newName = uniqid($prefix, true) . '.' . $ext;
         
         $destination = rtrim($uploadDir, '/') . '/' . $newName;
 

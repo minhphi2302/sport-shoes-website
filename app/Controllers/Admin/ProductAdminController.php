@@ -6,6 +6,8 @@ use App\Core\AdminController;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Brand;
+use App\Models\Size;
+use App\Models\Color;
 use App\Core\FileUploader;
 use App\Exceptions\ValidationException;
 
@@ -14,6 +16,8 @@ class ProductAdminController extends AdminController
     private Product $productModel;
     private Category $categoryModel;
     private Brand $brandModel;
+    private Size $sizeModel;
+    private Color $colorModel;
     private FileUploader $fileUploader;
 
     public function __construct()
@@ -22,13 +26,15 @@ class ProductAdminController extends AdminController
         $this->productModel = new Product();
         $this->categoryModel = new Category();
         $this->brandModel = new Brand();
+        $this->sizeModel = new Size();
+        $this->colorModel = new Color();
         $this->fileUploader = new FileUploader();
     }
 
     private function getProductDataFromRequest(): array
     {
         $data = [
-            'sku' => trim($_POST['sku'] ?? ''),
+            'sku' => mb_strtoupper(trim($_POST['sku'] ?? ''), 'UTF-8'),
             'name' => trim($_POST['name'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
             'category_id' => (int)($_POST['category_id'] ?? 0),
@@ -40,7 +46,7 @@ class ProductAdminController extends AdminController
 
         if (!empty($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
             $uploadDir = __DIR__ . '/../../../public/uploads/products';
-            $data['image_url'] = 'products/' . $this->fileUploader->uploadProductImage($_FILES['image'], $uploadDir);
+            $data['image_url'] = 'products/' . $this->fileUploader->uploadImage($_FILES['image'], $uploadDir, 'product_');
         }
 
         return $data;
@@ -147,10 +153,14 @@ class ProductAdminController extends AdminController
 
         $categories = $this->categoryModel->all();
         $brands = $this->brandModel->all();
+        $sizes = $this->sizeModel->all();
+        $colors = $this->colorModel->all();
 
         $this->view('admin/product_create', [
             'categories' => $categories,
-            'brands' => $brands
+            'brands' => $brands,
+            'sizes' => $sizes,
+            'colors' => $colors
         ]);
     }
 
@@ -208,11 +218,15 @@ class ProductAdminController extends AdminController
 
         $categories = $this->categoryModel->all();
         $brands = $this->brandModel->all();
+        $sizes = $this->sizeModel->all();
+        $colors = $this->colorModel->all();
 
         $this->view('admin/product_edit', [
             'product' => $product,
             'categories' => $categories,
             'brands' => $brands,
+            'sizes' => $sizes,
+            'colors' => $colors,
             'variants' => $this->productModel->getVariants($productId)
         ]);
     }

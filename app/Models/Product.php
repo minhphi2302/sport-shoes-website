@@ -120,14 +120,21 @@ class Product extends Model
         $sql = "INSERT INTO product_variants (product_id, sku, model, size, color, price, quantity) VALUES (:product_id, :sku, :model, :size, :color, :price, :quantity)";
         $stmt = $this->db->prepare($sql);
         
+        $product = $this->findById($productId);
+        $basePrice = $product ? (float)$product['price'] : 0;
+
         $totalQty = 0;
         for ($i = 0; $i < count($sizes); $i++) {
-            $sku = trim($skus[$i] ?? '');
+            $sku = mb_strtoupper(trim($skus[$i] ?? ''), 'UTF-8');
             $model = trim($models[$i] ?? 'Mặc định');
             $size = trim($sizes[$i]);
             $color = trim($colors[$i]);
             $price = isset($prices[$i]) && $prices[$i] !== '' ? (float)$prices[$i] : null;
             $qty = (int)$qtys[$i];
+            
+            if ($price !== null && $price > $basePrice) {
+                $price = $basePrice;
+            }
             
             if ($model !== '' && $size !== '' && $color !== '' && $qty >= 0) {
                 $stmt->execute([
@@ -169,6 +176,7 @@ class Product extends Model
 
     public function skuExists(string $sku, ?int $excludeId = null): bool
     {
+        $sku = mb_strtoupper(trim($sku), 'UTF-8');
         $sql = 'SELECT COUNT(*) FROM products WHERE sku = :sku';
         $params = ['sku' => $sku];
 
@@ -184,6 +192,9 @@ class Product extends Model
 
     public function create(array $data): int|false
     {
+        if (isset($data['sku'])) {
+            $data['sku'] = mb_strtoupper(trim($data['sku']), 'UTF-8');
+        }
         $this->validateProductData($data);
 
         $sql = 'INSERT INTO products (sku, name, description, category_id, brand_id, price, sale_price, quantity, image_url, created_at, updated_at) 
@@ -207,6 +218,9 @@ class Product extends Model
 
     public function update(int $id, array $data): bool
     {
+        if (isset($data['sku'])) {
+            $data['sku'] = mb_strtoupper(trim($data['sku']), 'UTF-8');
+        }
         $this->validateProductData($data, $id);
 
         $sql = 'UPDATE products SET 
