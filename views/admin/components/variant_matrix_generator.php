@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            let duplicateFound = false;
+            let duplicateVariants = [];
 
             // Sinh dữ liệu
             models.forEach(modelObj => {
@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
 
                         if (isDuplicate || document.querySelector(`tr[data-key="${key}"]`)) {
-                            duplicateFound = true;
+                            duplicateVariants.push(`[${displayModel} - ${genderPart} ${sizePart} - ${colorObj.name}]`);
                         } else {
                             const tr = document.createElement('tr');
                             tr.setAttribute('data-key', key);
@@ -364,8 +364,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (hasError) return;
 
-            if (duplicateFound) {
-                window.showMatrixNotice('Biến thể giày đã tồn tại!');
+            if (duplicateVariants.length > 0) {
+                window.showMatrixNotice(`Biến thể giày đã tồn tại: ${duplicateVariants.join(', ')}`);
             }
 
             // Bỏ chọn tất cả sau khi đã ném xuống bảng
