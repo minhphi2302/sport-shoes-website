@@ -188,7 +188,7 @@ require __DIR__ . '/layouts/header.php';
                                                 <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết"><i class="fa-solid fa-magnifying-glass"></i></a>
                                             </div>
                                             <?php if (($product['quantity'] ?? 50) > 0): ?>
-                                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-cart-hover position-absolute" style="bottom: 10px; right: 10px;" title="Thêm vào giỏ">
+                                            <a href="<?= base_url('cart/add/' . $product['product_id']) ?>" class="btn-cart-hover position-absolute" style="bottom: 10px; right: 10px;" title="Thêm vào giỏ">
                                                 <span class="cart-text">Thêm vào giỏ</span>
                                                 <span class="cart-icon-wrapper">
                                                 <svg class="custom-bag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
@@ -201,7 +201,7 @@ require __DIR__ . '/layouts/header.php';
                                                 </span>
                                             </a>
                                             <?php else: ?>
-                                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-cart-hover position-absolute btn-out-of-stock" style="bottom: 10px; right: 10px;" title="Tạm hết hàng">
+                                            <a href="<?= base_url('cart/add/' . $product['product_id']) ?>" class="btn-cart-hover position-absolute btn-out-of-stock" style="bottom: 10px; right: 10px;" title="Tạm hết hàng">
                                                 <span class="cart-text">Tạm hết hàng</span>
                                                 <span class="cart-icon-wrapper">
                                                 <svg class="custom-bag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">

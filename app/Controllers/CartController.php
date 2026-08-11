@@ -35,11 +35,11 @@ class CartController extends Controller
         ]);
     }
 
-    public function add(): void
+    public function add(mixed $id = null): void
     {
-        $productId = (int)($_POST['product_id'] ?? 0);
-        $quantity = (int)($_POST['quantity'] ?? 1);
-        $referer = $_SERVER['HTTP_REFERER'] ?? ($_ENV['APP_URL'] ?? '') . '/products';
+        $productId = (int)($id ?: ($_POST['product_id'] ?? $_GET['product_id'] ?? 0));
+        $quantity = (int)($_POST['quantity'] ?? $_GET['quantity'] ?? 1);
+        $referer = $_SERVER['HTTP_REFERER'] ?? base_url('products');
 
         if (Auth::check() && Auth::user()['role'] === 'admin') {
             $_SESSION['error'] = "Tài khoản admin không được sử dụng chức năng mua hàng.";
