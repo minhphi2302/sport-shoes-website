@@ -47,4 +47,9 @@ class Category extends Model
         $stmt->execute(['id' => $id]);
         return (int)$stmt->fetchColumn() > 0;
     }
+
+    public function getAllCategories(): array
+    {
+        return $this->all();
+    }
 }

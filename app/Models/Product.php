@@ -101,6 +101,16 @@ class Product extends Model
         return $stmt->fetchAll();
     }
 
+    public function getFeaturedProducts(int $limit = 4): array
+    {
+        return $this->getFeatured($limit);
+    }
+
+    public function getProductsFiltered(array $filters = [], int $page = 1, int $perPage = 20): array
+    {
+        return $this->findAllWithFilters($filters, $page, $perPage);
+    }
+
     public function getLatestProducts(int $limit = 8): array
     {
         $sql = "SELECT * FROM {$this->table} WHERE status = 'active' ORDER BY created_at DESC LIMIT :limit";
