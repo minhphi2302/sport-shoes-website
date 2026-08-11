@@ -59,6 +59,11 @@ class Brand extends Model
         return (int)$stmt->fetchColumn() > 0;
     }
 
+    public function getAllBrands(): array
+    {
+        return $this->all();
+    }
+
     public function nameExists(string $name, ?int $excludeId = null): bool
     {
         $sql = 'SELECT COUNT(*) FROM brands WHERE name = :name';

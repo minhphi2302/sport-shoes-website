@@ -24,7 +24,7 @@ class Order extends Model
     {
         $this->db->beginTransaction();
         try {
-            $totalAmount = 0;
+            $subtotalAmount = 0;
             $productModel = new Product();
             $itemsWithCurrentPrice = [];
             
@@ -36,7 +36,7 @@ class Order extends Model
                 
                 $priceToUse = (!empty($product['sale_price']) && $product['sale_price'] < $product['price']) ? $product['sale_price'] : $product['price'];
                 $subtotal = $priceToUse * $item['quantity'];
-                $totalAmount += $subtotal;
+                $subtotalAmount += $subtotal;
                 
                 $item['current_price'] = $priceToUse;
                 $item['subtotal'] = $subtotal;
@@ -46,8 +46,17 @@ class Order extends Model
                 $itemsWithCurrentPrice[] = $item;
             }
 
-            $orderSql = "INSERT INTO orders (user_id, recipient_name, recipient_phone, shipping_address, total_amount, payment_method, notes, status, created_at, updated_at) 
-                         VALUES (:user_id, :recipient_name, :recipient_phone, :shipping_address, :total_amount, :payment_method, :notes, 'pending', NOW(), NOW())";
+            $paymentMethod = $shippingInfo['payment_method'] ?? 'COD';
+            $shippingFee = 0;
+            if ($paymentMethod === 'COD') {
+                $threshold = defined('FREE_COD_THRESHOLD') ? FREE_COD_THRESHOLD : 1000000;
+                $fee = defined('COD_FEE') ? COD_FEE : 30000;
+                $shippingFee = ($subtotalAmount >= $threshold) ? 0 : $fee;
+            }
+            $totalAmount = $subtotalAmount + $shippingFee;
+
+            $orderSql = "INSERT INTO orders (user_id, recipient_name, recipient_phone, shipping_address, total_amount, shipping_fee, payment_method, notes, status, created_at, updated_at) 
+                         VALUES (:user_id, :recipient_name, :recipient_phone, :shipping_address, :total_amount, :shipping_fee, :payment_method, :notes, 'pending', NOW(), NOW())";
             $stmt = $this->db->prepare($orderSql);
             $stmt->execute([
                 'user_id' => $userId,
@@ -55,7 +64,8 @@ class Order extends Model
                 'recipient_phone' => $shippingInfo['phone'],
                 'shipping_address' => $shippingInfo['address'],
                 'total_amount' => $totalAmount,
-                'payment_method' => $shippingInfo['payment_method'],
+                'shipping_fee' => $shippingFee,
+                'payment_method' => $paymentMethod,
                 'notes' => $shippingInfo['notes'] ?? null,
             ]);
             

@@ -28,6 +28,42 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function updateInfo(): void
+    {
+        if (!Auth::check()) {
+            $this->redirect('/login');
+        }
+
+        $userId = Auth::id();
+        $name = trim($_POST['name'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $address = trim($_POST['address'] ?? '');
+
+        if (empty($name)) {
+            $_SESSION['error'] = 'Tên không được để trống.';
+            $this->redirect('/profile');
+        }
+
+        try {
+            $this->userModel->update($userId, [
+                'name' => $name,
+                'phone' => $phone,
+                'address' => $address
+            ]);
+
+            // Update session
+            $_SESSION['user']['name'] = $name;
+            $_SESSION['user']['phone'] = $phone;
+            $_SESSION['user']['address'] = $address;
+
+            $_SESSION['success'] = 'Cập nhật thông tin thành công.';
+        } catch (\Exception $e) {
+            $_SESSION['error'] = 'Có lỗi xảy ra: ' . $e->getMessage();
+        }
+
+        $this->redirect('/profile');
+    }
+
     public function updatePassword(): void
     {
         if (!Auth::check()) {
