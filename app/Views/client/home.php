@@ -176,13 +176,12 @@ require __DIR__ . '/layouts/header.php';
                                         ?>
                                         <div class="badge-ribbon badge-ribbon-red"><small>-</small><?= $discountPercent ?>%</div>
                                         <?php 
-                                            $fallbackImg = 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif';
-                                            $imgSrc = !empty($product['image_url']) ? $product['image_url'] : $fallbackImg;
+                                            $imgSrc = get_product_image_url($product['image_url'] ?? null, $product['product_id'] ?? 1);
                                         ?>
                                         <div class="position-relative">
                                             <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="text-decoration-none d-block">
                                                 <div style="background-color: #f8f9fa;" class="text-center p-2">
-                                                    <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" class="img-fluid" style="height: 190px; object-fit: contain; width: 100%;" alt="<?= htmlspecialchars($product['name']) ?>">
+                                                    <img src="<?= htmlspecialchars($imgSrc) ?>" class="img-fluid" style="height: 190px; object-fit: contain; width: 100%;" alt="<?= htmlspecialchars($product['name']) ?>" onerror="this.src='<?= base_url('image/slide/slide1.avif') ?>'">
                                                 </div>
                                             </a>
                                             <div class="product-center-action">

@@ -23,10 +23,9 @@ require __DIR__ . '/layouts/header.php';
             <div class="product-detail-gallery">
                 <!-- Ảnh lớn chính -->
                 <?php 
-                    $fallbackImg = 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif';
-                    $imgSrc = !empty($product['image_url']) ? $product['image_url'] : $fallbackImg;
+                    $imgSrc = get_product_image_url($product['image_url'] ?? null, $product['product_id'] ?? 1);
                 ?>
-                <img id="mainProductImg" src="<?= htmlspecialchars(base_url($imgSrc)) ?>" class="main-img" alt="<?= htmlspecialchars($product['name'] ?? 'Product') ?>">
+                <img id="mainProductImg" src="<?= htmlspecialchars($imgSrc) ?>" class="main-img" alt="<?= htmlspecialchars($product['name'] ?? 'Product') ?>" onerror="this.src='<?= base_url('image/slide/slide1.avif') ?>'">
             </div>
         </div>
 
