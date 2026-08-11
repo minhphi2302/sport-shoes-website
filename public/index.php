@@ -21,9 +21,10 @@ $router->get('/logout',          [App\Controllers\AuthController::class, 'logout
 $router->post('/logout',         [App\Controllers\AuthController::class, 'logout']);
 
 // ── Profile ───────────────────────────────────────────────────
-$router->get('/profile',                 [App\Controllers\ProfileController::class, 'index']);
-$router->post('/profile/password',       [App\Controllers\ProfileController::class, 'updatePassword']);
-$router->post('/profile/delete',         [App\Controllers\ProfileController::class, 'deleteAccount']);
+$router->get('/account',                 [App\Controllers\ProfileController::class, 'index']);
+$router->post('/account/password',       [App\Controllers\ProfileController::class, 'updatePassword']);
+$router->post('/account/delete',         [App\Controllers\ProfileController::class, 'deleteAccount']);
+$router->post('/account/update',         [App\Controllers\ProfileController::class, 'updateAccount']);
 
 // ── Giỏ hàng ─────────────────────────────────────────────────
 $router->get('/cart',            [App\Controllers\CartController::class, 'index']);

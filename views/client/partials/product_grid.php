@@ -45,19 +45,24 @@
 
                         <?php 
                             $fallbackImg = 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif';
-                            $imgSrc = !empty($product['image_url']) ? $product['image_url'] : $fallbackImg;
+                            $imgSrc = !empty($product['image_url']) ? 'uploads/' . $product['image_url'] : $fallbackImg;
+                            
+                            // Check if file actually exists on disk, otherwise use fallback
+                            if (!file_exists(__DIR__ . '/../../../public/' . $imgSrc)) {
+                                $imgSrc = $fallbackImg;
+                            }
                         ?>
-                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="d-block position-absolute w-100 h-100" style="top:0; left:0; z-index: 5;">
+                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="d-block position-absolute w-100 h-100" style="top:0; left:0; z-index: 5;">
                             <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                         </a>
                         <!-- Center search button for viewing detail -->
                         <div class="product-center-action">
-                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết">
+                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </a>
                         </div>
                         
-                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add/<?= $product['product_id'] ?>" class="btn-cart-hover <?= (($product['quantity'] ?? 50) <= 0) ? 'btn-out-of-stock' : '' ?>" title="<?= (($product['quantity'] ?? 50) <= 0) ? 'Tạm hết hàng' : 'Thêm vào giỏ' ?>">
+                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="btn-cart-hover <?= (($product['quantity'] ?? 50) <= 0) ? 'btn-out-of-stock' : '' ?>" title="<?= (($product['quantity'] ?? 50) <= 0) ? 'Tạm hết hàng' : 'Thêm vào giỏ' ?>">
                             <span class="cart-text"><?= (($product['quantity'] ?? 50) <= 0) ? 'Tạm hết hàng' : 'Thêm vào giỏ' ?></span>
                             <span class="cart-icon-wrapper">
                                 <svg class="custom-bag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
@@ -72,7 +77,7 @@
                     </div>
 
                     <div class="product-body">
-                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="product-title mb-1"><?= htmlspecialchars($product['name']) ?></a>
+                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="product-title mb-1"><?= htmlspecialchars($product['name']) ?></a>
                         <?php if (!empty($product['sku'])): ?>
                             <div class="text-muted mb-2" style="font-size: 0.85rem;"><?= htmlspecialchars($product['sku']) ?></div>
                         <?php endif; ?>

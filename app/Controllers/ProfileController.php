@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Auth;
 use App\Models\User;
+use App\Models\Order;
 
 class ProfileController extends Controller
 {
@@ -23,9 +24,43 @@ class ProfileController extends Controller
 
         $user = Auth::user();
 
-        $this->view('client/profile', [
+        $orderModel = new Order();
+        $orders = $orderModel->findByUserId($user['user_id'] ?? 0, 1, 50);
+
+        $this->view('client/account', [
+            'orders' => $orders,
             'user' => $user
         ]);
+    }
+
+    public function updateAccount(): void
+    {
+        if (!Auth::check()) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $name = trim($input['name'] ?? '');
+        $phone = trim($input['phone'] ?? '');
+        $address = trim($input['address'] ?? '');
+
+        if (empty($name)) {
+            echo json_encode(['success' => false, 'message' => 'T�n kh�ng du?c d? tr?ng']);
+            return;
+        }
+
+        $userId = Auth::id();
+        $this->userModel->update($userId, [
+            'name' => $name,
+            'phone' => $phone,
+            'address' => $address
+        ]);
+        
+        $user = $this->userModel->find($userId);
+        Auth::login($user);
+
+        echo json_encode(['success' => true]);
     }
 
     public function updatePassword(): void
@@ -42,31 +77,31 @@ class ProfileController extends Controller
 
         if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
             $_SESSION['error'] = 'Vui lòng nhập đầy đủ thông tin.';
-            $this->redirect('/profile');
+            $this->redirect('/account');
         }
 
         $fullUser = $this->userModel->find($userId);
 
         if (!$this->userModel->verifyPassword($currentPassword, $fullUser['password'])) {
             $_SESSION['error'] = 'Mật khẩu hiện tại không đúng.';
-            $this->redirect('/profile');
+            $this->redirect('/account');
         }
 
         if (strlen($newPassword) < 6) {
             $_SESSION['error'] = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
-            $this->redirect('/profile');
+            $this->redirect('/account');
         }
 
         if ($newPassword !== $confirmPassword) {
             $_SESSION['error'] = 'Mật khẩu xác nhận không khớp.';
-            $this->redirect('/profile');
+            $this->redirect('/account');
         }
 
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
         $this->userModel->update($userId, ['password' => $hash]);
 
         $_SESSION['success'] = 'Cập nhật mật khẩu thành công.';
-        $this->redirect('/profile');
+        $this->redirect('/account');
     }
 
     public function deleteAccount(): void
@@ -82,12 +117,12 @@ class ProfileController extends Controller
         
         if ($fullUser['role'] === 'admin') {
             $_SESSION['error'] = 'Không thể xóa tài khoản quản trị viên.';
-            $this->redirect('/profile');
+            $this->redirect('/account');
         }
 
         if (!$this->userModel->verifyPassword($password, $fullUser['password'])) {
             $_SESSION['error'] = 'Mật khẩu không đúng. Hủy thao tác xóa tài khoản.';
-            $this->redirect('/profile');
+            $this->redirect('/account');
         }
 
         try {
@@ -98,7 +133,7 @@ class ProfileController extends Controller
             $this->redirect('/');
         } catch (\Exception $e) {
             $_SESSION['error'] = 'Có lỗi xảy ra khi xóa tài khoản: ' . $e->getMessage();
-            $this->redirect('/profile');
+            $this->redirect('/account');
         }
     }
 }

@@ -32,6 +32,18 @@ class Product extends Model
             $params['search'] = "%{$filters['search']}%";
             $params['search_exact'] = $filters['search'];
         }
+        if (!empty($filters['gender'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.size LIKE :gender)";
+            $params['gender'] = $filters['gender'] . ' - %';
+        }
+        if (!empty($filters['size'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.size LIKE :size)";
+            $params['size'] = '% - ' . $filters['size'];
+        }
+        if (!empty($filters['color'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.color = :color)";
+            $params['color'] = $filters['color'];
+        }
 
         $whereClause = implode(' AND ', $where);
 
@@ -76,6 +88,19 @@ class Product extends Model
             $where[] = "(name LIKE :search OR sku = :search_exact)";
             $params['search'] = "%{$filters['search']}%";
             $params['search_exact'] = $filters['search'];
+        }
+        
+        if (!empty($filters['gender'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.product_id AND pv.size LIKE :gender)";
+            $params['gender'] = $filters['gender'] . ' - %';
+        }
+        if (!empty($filters['size'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.product_id AND pv.size LIKE :size)";
+            $params['size'] = '% - ' . $filters['size'];
+        }
+        if (!empty($filters['color'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.product_id AND pv.color = :color)";
+            $params['color'] = $filters['color'];
         }
 
         $whereClause = implode(' AND ', $where);

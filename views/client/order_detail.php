@@ -43,40 +43,49 @@
                             </thead>
                             <tbody>
                                 <?php foreach ($orderDetails as $item): ?>
-                                <tr>
-                                    <td class="ps-3">
-                                        <div class="d-flex align-items-center">
-                                            <?php 
-                                                $imgSrc = !empty($item['image_url']) ? '/uploads/' . $item['image_url'] : '/uploads/default-product.jpg';
-                                                $baseUrl = htmlspecialchars($_ENV['APP_URL'] ?? '');
-                                            ?>
-                                            <img src="<?= $baseUrl . htmlspecialchars($imgSrc) ?>" alt="" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;" onerror="this.src='<?= $baseUrl ?>/uploads/default-product.jpg'">
-                                            <div>
-                                                <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $item['product_id'] ?>" class="text-dark fw-bold text-decoration-none d-block">
-                                                    <?= htmlspecialchars($item['product_name']) ?>
-                                                </a>
-                                                <small class="text-muted">Mã: <?= htmlspecialchars($item['sku']) ?></small>
-                                                <?php if (!empty($item['size']) && !empty($item['color'])): ?>
-                                                    <br><small class="text-muted">Size: <?= htmlspecialchars($item['size']) ?> - Màu: <?= htmlspecialchars($item['color']) ?></small>
-                                                <?php endif; ?>
+                                    <tr>
+                                        <td class="ps-3">
+                                            <div class="d-flex align-items-center">
+                                                <?php
+                                                $imgSrc = !empty($item['image_url']) ? 'uploads/' . $item['image_url'] : 'uploads/default-product.jpg';
+                                                ?>
+                                                <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" alt=""
+                                                    class="rounded me-3"
+                                                    style="width: 60px; height: 60px; object-fit: cover;"
+                                                    onerror="this.src='<?= base_url('uploads/default-product.jpg') ?>'">
+                                                <div>
+                                                    <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $item['product_id'] ?>"
+                                                        class="text-dark fw-bold text-decoration-none d-block">
+                                                        <?= htmlspecialchars($item['product_name']) ?>
+                                                    </a>
+                                                    <small class="text-muted">Mã:
+                                                        <?= htmlspecialchars($item['sku']) ?></small>
+                                                    <?php if (!empty($item['size']) && !empty($item['color'])): ?>
+                                                        <br><small class="text-muted">Size:
+                                                            <?= htmlspecialchars($item['size']) ?> - Màu:
+                                                            <?= htmlspecialchars($item['color']) ?></small>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="text-end text-muted"><?= number_format($item['unit_price'], 0, ',', '.') ?>đ</td>
-                                    <td class="text-center fw-semibold"><?= $item['quantity'] ?></td>
-                                    <td class="text-end fw-bold text-primary"><?= number_format($item['subtotal'], 0, ',', '.') ?>đ</td>
-                                </tr>
+                                        </td>
+                                        <td class="text-end text-muted">
+                                            <?= number_format($item['unit_price'], 0, ',', '.') ?>đ</td>
+                                        <td class="text-center fw-semibold"><?= $item['quantity'] ?></td>
+                                        <td class="text-end fw-bold text-primary">
+                                            <?= number_format($item['subtotal'], 0, ',', '.') ?>đ</td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-            
+
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4 text-end">
                     <h5 class="d-inline-block me-3 text-muted">Tổng đơn hàng:</h5>
-                    <span class="fs-4 fw-bold text-primary"><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</span>
+                    <span
+                        class="fs-4 fw-bold text-primary"><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</span>
                 </div>
             </div>
         </div>
@@ -92,20 +101,20 @@
                     <div class="mb-3 d-flex justify-content-between border-bottom pb-2 align-items-center">
                         <span class="text-muted">Trạng thái:</span>
                         <?php
-                            $badgeClass = match($order['status']) {
-                                'pending' => 'bg-secondary',
-                                'confirmed' => 'bg-info',
-                                'completed' => 'bg-success',
-                                'cancelled' => 'bg-danger',
-                                default => 'bg-secondary'
-                            };
-                            $label = match($order['status']) {
-                                'pending' => 'Chờ xử lý',
-                                'confirmed' => 'Đã xác nhận',
-                                'completed' => 'Hoàn thành',
-                                'cancelled' => 'Đã hủy',
-                                default => 'Không rõ'
-                            };
+                        $badgeClass = match ($order['status']) {
+                            'pending' => 'bg-secondary',
+                            'confirmed' => 'bg-info',
+                            'completed' => 'bg-success',
+                            'cancelled' => 'bg-danger',
+                            default => 'bg-secondary'
+                        };
+                        $label = match ($order['status']) {
+                            'pending' => 'Chờ xử lý',
+                            'confirmed' => 'Đã xác nhận',
+                            'completed' => 'Hoàn thành',
+                            'cancelled' => 'Đã hủy',
+                            default => 'Không rõ'
+                        };
                         ?>
                         <span class="badge <?= $badgeClass ?> rounded-pill px-3 py-2"><?= $label ?></span>
                     </div>
@@ -114,10 +123,13 @@
                         <span class="fw-semibold"><?= htmlspecialchars($order['payment_method']) ?></span>
                     </div>
                     <?php if ($order['status'] === 'pending'): ?>
-                    <hr>
-                    <form action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/orders/<?= $order['order_id'] ?>/cancel" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này? Không thể hoàn tác sau khi hủy.');">
-                        <button type="submit" class="btn btn-outline-danger w-100 rounded-pill">Hủy đơn hàng</button>
-                    </form>
+                        <hr>
+                        <form
+                            action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/orders/<?= $order['order_id'] ?>/cancel"
+                            method="POST"
+                            onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này? Không thể hoàn tác sau khi hủy.');">
+                            <button type="submit" class="btn btn-outline-danger w-100 rounded-pill">Hủy đơn hàng</button>
+                        </form>
                     <?php endif; ?>
                 </div>
             </div>
@@ -138,10 +150,10 @@
                         <div class="fw-semibold"><?= htmlspecialchars($order['shipping_address']) ?></div>
                     </div>
                     <?php if (!empty($order['notes'])): ?>
-                    <div>
-                        <label class="text-muted small">Ghi chú:</label>
-                        <div class="fw-semibold text-warning"><?= nl2br(htmlspecialchars($order['notes'])) ?></div>
-                    </div>
+                        <div>
+                            <label class="text-muted small">Ghi chú:</label>
+                            <div class="fw-semibold text-warning"><?= nl2br(htmlspecialchars($order['notes'])) ?></div>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
