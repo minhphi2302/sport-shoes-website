@@ -138,15 +138,22 @@ class ProductAdminController extends AdminController
                 
                 $this->processAndSaveVariants($productId);
 
-                $_SESSION['success'] = 'Thêm sản phẩm thành công';
+                // Khởi động session trước khi set message (business rule: Session Security)
+                \App\Core\Auth::initSession();
+                $_SESSION['success'] = 'Thêm sản phẩm thành công.';
                 $this->redirect('/admin/products');
 
             } catch (ValidationException $e) {
+                // Khởi động session trước khi set message
+                \App\Core\Auth::initSession();
                 $_SESSION['error'] = $e->getMessage();
-                // To keep form data, we could store it in session, but skipping for simplicity
                 $this->redirect('/admin/products/create');
             } catch (\Exception $e) {
+                // Khởi động session trước khi set message
+                \App\Core\Auth::initSession();
                 $_SESSION['error'] = 'Lỗi hệ thống: ' . $e->getMessage();
+                // Log chi tiết để debug
+                error_log("Product Create Error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
                 $this->redirect('/admin/products/create');
             }
         }
@@ -170,11 +177,11 @@ class ProductAdminController extends AdminController
         $product = $this->productModel->findById($productId);
         
         if (!$product) {
-            $_SESSION['error'] = 'Sản phẩm không tồn tại';
-            $this->redirect('/admin/products');
-        }
-        
-        $variants = $this->productModel->getVariants($productId);
+                $_SESSION['error'] = 'Sản phẩm không tồn tại.';
+                $this->redirect('/admin/products');
+            }
+            
+            $variants = $this->productModel->getVariants($productId);
         
         $this->view('admin/product_detail', [
             'product' => $product,
@@ -204,15 +211,20 @@ class ProductAdminController extends AdminController
                 $this->productModel->update($productId, $data);
                 $this->processAndSaveVariants($productId);
 
-                $_SESSION['success'] = 'Cập nhật sản phẩm thành công';
-                $this->redirect('/admin/products');
+                $_SESSION['success'] = 'Cập nhật sản phẩm thành công.';
+                
+                // Giữ lại page hiện tại khi redirect về danh sách (business rule: UX)
+                $returnPage = !empty($_POST['return_page']) ? (int)$_POST['return_page'] : 1;
+                $this->redirect('/admin/products?page=' . $returnPage);
 
             } catch (ValidationException $e) {
                 $_SESSION['error'] = $e->getMessage();
-                $this->redirect("/admin/products/{$productId}/edit");
+                $returnPage = !empty($_POST['return_page']) ? '?return_page=' . (int)$_POST['return_page'] : '';
+                $this->redirect("/admin/products/{$productId}/edit" . $returnPage);
             } catch (\Exception $e) {
                 $_SESSION['error'] = 'Lỗi hệ thống: ' . $e->getMessage();
-                $this->redirect("/admin/products/{$productId}/edit");
+                $returnPage = !empty($_POST['return_page']) ? '?return_page=' . (int)$_POST['return_page'] : '';
+                $this->redirect("/admin/products/{$productId}/edit" . $returnPage);
             }
         }
 
@@ -227,7 +239,8 @@ class ProductAdminController extends AdminController
             'brands' => $brands,
             'sizes' => $sizes,
             'colors' => $colors,
-            'variants' => $this->productModel->getVariants($productId)
+            'variants' => $this->productModel->getVariants($productId),
+            'returnPage' => $_GET['return_page'] ?? 1 // Truyền return_page vào view
         ]);
     }
 

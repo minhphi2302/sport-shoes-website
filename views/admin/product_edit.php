@@ -16,6 +16,8 @@
 <div class="card border-0 shadow-sm rounded-4">
     <div class="card-body p-4">
         <form id="product-form" action="" method="POST" enctype="multipart/form-data">
+            <!-- Hidden field để giữ return_page (business rule: UX - giữ trang hiện tại khi redirect) -->
+            <input type="hidden" name="return_page" value="<?= htmlspecialchars($returnPage ?? 1) ?>">
             <div class="row g-4">
                 <div class="col-md-8">
                     <!-- Thông tin cơ bản -->
@@ -185,7 +187,7 @@
                                                 </td>
                                                 <td><input type="text" name="variant_raw_sizes[]" class="form-control form-control-sm" value="<?= htmlspecialchars($sizeVal) ?>"></td>
                                                 <td><input type="text" name="variant_colors[]" class="form-control form-control-sm" value="<?= htmlspecialchars($v['color']) ?>"></td>
-                                                <td><input type="number" name="variant_prices[]" class="form-control form-control-sm variant-price" value="<?= $v['price'] ?? '' ?>" min="0"></td>
+                                                <td><input type="number" name="variant_prices[]" class="form-control form-control-sm variant-price" value="<?= isset($v['price']) && $v['price'] !== null ? (float)$v['price'] : (float)($product['price'] ?? 0) ?>" min="0"></td>
                                                 <td><input type="number" name="variant_qtys[]" class="form-control form-control-sm variant-qty" value="<?= $v['quantity'] ?? 10 ?>" min="0"></td>
                                                 <td class="text-center"><button type="button" class="btn btn-danger btn-sm btn-remove-variant"><i class="bi bi-trash"></i></button></td>
                                             </tr>
@@ -369,10 +371,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Nếu có thay đổi giá mẫu, dùng giá mẫu mới làm gốc, ngược lại dùng giá hiện tại
                         let baseForPct = newModelPrice !== null ? newModelPrice : currentPrice;
-                        // Tính giá sau khi giảm giá size
-                        let priceAfterSize = baseForPct * (1 - (pctSize / 100));
-                        // Lấy giá sau khi giảm size tính tiếp giảm màu
-                        currentPrice = priceAfterSize * (1 - (pctColor / 100));
+                        // Cộng tổng % giảm rồi áp 1 lần (additive), tránh compound
+                        const totalPct = (pctSize || 0) + (pctColor || 0);
+                        currentPrice = baseForPct * (1 - totalPct / 100);
                         
                         if (currentPrice > basePrice) {
                             currentPrice = basePrice;
@@ -380,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         if (currentPrice <= 0) {
                             if (typeof window.showMatrixNotice === 'function') {
-                                window.showMatrixNotice('Lỗi: Có biến thể bị tính giá <= 0 sau khi áp dụng Giảm giá. Vui lòng kiểm tra lại!');
+                                window.showMatrixNotice('Lỗi: Có biến thể bị tính giá <= 0 sau khi áp dụng điều chỉnh giá. Vui lòng kiểm tra lại!');
                             }
                             return;
                         }

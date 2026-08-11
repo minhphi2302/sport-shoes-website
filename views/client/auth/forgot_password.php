@@ -22,14 +22,14 @@
                             <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
                         <?php endif; ?>
                         
-                        <p class="text-muted mb-4">Vui lòng nhập địa chỉ email bạn đã sử dụng để đăng ký tài khoản. Hệ thống sẽ cấp lại mật khẩu mới cho bạn.</p>
+    <p class="text-muted mb-4">Vui lòng nhập địa chỉ email bạn đã dùng để đăng ký tài khoản. Chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu cho bạn.</p>
 
                         <form action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/forgot-password" method="POST">
                             <div class="mb-4">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="email" class="form-control" id="email" name="email" required>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2">Khôi phục mật khẩu</button>
+                            <button type="submit" class="btn btn-primary w-100 py-2">Gửi yêu cầu đặt lại mật khẩu</button>
                         </form>
                         
                         <div class="text-center mt-4">

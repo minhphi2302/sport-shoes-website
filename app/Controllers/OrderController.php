@@ -24,7 +24,7 @@ class OrderController extends Controller
         }
 
         if (Auth::user()['role'] === 'admin') {
-            $_SESSION['error'] = 'Tài khoản admin không được sử dụng chức năng mua hàng.';
+            $_SESSION['error'] = 'Tài khoản admin không được phép sử dụng chức năng mua hàng.';
             $this->redirect('/cart');
         }
 
@@ -57,7 +57,7 @@ class OrderController extends Controller
         }
 
         if (Auth::user()['role'] === 'admin') {
-            $_SESSION['error'] = 'Tài khoản admin không được sử dụng chức năng mua hàng.';
+            $_SESSION['error'] = 'Tài khoản admin không được phép sử dụng chức năng mua hàng.';
             $this->redirect('/cart');
         }
 
@@ -99,7 +99,7 @@ class OrderController extends Controller
             $this->redirect('/cart');
         } catch (\Exception $e) {
             // Log error in real app
-            $_SESSION['error'] = 'Đã có lỗi xảy ra trong quá trình đặt hàng: ' . $e->getMessage();
+            $_SESSION['error'] = 'Đã có lỗi xảy ra trong quá trình đặt hàng. Vui lòng thử lại.';
             $this->redirect('/checkout');
         }
     }

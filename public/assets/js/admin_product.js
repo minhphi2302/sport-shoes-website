@@ -101,40 +101,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const basePriceInput = document.querySelector('input[name="price"]');
             const basePriceVal = basePriceInput ? Number(basePriceInput.value) : 0;
             
-            const seenVariants = new Set();
+            // Bỏ kiểm tra trùng lặp ở client - để backend xử lý
+            // Backend sẽ:
+            // - Cộng dồn số lượng nếu trùng hoàn toàn (cả % giảm)
+            // - Báo lỗi nếu trùng nhưng % giảm khác
+            // Client chỉ validate format cơ bản
 
             variantRows.forEach(row => {
                 if (!isValid) return; // Chỉ báo lỗi đầu tiên
-                
-                // Validate duplicate variants
-                const vModelInput = row.querySelector('input[name="variant_models[]"]');
-                const vGenderInput = row.querySelector('select[name="variant_genders[]"]');
-                const vRawSizeInput = row.querySelector('input[name="variant_raw_sizes[]"]');
-                const vColorInput = row.querySelector('input[name="variant_colors[]"]');
-                
-                const vModel = vModelInput ? vModelInput.value.trim() : 'Mặc định';
-                const vGender = vGenderInput ? vGenderInput.value.trim() : '';
-                const vRawSize = vRawSizeInput ? vRawSizeInput.value.trim() : '';
-                const vColor = vColorInput ? vColorInput.value.trim() : '';
-                
-                const uniqueKey = `${vModel.toLowerCase()}-${vGender.toLowerCase()}-${vRawSize.toLowerCase()}-${vColor.toLowerCase()}`;
-                
-                if (seenVariants.has(uniqueKey)) {
-                    const msg = `Lỗi: Có biến thể bị trùng lặp (Mẫu: ${vModel}, Đối tượng: ${vGender}, Size: ${vRawSize}, Màu: ${vColor}). Không thể lưu!`;
-                    if (typeof window.showMatrixNotice === 'function') {
-                        window.showMatrixNotice(msg);
-                    } else if (variantGlobalError) {
-                        variantGlobalError.innerText = msg;
-                        variantGlobalError.style.display = 'block';
-                    }
-                    isValid = false;
-                    firstInvalid = vModelInput;
-                    row.style.transition = "background-color 0.5s";
-                    row.style.backgroundColor = "#f8d7da"; // highlight red
-                    setTimeout(() => { row.style.backgroundColor = ""; }, 3000);
-                    return;
-                }
-                seenVariants.add(uniqueKey);
                 
                 const vSku = row.querySelector('input[name="variant_skus[]"]');
                 const vPrice = row.querySelector('input[name="variant_prices[]"]');
@@ -143,7 +117,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (vSku && vSku.value.trim().length === 0) {
                     showError(vSku, 'Thiếu SKU');
                 } else if (vPrice && (vPrice.value.trim() === '' || Number(vPrice.value) <= 0)) {
-                    showError(vPrice, 'Giá phải > 0');
+                    // Nếu giá trống, tự điền bằng giá bán mặc định thay vì báo lỗi
+                    const fallback = basePriceVal > 0 ? basePriceVal : 0;
+                    if (fallback <= 0) {
+                        showError(vPrice, 'Giá phải > 0');
+                    } else {
+                        vPrice.value = fallback;
+                    }
                 } else if (vQty && (vQty.value.trim() === '' || Number(vQty.value) < 0 || !Number.isInteger(Number(vQty.value)))) {
                     showError(vQty, 'Sai SL');
                 }

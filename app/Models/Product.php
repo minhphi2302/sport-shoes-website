@@ -112,52 +112,158 @@ class Product extends Model
 
     public function saveVariants(int $productId, array $skus, array $models, array $sizes, array $colors, array $prices, array $qtys): void
     {
-        // First delete existing variants
-        $stmt = $this->db->prepare("DELETE FROM product_variants WHERE product_id = :id");
-        $stmt->execute(['id' => $productId]);
-
-        // Insert new variants
-        $sql = "INSERT INTO product_variants (product_id, sku, model, size, color, price, quantity) VALUES (:product_id, :sku, :model, :size, :color, :price, :quantity)";
-        $stmt = $this->db->prepare($sql);
-        
         $product = $this->findById($productId);
         $basePrice = $product ? (float)$product['price'] : 0;
-
-        $totalQty = 0;
+        
+        // 1. Lấy variants hiện có từ DB
+        $existingVariants = $this->getVariants($productId);
+        $existingMap = [];
+        foreach ($existingVariants as $ev) {
+            $key = trim($ev['model']) . '|' . trim($ev['size']) . '|' . trim($ev['color']);
+            $evPrice = (float)$ev['price'];
+            $existingMap[$key] = [
+                'variant_id' => $ev['variant_id'],
+                'sku' => $ev['sku'],
+                'model' => $ev['model'],
+                'size' => $ev['size'],
+                'color' => $ev['color'],
+                'price' => $evPrice,
+                'quantity' => (int)$ev['quantity']
+            ];
+        }
+        
+        // 2. Chuẩn hóa variants mới từ form
+        $newVariants = [];
         for ($i = 0; $i < count($sizes); $i++) {
-            $sku = mb_strtoupper(trim($skus[$i] ?? ''), 'UTF-8');
             $model = trim($models[$i] ?? 'Mặc định');
             $size = trim($sizes[$i]);
             $color = trim($colors[$i]);
             $price = isset($prices[$i]) && $prices[$i] !== '' ? (float)$prices[$i] : null;
             $qty = (int)$qtys[$i];
+            $sku = mb_strtoupper(trim($skus[$i] ?? ''), 'UTF-8');
             
+            // Giới hạn giá không vượt giá gốc
             if ($price !== null && $price > $basePrice) {
                 $price = $basePrice;
             }
             
             if ($model !== '' && $size !== '' && $color !== '' && $qty >= 0) {
-                $stmt->execute([
-                    'product_id' => $productId,
+                $key = $model . '|' . $size . '|' . $color;
+                $newVariants[] = [
+                    'key' => $key,
                     'sku' => $sku !== '' ? $sku : null,
                     'model' => $model,
                     'size' => $size,
                     'color' => $color,
                     'price' => $price,
                     'quantity' => $qty
-                ]);
-                $totalQty += $qty;
+                ];
             }
         }
         
-        // Update main product quantity to sum of variants
-        $updateStmt = $this->db->prepare("UPDATE products SET quantity = :qty WHERE product_id = :id");
-        $updateStmt->execute(['qty' => $totalQty, 'id' => $productId]);
+        // 3. Kiểm tra trùng lặp TRONG form submit
+        // Business rule: CHỈ CHO PHÉP thêm biến thể nếu hoàn toàn mới (không trùng model+size+màu)
+        // Nếu trùng → BÁO LỖI, KHÔNG cộng dồn
+        $seenInForm = [];
+        foreach ($newVariants as $nv) {
+            $key = $nv['key'];
+            if (isset($seenInForm[$key])) {
+                // Trùng model+size+màu trong cùng lần submit → Báo lỗi
+                throw new ValidationException(
+                    'variants',
+                    "Biến thể trùng lặp: {$nv['model']} - {$nv['size']} - {$nv['color']}. Vui lòng kiểm tra lại."
+                );
+            }
+            $seenInForm[$key] = $nv;
+        }
+        
+        // 4. Kiểm tra trùng với variants ĐÃ TỒN TẠI trong DB
+        $finalVariants = [];
+        
+        foreach ($seenInForm as $key => $newVar) {
+            if (isset($existingMap[$key])) {
+                // Biến thể ĐÃ TỒN TẠI trong DB → Cho phép CẬP NHẬT (giá, số lượng, SKU)
+                // Đây là trường hợp EDIT biến thể hiện có, không phải thêm mới
+                $existingVar = $existingMap[$key];
+                
+                $finalVariants[$key] = [
+                    'variant_id' => $existingVar['variant_id'],
+                    'sku' => $newVar['sku'] ?? $existingVar['sku'],
+                    'model' => $newVar['model'],
+                    'size' => $newVar['size'],
+                    'color' => $newVar['color'],
+                    'price' => $newVar['price'], // Cập nhật giá mới
+                    'quantity' => $newVar['quantity'], // Cập nhật số lượng mới (GHI ĐÈ, không cộng dồn)
+                    'is_update' => true
+                ];
+            } else {
+                // Biến thể MỚI hoàn toàn → Thêm vào DB
+                $finalVariants[$key] = [
+                    'sku' => $newVar['sku'],
+                    'model' => $newVar['model'],
+                    'size' => $newVar['size'],
+                    'color' => $newVar['color'],
+                    'price' => $newVar['price'],
+                    'quantity' => $newVar['quantity'],
+                    'is_update' => false
+                ];
+            }
+        }
+        
+        // 5. Xóa các variants KHÔNG còn trong form (bị user xóa khỏi danh sách)
+        foreach ($existingMap as $key => $ev) {
+            if (!isset($finalVariants[$key])) {
+                $deleteStmt = $this->db->prepare("DELETE FROM product_variants WHERE id = :id");
+                $deleteStmt->execute(['id' => $ev['variant_id']]);
+            }
+        }
+        
+        // 6. INSERT hoặc UPDATE variants
+        $insertSql = "INSERT INTO product_variants (product_id, sku, model, size, color, price, quantity) 
+                      VALUES (:product_id, :sku, :model, :size, :color, :price, :quantity)";
+        $insertStmt = $this->db->prepare($insertSql);
+        
+        $updateSql = "UPDATE product_variants 
+                      SET sku = :sku, model = :model, size = :size, color = :color, price = :price, quantity = :quantity
+                      WHERE id = :variant_id";
+        $updateStmt = $this->db->prepare($updateSql);
+        
+        $totalQty = 0;
+        foreach ($finalVariants as $variant) {
+            if ($variant['is_update']) {
+                // UPDATE biến thể đã tồn tại (ghi đè số lượng mới)
+                $updateStmt->execute([
+                    'variant_id' => $variant['variant_id'],
+                    'sku' => $variant['sku'],
+                    'model' => $variant['model'],
+                    'size' => $variant['size'],
+                    'color' => $variant['color'],
+                    'price' => $variant['price'],
+                    'quantity' => $variant['quantity']
+                ]);
+            } else {
+                // INSERT biến thể mới
+                $insertStmt->execute([
+                    'product_id' => $productId,
+                    'sku' => $variant['sku'],
+                    'model' => $variant['model'],
+                    'size' => $variant['size'],
+                    'color' => $variant['color'],
+                    'price' => $variant['price'],
+                    'quantity' => $variant['quantity']
+                ]);
+            }
+            $totalQty += $variant['quantity'];
+        }
+        
+        // 7. Cập nhật tổng số lượng vào bảng products
+        $updateProductStmt = $this->db->prepare("UPDATE products SET quantity = :qty WHERE product_id = :id");
+        $updateProductStmt->execute(['qty' => $totalQty, 'id' => $productId]);
     }
 
     public function getVariants(int $productId): array
     {
-        $stmt = $this->db->prepare("SELECT * FROM product_variants WHERE product_id = :id ORDER BY model, color, size");
+        $stmt = $this->db->prepare("SELECT id as variant_id, product_id, sku, model, size, color, price, quantity FROM product_variants WHERE product_id = :id ORDER BY model, color, size");
         $stmt->execute(['id' => $productId]);
         return $stmt->fetchAll();
     }

@@ -18,6 +18,8 @@ spl_autoload_register(function ($class) {
 
 try {
     $pdo = \App\Core\Database::getInstance();
+    // Đảm bảo kết nối dùng utf8mb4 khi đọc/ghi dữ liệu tiếng Việt
+    $pdo->exec("SET NAMES utf8mb4");
     
     // Check if migrations table exists
     $stmt = $pdo->query("SHOW TABLES LIKE 'migrations'");

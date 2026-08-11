@@ -1,7 +1,7 @@
 <?php require_once __DIR__ . '/layouts/header.php'; ?>
 
 <div class="container py-5">
-    <h2 class="fw-bold mb-4">Giỏ hàng của bạn </h2>
+    <h2 class="fw-bold mb-4">Giỏ hàng của bạn</h2>
 
     <?php if (isset($_SESSION['error'])): ?>
         <div class="alert alert-danger alert-dismissible fade show">

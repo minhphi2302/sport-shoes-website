@@ -42,7 +42,7 @@ class CartController extends Controller
         $referer = $_SERVER['HTTP_REFERER'] ?? ($_ENV['APP_URL'] ?? '') . '/products';
 
         if (Auth::check() && Auth::user()['role'] === 'admin') {
-            $_SESSION['error'] = "Tài khoản admin không được sử dụng chức năng mua hàng.";
+            $_SESSION['error'] = "Tài khoản admin không được phép sử dụng chức năng mua hàng.";
             $this->redirect($referer);
         }
 
@@ -139,7 +139,7 @@ class CartController extends Controller
         $quantity = (int)($_POST['quantity'] ?? 0);
 
         if (Auth::check() && Auth::user()['role'] === 'admin') {
-            $_SESSION['error'] = "Tài khoản admin không được sử dụng chức năng mua hàng.";
+            $_SESSION['error'] = "Tài khoản admin không được phép sử dụng chức năng mua hàng.";
             $this->redirect('/cart');
         }
 

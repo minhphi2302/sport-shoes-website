@@ -176,7 +176,7 @@ class AuthController extends Controller
 
         // Luôn hiển thị thông báo thành công dù có tìm thấy email hay không (chống dò email)
         $this->view('client/auth/forgot_password', [
-            'success' => "Một email kèm hướng dẫn khôi phục mật khẩu đã được gửi (Giả lập: Hãy kiểm tra file <code>storage/logs/emails.log</code> để lấy link)."
+            'success' => "Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi. (Môi trường dev: Kiểm tra file <code>storage/logs/emails.log</code> để lấy link.)"
         ]);
     }
 
@@ -226,8 +226,7 @@ class AuthController extends Controller
             return;
         }
 
-        // Cập nhật mật khẩu và xóa token
-        $hash = password_hash($password, PASSWORD_DEFAULT);
+        // Cập nhật mật khẩu và xóa token        $hash = password_hash($password, PASSWORD_DEFAULT);
         $this->userModel->update($user['user_id'], ['password' => $hash]);
         $this->userModel->clearResetToken($user['user_id']);
 
@@ -235,6 +234,6 @@ class AuthController extends Controller
             Auth::logout();
         }
 
-        $this->view('client/auth/login', ['success' => 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập với mật khẩu mới.']);
+        $this->view('client/auth/login', ['success' => 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.']);
     }
 }

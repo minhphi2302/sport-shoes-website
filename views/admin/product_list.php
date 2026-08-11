@@ -112,7 +112,7 @@ $filters = $filters ?? [];
                                 </span>
                             </td>
                             <td class="pe-4 text-end">
-                                <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/admin/products/<?= $product['product_id'] ?>/edit" class="btn btn-sm btn-outline-primary me-1">Sửa</a>
+                                <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/admin/products/<?= $product['product_id'] ?>/edit?return_page=<?= $currentPage ?>" class="btn btn-sm btn-outline-primary me-1">Sửa</a>
                                 <form action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/admin/products/<?= $product['product_id'] ?>/delete" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
                                 </form>

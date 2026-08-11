@@ -58,7 +58,7 @@
                 <div class="alert alert-info text-center py-5 rounded-3">
                     <i class="bi bi-emoji-frown fs-1 d-block mb-3"></i>
                     <h4>Không tìm thấy sản phẩm nào!</h4>
-                    <p class="mb-0">Vui lòng thử nghiệm bộ lọc khác hoặc tìm kiếm với từ khóa khác.</p>
+                    <p class="mb-0">Vui lòng thử lại với bộ lọc khác hoặc tìm kiếm với từ khóa khác.</p>
                 </div>
             <?php else: ?>
                 <div class="row g-4">

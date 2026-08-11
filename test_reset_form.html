@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Reset Form</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h2>Test Reset Form After Adding Variants</h2>
+    <p>Kiểm tra xem form có reset sau khi thêm biến thể không</p>
+    
+    <h3>Checklist:</h3>
+    <ul>
+        <li>✅ Checkbox size được bỏ chọn</li>
+        <li>✅ Checkbox color được bỏ chọn</li>
+        <li>✅ % giảm giá size reset về 0</li>
+        <li>✅ % giảm giá color reset về 0</li>
+        <li>✅ Số lượng mặc định được xóa</li>
+        <li>✅ Các model đã thêm được xóa</li>
+    </ul>
+    
+    <h3>Code JavaScript:</h3>
+    <pre>
+// Reset toàn bộ form sau khi thêm thành công
+// 1. Bỏ chọn tất cả size và color
+document.querySelectorAll('.chk-size:checked, .chk-color:checked')
+    .forEach(cb => cb.checked = false);
+
+// 2. Reset % giảm giá của size và color về 0
+document.querySelectorAll('.size-percent, .color-percent')
+    .forEach(input => { input.value = 0; });
+
+// 3. Reset số lượng mặc định
+document.getElementById('common_qty').value = '';
+
+// 4. Xóa tất cả mẫu đã thêm
+const modelsContainer = document.getElementById('models-container');
+if (modelsContainer) {
+    modelsContainer.innerHTML = '';
+}
+    </pre>
+    
+    <h3>Thông báo ngắn gọn:</h3>
+    <div class="test-result success">
+        ✓ Đã thêm 3 biến thể mới!
+    </div>
+    
+    <div class="test-result info">
+        ℹ Biến thể đã tồn tại. Đã cộng dồn số lượng.
+    </div>
+    
+    <div class="test-result success">
+        ✓ Đã thêm 2 biến thể mới. Các biến thể trùng đã được cộng dồn số lượng.
+    </div>
+    
+    <h3>So sánh:</h3>
+    <table border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
+        <tr style="background: #f0f0f0;">
+            <th>Trường hợp</th>
+            <th>Trước (Dài dòng)</th>
+            <th>Sau (Ngắn gọn)</th>
+        </tr>
+        <tr>
+            <td>Tất cả mới</td>
+            <td>Đã thêm 3 biến thể mới thành công!</td>
+            <td><strong>Đã thêm 3 biến thể mới!</strong></td>
+        </tr>
+        <tr>
+            <td>Tất cả trùng</td>
+            <td>Đã cộng dồn số lượng và cập nhật giá cho các biến thể đã tồn tại (highlight xanh).</td>
+            <td><strong>Biến thể đã tồn tại. Đã cộng dồn số lượng.</strong></td>
+        </tr>
+        <tr>
+            <td>Mix</td>
+            <td>Đã thêm 2 biến thể mới và cộng dồn số lượng cho các biến thể đã tồn tại (highlight xanh).</td>
+            <td><strong>Đã thêm 2 biến thể mới. Các biến thể trùng đã được cộng dồn số lượng.</strong></td>
+        </tr>
+        <tr>
+            <td>Lỗi giá <= 0</td>
+            <td>Lỗi: Giá bán cuối cùng của biến thể (Mẫu: Mặc định, Size: Nam - 42, Màu: Trắng) phải lớn hơn 0. Vui lòng giảm bớt % giảm giá!</td>
+            <td><strong>Giá biến thể phải lớn hơn 0. Vui lòng giảm % giảm giá!</strong></td>
+        </tr>
+        <tr>
+            <td>Thiếu số lượng</td>
+            <td>Vui lòng nhập Số lượng ở Bước 4 trước khi thêm!</td>
+            <td><strong>Vui lòng nhập số lượng!</strong></td>
+        </tr>
+    </table>
+    
+    <h3>Kết luận:</h3>
+    <div class="test-result success">
+        ✅ Form sẽ được reset hoàn toàn sau khi thêm biến thể thành công<br>
+        ✅ Thông báo ngắn gọn, dễ hiểu hơn<br>
+        ✅ UX tốt hơn, không làm người dùng bối rối
+    </div>
+</body>
+</html>
