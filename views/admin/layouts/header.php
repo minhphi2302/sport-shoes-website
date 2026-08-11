@@ -32,7 +32,7 @@ $baseUrl = $_ENV['APP_URL'] ?? '';
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm py-2" style="background-color: #111111 !important;">
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm py-2 border-bottom">
     <div class="container-fluid">
         <a class="navbar-brand py-0 me-4 d-flex align-items-center" href="<?= base_url('admin/dashboard') ?>">
             <img src="<?= base_url('image/logo.webp') ?>" alt="ANTA Store Logo" style="height: 42px; width: auto; object-fit: contain;">
@@ -44,10 +44,10 @@ $baseUrl = $_ENV['APP_URL'] ?? '';
         <div class="collapse navbar-collapse" id="adminNavbar">
             <ul class="navbar-nav ms-auto align-items-center">
                 <li class="nav-item me-3">
-                    <a class="nav-link text-white fw-semibold" href="<?= base_url('/') ?>" target="_blank"><i class="bi bi-box-arrow-up-right me-1 text-warning"></i> Xem trang khách</a>
+                    <a class="nav-link text-dark fw-semibold" href="<?= base_url('/') ?>" target="_blank"><i class="bi bi-box-arrow-up-right me-1 text-danger"></i> Xem trang khách</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle text-white fw-bold d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle text-dark fw-bold d-flex align-items-center" href="#" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle fs-5 me-1 text-danger"></i> <?= htmlspecialchars($user['name'] ?? 'Admin') ?>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
