@@ -139,10 +139,10 @@
                         
                         <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                             <span class="fw-bold fs-5">Tổng cộng</span>
-                            <span class="fw-bold fs-4 text-red"><?= number_format($currentGrandTotal, 0, ',', '.') ?>đ</span>
+                            <span class="fw-bold fs-4 text-primary"><?= number_format($currentGrandTotal, 0, ',', '.') ?>đ</span>
                         </div>
 
-                        <button type="submit" class="btn btn-red w-100 py-3 mt-4 rounded-pill fw-bold text-uppercase fs-5">
+                        <button type="submit" class="btn btn-primary w-100 py-3 mt-4 rounded-pill fw-bold text-uppercase fs-5">
                             Đặt hàng ngay
                         </button>
                         <div class="text-center mt-3">
