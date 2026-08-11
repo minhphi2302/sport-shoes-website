@@ -26,8 +26,10 @@ class CartController extends Controller
         $total = 0;
 
         foreach ($cartRaw as $key => $item) {
-            $priceToUse = (!empty($item['sale_price']) && $item['sale_price'] < $item['price']) ? $item['sale_price'] : $item['price'];
-            $total += $priceToUse * $item['quantity'];
+            $price = $item['price'] ?? 0;
+            $salePrice = $item['sale_price'] ?? null;
+            $priceToUse = (!empty($salePrice) && $salePrice < $price) ? $salePrice : $price;
+            $total += $priceToUse * ($item['quantity'] ?? 1);
 
             // Parse available sizes/colors/genders from variant size field "Gender - Size"
             $variants = $this->productModel->getVariants((int)$item['product_id']);
@@ -55,10 +57,10 @@ class CartController extends Controller
         ]);
     }
 
-    public function add(): void
+    public function add(mixed $id = null): void
     {
-        $productId = (int)($_POST['product_id'] ?? 0);
-        $quantity = (int)($_POST['quantity'] ?? 1);
+        $productId = (int)($id ?: ($_POST['product_id'] ?? $_GET['product_id'] ?? 0));
+        $quantity = (int)($_POST['quantity'] ?? $_GET['quantity'] ?? 1);
         $referer = $_SERVER['HTTP_REFERER'] ?? ($_ENV['APP_URL'] ?? '') . '/products';
 
         if (Auth::check() && Auth::user()['role'] === 'admin') {
@@ -109,11 +111,21 @@ class CartController extends Controller
                 $this->redirect($referer);
             }
         } else {
-            // Check if product actually HAS variants, if yes, user MUST select one
+            // Check if product HAS variants, if yes, select the first available variant for quick add
             $variants = $this->productModel->getVariants($productId);
             if (!empty($variants)) {
-                $_SESSION['error'] = "Vui lòng chọn phân loại sản phẩm.";
-                $this->redirect($referer);
+                $firstV = $variants[0];
+                $variantId = (int)$firstV['variant_id']; // Using variant_id from db
+                $maxQty = (int)$firstV['quantity'];
+                $priceToUse = isset($firstV['price']) ? $firstV['price'] : $product['price'];
+                $skuToUse = !empty($firstV['sku']) ? $firstV['sku'] : $product['sku'];
+                $variantModel = $firstV['model'] ?? 'Mặc định';
+                $variantSize = $firstV['size'] ?? '';
+                $variantColor = $firstV['color'] ?? '';
+                
+                $cartKey = $productId . '_v' . $variantId;
+                $currentQtyInCart = isset($_SESSION['cart'][$cartKey]) ? $_SESSION['cart'][$cartKey]['quantity'] : 0;
+                $newQty = $currentQtyInCart + $quantity;
             }
         }
 

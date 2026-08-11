@@ -63,7 +63,7 @@
                             </a>
                         </div>
                         
-                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="btn-cart-hover <?= (($product['quantity'] ?? 50) <= 0) ? 'btn-out-of-stock' : '' ?>" title="<?= (($product['quantity'] ?? 50) <= 0) ? 'Tạm hết hàng' : 'Thêm vào giỏ' ?>">
+                        <a href="<?= base_url('cart/add/' . $product['product_id']) ?>" class="btn-cart-hover <?= (($product['quantity'] ?? 50) <= 0) ? 'btn-out-of-stock' : '' ?>" title="<?= (($product['quantity'] ?? 50) <= 0) ? 'Tạm hết hàng' : 'Thêm vào giỏ' ?>">
                             <span class="cart-text"><?= (($product['quantity'] ?? 50) <= 0) ? 'Tạm hết hàng' : 'Thêm vào giỏ' ?></span>
                             <span class="cart-icon-wrapper">
                                 <svg class="custom-bag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
