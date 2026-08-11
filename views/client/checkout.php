@@ -101,18 +101,45 @@
                         
                         <hr class="my-4">
                         
+                        <?php 
+                            $threshold = $freeThreshold ?? 1000000;
+                            $currentSubtotal = $subtotal ?? 0;
+                            $currentShippingFee = $shippingFee ?? 0;
+                            $currentGrandTotal = $grandTotal ?? ($currentSubtotal + $currentShippingFee);
+                        ?>
+
+                        <?php if ($currentSubtotal < $threshold): ?>
+                            <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-3 p-3 d-flex align-items-center" style="font-size: 0.85rem;">
+                                <i class="bi bi-info-circle-fill text-warning me-2 fs-5"></i>
+                                <div>
+                                    Mua thêm <strong><?= number_format($threshold - $currentSubtotal, 0, ',', '.') ?>đ</strong> để được <strong class="text-success">Miễn phí vận chuyển</strong>!
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="alert alert-success border-0 shadow-sm rounded-3 mb-3 p-3 d-flex align-items-center" style="font-size: 0.85rem;">
+                                <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                                <div>
+                                    Đơn hàng của bạn đã đủ điều kiện <strong class="text-success">Miễn phí vận chuyển (Freeship)</strong>!
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Tạm tính</span>
-                            <span class="fw-semibold"><?= number_format($total, 0, ',', '.') ?>đ</span>
+                            <span class="fw-semibold"><?= number_format($currentSubtotal, 0, ',', '.') ?>đ</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Phí vận chuyển</span>
-                            <span class="fw-semibold text-success">Miễn phí</span>
+                            <span class="text-muted">Phí vận chuyển & COD</span>
+                            <?php if ($currentShippingFee == 0): ?>
+                                <span class="fw-semibold text-success"><i class="bi bi-patch-check-fill me-1"></i>Miễn phí</span>
+                            <?php else: ?>
+                                <span class="fw-semibold text-dark"><?= number_format($currentShippingFee, 0, ',', '.') ?>đ</span>
+                            <?php endif; ?>
                         </div>
                         
                         <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                             <span class="fw-bold fs-5">Tổng cộng</span>
-                            <span class="fw-bold fs-4 text-primary"><?= number_format($total, 0, ',', '.') ?>đ</span>
+                            <span class="fw-bold fs-4 text-primary"><?= number_format($currentGrandTotal, 0, ',', '.') ?>đ</span>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 py-3 mt-4 rounded-pill fw-bold text-uppercase fs-5">

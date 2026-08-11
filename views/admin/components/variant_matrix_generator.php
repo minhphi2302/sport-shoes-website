@@ -111,7 +111,8 @@
     </div>
 </div>
 <script>
-window.showMatrixNotice = function(msg, type = 'danger') {
+let matrixNoticeTimer = null;
+window.showMatrixNotice = function(msg, type = 'danger', duration = 5000) {
     const alertBox = document.getElementById('matrix-error-alert');
     const textSpan = document.getElementById('matrix-error-text');
     if (alertBox && textSpan) {
@@ -119,12 +120,25 @@ window.showMatrixNotice = function(msg, type = 'danger') {
         alertBox.className = `alert alert-${type} alert-dismissible fade show mb-3`;
         alertBox.style.display = 'block';
         alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (matrixNoticeTimer) {
+            clearTimeout(matrixNoticeTimer);
+        }
+        if (duration > 0) {
+            matrixNoticeTimer = setTimeout(function() {
+                window.hideMatrixNotice();
+            }, duration);
+        }
     }
 };
 
 window.hideMatrixNotice = function() {
     const alertBox = document.getElementById('matrix-error-alert');
     if (alertBox) alertBox.style.display = 'none';
+    if (matrixNoticeTimer) {
+        clearTimeout(matrixNoticeTimer);
+        matrixNoticeTimer = null;
+    }
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -168,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.hideMatrixNotice();
             const commonQty = document.getElementById('common_qty').value.trim();
             if (commonQty === '') {
-                window.showMatrixNotice('Vui lòng nhập số lượng!');
+                window.showMatrixNotice('Vui lòng nhập Số lượng ở Bước 4 trước khi thêm!');
                 document.getElementById('common_qty').focus();
                 return;
             }
@@ -177,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const skuCha = (skuInput ? skuInput.value.trim() : '') || 'SKU';
             const basePrice = basePriceInput ? (parseFloat(basePriceInput.value) || 0) : 0;
             if (isNaN(basePrice) || basePrice <= 0) {
-                window.showMatrixNotice('Vui lòng nhập giá bán mặc định!');
+                window.showMatrixNotice('Vui lòng nhập Giá bán mặc định hợp lệ ở phần thông tin cơ bản trước khi tạo biến thể!');
                 if (basePriceInput) basePriceInput.focus();
                 return;
             }
@@ -198,12 +212,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Kiểm tra giá mẫu không được lớn hơn giá bán mặc định và không được âm
                     if (mPrice > basePrice) {
-                        window.showMatrixNotice('Giá mẫu không được lớn hơn giá bán!');
+                        window.showMatrixNotice('Lỗi: Giá của biến thể mẫu không được phép lớn hơn Giá bán mặc định!');
                         priceInput.focus();
                         hasError = true;
                         return;
                     } else if (mPrice < 0) {
-                        window.showMatrixNotice('Giá mẫu không được âm!');
+                        window.showMatrixNotice('Lỗi: Giá mẫu không được là số âm!');
                         priceInput.focus();
                         hasError = true;
                         return;
@@ -254,19 +268,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Snapshot các row hiện có TRƯỚC KHI thêm mới
-            const existingRowsSnapshot = Array.from(document.querySelectorAll('#variants-table tbody tr'));
-            const proposedVariants = [];
+            let duplicateVariants = [];
 
-            // Sinh và kiểm tra dữ liệu
+            // Sinh dữ liệu
             models.forEach(modelObj => {
                 selectedSizes.forEach(sizeObj => {
                     selectedColors.forEach(colorObj => {
                         if (hasError) return;
 
-                        // Cộng tổng % giảm của size và màu rồi áp dụng 1 lần lên giá mẫu
-                        const totalDiscountPercent = (sizeObj.percent || 0) + (colorObj.percent || 0);
-                        let calculatedPrice = modelObj.price * (1 - totalDiscountPercent / 100);
+                        // Tính giá sau khi giảm giá size
+                        let priceAfterSize = modelObj.price * (1 - (sizeObj.percent / 100));
+                        // Lấy giá sau khi giảm size tính tiếp giảm màu
+                        let calculatedPrice = priceAfterSize * (1 - (colorObj.percent / 100));
                         
                         // Ràng buộc giá biến thể không vượt quá giá bán gốc
                         if (calculatedPrice > basePrice) {
@@ -274,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         if (calculatedPrice <= 0) {
-                            window.showMatrixNotice(`Giá biến thể phải lớn hơn 0. Vui lòng giảm % giảm giá!`);
+                            window.showMatrixNotice(`Lỗi: Giá bán cuối cùng của biến thể (Mẫu: ${modelObj.name || 'Mặc định'}, Size: ${sizeObj.name}, Màu: ${colorObj.name}) phải lớn hơn 0. Vui lòng giảm bớt % giảm giá!`);
                             hasError = true;
                             return;
                         }
@@ -294,8 +307,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Kiểm tra xem biến thể đã tồn tại trong danh sách chưa
                         let isDuplicate = false;
+                        const existingRows = document.querySelectorAll('#variants-table tbody tr');
 
-                        existingRowsSnapshot.forEach(row => {
+                        existingRows.forEach(row => {
                             const rModelInput = row.querySelector('input[name="variant_models[]"]');
                             const rGenderSelect = row.querySelector('select[name="variant_genders[]"]');
                             const rSizeInput = row.querySelector('input[name="variant_raw_sizes[]"]');
@@ -313,68 +327,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             if (rModel === checkModel && rGender === checkGender && rSize === checkSize && rColor === checkColor) {
                                 isDuplicate = true;
+                                row.style.transition = "background-color 0.5s";
+                                row.style.backgroundColor = "#f8d7da";
+                                setTimeout(() => { row.style.backgroundColor = ""; }, 5000);
                             }
                         });
 
-                        if (isDuplicate) {
-                            window.showMatrixNotice(`Biến thể [Mẫu: ${displayModel} - Size: ${sizePart} - Màu: ${colorObj.name}] đã tồn tại trong danh sách. Vui lòng bỏ chọn biến thể này!`);
-                            hasError = true;
-                            return;
-                        }
+                        if (isDuplicate || document.querySelector(`tr[data-key="${key}"]`)) {
+                            duplicateVariants.push(`[${displayModel} - ${genderPart} ${sizePart} - ${colorObj.name}]`);
+                        } else {
+                            const tr = document.createElement('tr');
+                            tr.setAttribute('data-key', key);
 
-                        proposedVariants.push({
-                            key, variantSku, displayModel, genderPart, sizePart, colorName: colorObj.name, price: Math.round(calculatedPrice)
-                        });
+                            tr.innerHTML = `
+                                <td><input type="text" name="variant_skus[]" class="form-control form-control-sm" value="${variantSku}"></td>
+                                <td><input type="text" name="variant_models[]" class="form-control form-control-sm" value="${displayModel}"></td>
+                                <td>
+                                    <select name="variant_genders[]" class="form-select form-select-sm">
+                                        <option value="Nam" ${genderPart === 'Nam' ? 'selected' : ''}>Nam</option>
+                                        <option value="Nữ" ${genderPart === 'Nữ' ? 'selected' : ''}>Nữ</option>
+                                        <option value="Trẻ em" ${genderPart === 'Trẻ em' ? 'selected' : ''}>Trẻ em</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" name="variant_raw_sizes[]" class="form-control form-control-sm" value="${sizePart}"></td>
+                                <td><input type="text" name="variant_colors[]" class="form-control form-control-sm" value="${colorObj.name}"></td>
+                                <td><input type="number" name="variant_prices[]" class="form-control form-control-sm variant-price" value="${Math.round(calculatedPrice)}" min="0"></td>
+                                <td><input type="number" name="variant_qtys[]" class="form-control form-control-sm variant-qty" value="${commonQty}" min="0" required></td>
+                                <td class="text-center"><button type="button" class="btn btn-danger btn-sm btn-remove-variant"><i class="bi bi-trash"></i></button></td>
+                            `;
+                            const tableBody = document.querySelector('#variants-table tbody');
+                            if (tableBody) tableBody.appendChild(tr);
+                        }
                     });
                 });
             });
 
             if (hasError) return;
 
-            // Thêm các biến thể đã hợp lệ vào danh sách
-            proposedVariants.forEach(pv => {
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-key', pv.key);
-
-                tr.innerHTML = `
-                    <td><input type="text" name="variant_skus[]" class="form-control form-control-sm" value="${pv.variantSku}"></td>
-                    <td><input type="text" name="variant_models[]" class="form-control form-control-sm" value="${pv.displayModel}"></td>
-                    <td>
-                        <select name="variant_genders[]" class="form-select form-select-sm">
-                            <option value="Nam" ${pv.genderPart === 'Nam' ? 'selected' : ''}>Nam</option>
-                            <option value="Nữ" ${pv.genderPart === 'Nữ' ? 'selected' : ''}>Nữ</option>
-                            <option value="Trẻ em" ${pv.genderPart === 'Trẻ em' ? 'selected' : ''}>Trẻ em</option>
-                        </select>
-                    </td>
-                    <td><input type="text" name="variant_raw_sizes[]" class="form-control form-control-sm" value="${pv.sizePart}"></td>
-                    <td><input type="text" name="variant_colors[]" class="form-control form-control-sm" value="${pv.colorName}"></td>
-                    <td><input type="number" name="variant_prices[]" class="form-control form-control-sm variant-price" value="${pv.price}" min="0"></td>
-                    <td><input type="number" name="variant_qtys[]" class="form-control form-control-sm variant-qty" value="${commonQty}" min="0" required></td>
-                    <td class="text-center"><button type="button" class="btn btn-danger btn-sm btn-remove-variant"><i class="bi bi-trash"></i></button></td>
-                `;
-                const tableBody = document.querySelector('#variants-table tbody');
-                if (tableBody) tableBody.appendChild(tr);
-            });
-
-            window.showMatrixNotice(`Đã thêm ${proposedVariants.length} biến thể mới!`, 'success');
-
-            // Reset toàn bộ form sau khi thêm thành công
-            // 1. Bỏ chọn tất cả size và color
-            document.querySelectorAll('.chk-size:checked, .chk-color:checked').forEach(cb => cb.checked = false);
-            
-            // 2. Reset % giảm giá của size và color về 0
-            document.querySelectorAll('.size-percent, .color-percent').forEach(input => {
-                input.value = 0;
-            });
-            
-            // 3. Reset số lượng mặc định
-            document.getElementById('common_qty').value = '';
-            
-            // 4. Xóa tất cả mẫu đã thêm (nếu có)
-            const modelsContainer = document.getElementById('models-container');
-            if (modelsContainer) {
-                modelsContainer.innerHTML = '';
+            if (duplicateVariants.length > 0) {
+                window.showMatrixNotice(`Biến thể giày đã tồn tại: ${duplicateVariants.join(', ')}`);
             }
+
+            // Bỏ chọn tất cả sau khi đã ném xuống bảng
+            document.querySelectorAll('.chk-size:checked, .chk-color:checked').forEach(cb => cb.checked = false);
+            document.getElementById('common_qty').value = '';
             
             if (typeof window.updateTotalQuantity === 'function') {
                 window.updateTotalQuantity();

@@ -15,7 +15,10 @@ abstract class Controller
         // Giải nén mảng data thành các biến riêng lẻ
         extract($data);
         
-        $viewPath = __DIR__ . '/../../views/' . $view . '.php';
+        $viewPath = __DIR__ . '/../Views/' . $view . '.php';
+        if (!file_exists($viewPath)) {
+            $viewPath = __DIR__ . '/../../views/' . $view . '.php';
+        }
         
         if (file_exists($viewPath)) {
             require $viewPath;

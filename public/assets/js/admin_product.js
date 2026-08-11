@@ -30,6 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 err.className = 'invalid-feedback fw-bold';
                 err.innerText = message;
                 input.parentElement.appendChild(err);
+
+                // Tự động ẩn lỗi ô nhập sau 5 giây (5000ms)
+                setTimeout(() => {
+                    input.classList.remove('is-invalid');
+                    err.remove();
+                }, 5000);
             };
 
             const name = document.querySelector('input[name="name"]');
@@ -101,14 +107,40 @@ document.addEventListener('DOMContentLoaded', function() {
             const basePriceInput = document.querySelector('input[name="price"]');
             const basePriceVal = basePriceInput ? Number(basePriceInput.value) : 0;
             
-            // Bỏ kiểm tra trùng lặp ở client - để backend xử lý
-            // Backend sẽ:
-            // - Cộng dồn số lượng nếu trùng hoàn toàn (cả % giảm)
-            // - Báo lỗi nếu trùng nhưng % giảm khác
-            // Client chỉ validate format cơ bản
+            const seenVariants = new Set();
 
             variantRows.forEach(row => {
                 if (!isValid) return; // Chỉ báo lỗi đầu tiên
+                
+                // Validate duplicate variants
+                const vModelInput = row.querySelector('input[name="variant_models[]"]');
+                const vGenderInput = row.querySelector('select[name="variant_genders[]"]');
+                const vRawSizeInput = row.querySelector('input[name="variant_raw_sizes[]"]');
+                const vColorInput = row.querySelector('input[name="variant_colors[]"]');
+                
+                const vModel = vModelInput ? vModelInput.value.trim() : 'Mặc định';
+                const vGender = vGenderInput ? vGenderInput.value.trim() : '';
+                const vRawSize = vRawSizeInput ? vRawSizeInput.value.trim() : '';
+                const vColor = vColorInput ? vColorInput.value.trim() : '';
+                
+                const uniqueKey = `${vModel.toLowerCase()}-${vGender.toLowerCase()}-${vRawSize.toLowerCase()}-${vColor.toLowerCase()}`;
+                
+                if (seenVariants.has(uniqueKey)) {
+                    const msg = `Lỗi: Có biến thể bị trùng lặp (Mẫu: ${vModel}, Đối tượng: ${vGender}, Size: ${vRawSize}, Màu: ${vColor}). Không thể lưu!`;
+                    if (typeof window.showMatrixNotice === 'function') {
+                        window.showMatrixNotice(msg);
+                    } else if (variantGlobalError) {
+                        variantGlobalError.innerText = msg;
+                        variantGlobalError.style.display = 'block';
+                    }
+                    isValid = false;
+                    firstInvalid = vModelInput;
+                    row.style.transition = "background-color 0.5s";
+                    row.style.backgroundColor = "#f8d7da"; // highlight red
+                    setTimeout(() => { row.style.backgroundColor = ""; }, 5000);
+                    return;
+                }
+                seenVariants.add(uniqueKey);
                 
                 const vSku = row.querySelector('input[name="variant_skus[]"]');
                 const vPrice = row.querySelector('input[name="variant_prices[]"]');
@@ -117,13 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (vSku && vSku.value.trim().length === 0) {
                     showError(vSku, 'Thiếu SKU');
                 } else if (vPrice && (vPrice.value.trim() === '' || Number(vPrice.value) <= 0)) {
-                    // Nếu giá trống, tự điền bằng giá bán mặc định thay vì báo lỗi
-                    const fallback = basePriceVal > 0 ? basePriceVal : 0;
-                    if (fallback <= 0) {
-                        showError(vPrice, 'Giá phải > 0');
-                    } else {
-                        vPrice.value = fallback;
-                    }
+                    showError(vPrice, 'Giá phải > 0');
                 } else if (vQty && (vQty.value.trim() === '' || Number(vQty.value) < 0 || !Number.isInteger(Number(vQty.value)))) {
                     showError(vQty, 'Sai SL');
                 }
@@ -188,4 +214,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // 4. Tự động ẩn các thông báo alert trên trang sau 5 giây
+    document.querySelectorAll('.alert:not(#matrix-error-alert)').forEach(alertEl => {
+        setTimeout(() => {
+            alertEl.style.transition = 'opacity 0.5s ease-out';
+            alertEl.style.opacity = '0';
+            setTimeout(() => {
+                alertEl.style.display = 'none';
+            }, 500);
+        }, 5000);
+    });
 });
