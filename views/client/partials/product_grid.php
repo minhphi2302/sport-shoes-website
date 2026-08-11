@@ -16,7 +16,8 @@
     <div class="d-flex align-items-center gap-2">
         <label class="form-label mb-0 text-nowrap fs-7 fw-bold text-uppercase">Sắp xếp:</label>
         <select name="sort" class="form-select form-select-sm" form="filterForm" onchange="document.getElementById('filterForm').dispatchEvent(new Event('submit'))">
-            <option value="newest" <?= ($_GET['sort'] ?? '') === 'newest' ? 'selected' : '' ?>>Mới nhất</option>
+            <option value="newest" <?= ($_GET['sort'] ?? 'newest') === 'newest' ? 'selected' : '' ?>>Mới nhất</option>
+            <option value="bestseller" <?= ($_GET['sort'] ?? '') === 'bestseller' ? 'selected' : '' ?>>Bán chạy nhất</option>
             <option value="price_asc" <?= ($_GET['sort'] ?? '') === 'price_asc' ? 'selected' : '' ?>>Giá: Thấp đến Cao</option>
             <option value="price_desc" <?= ($_GET['sort'] ?? '') === 'price_desc' ? 'selected' : '' ?>>Giá: Cao đến Thấp</option>
         </select>

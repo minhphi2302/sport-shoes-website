@@ -47,6 +47,15 @@ class Product extends Model
 
         $whereClause = implode(' AND ', $where);
 
+        // Sắp xếp theo yêu cầu — whitelist để tránh SQL injection
+        $orderBy = match ($filters['sort'] ?? '') {
+            'newest'     => 'p.created_at DESC',
+            'bestseller' => '(SELECT COALESCE(SUM(od.quantity), 0) FROM order_details od INNER JOIN orders o ON od.order_id = o.order_id WHERE od.product_id = p.product_id AND o.status IN ("completed","confirmed")) DESC, p.created_at DESC',
+            'price_asc'  => 'COALESCE(NULLIF(p.sale_price, 0), p.price) ASC',
+            'price_desc' => 'COALESCE(NULLIF(p.sale_price, 0), p.price) DESC',
+            default      => 'p.created_at DESC',
+        };
+
         $sql = "SELECT p.*, c.name as category_name, b.name as brand_name,
                        (SELECT GROUP_CONCAT(DISTINCT size ORDER BY size SEPARATOR ', ') FROM product_variants WHERE product_id = p.product_id) as variant_sizes,
                        (SELECT GROUP_CONCAT(DISTINCT color ORDER BY color SEPARATOR ', ') FROM product_variants WHERE product_id = p.product_id) as variant_colors
@@ -54,7 +63,7 @@ class Product extends Model
                 LEFT JOIN categories c ON p.category_id = c.category_id
                 LEFT JOIN brands b ON p.brand_id = b.brand_id
                 WHERE {$whereClause}
-                ORDER BY p.created_at DESC
+                ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
 
         $stmt = $this->db->prepare($sql);

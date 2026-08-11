@@ -58,6 +58,12 @@ class ProductController extends Controller
         if (!empty($_GET['color'])) {
             $filters['color'] = trim($_GET['color']);
         }
+        // Sắp xếp: newest | bestseller | price_asc | price_desc
+        $allowedSorts = ['newest', 'bestseller', 'price_asc', 'price_desc'];
+        $sort = trim($_GET['sort'] ?? '');
+        if (in_array($sort, $allowedSorts, true)) {
+            $filters['sort'] = $sort;
+        }
 
         $products = $this->productModel->findAllWithFilters($filters, $page, $perPage);
         $totalProducts = $this->productModel->countAllWithFilters($filters);
