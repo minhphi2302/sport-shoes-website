@@ -35,17 +35,26 @@ class OrderController extends Controller
 
         $user = Auth::user();
         $cart = $_SESSION['cart'];
-        $total = 0;
+        $subtotal = 0;
 
         foreach ($cart as $item) {
             $priceToUse = (!empty($item['sale_price']) && $item['sale_price'] < $item['price']) ? $item['sale_price'] : $item['price'];
-            $total += $priceToUse * $item['quantity'];
+            $subtotal += $priceToUse * $item['quantity'];
         }
+
+        $threshold = defined('FREE_COD_THRESHOLD') ? FREE_COD_THRESHOLD : 1000000;
+        $codFeeConfig = defined('COD_FEE') ? COD_FEE : 30000;
+        $shippingFee = ($subtotal >= $threshold) ? 0 : $codFeeConfig;
+        $grandTotal = $subtotal + $shippingFee;
 
         $this->view('client/checkout', [
             'user' => $user,
             'cart' => $cart,
-            'total' => $total
+            'subtotal' => $subtotal,
+            'shippingFee' => $shippingFee,
+            'grandTotal' => $grandTotal,
+            'freeThreshold' => $threshold,
+            'codFeeConfig' => $codFeeConfig
         ]);
     }
 

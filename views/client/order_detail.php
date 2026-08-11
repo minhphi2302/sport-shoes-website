@@ -73,10 +73,28 @@
                 </div>
             </div>
             
+            <?php 
+                $itemsSubtotal = array_sum(array_column($orderDetails, 'subtotal'));
+                $shipFee = (float)($order['shipping_fee'] ?? 0);
+            ?>
             <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4 text-end">
-                    <h5 class="d-inline-block me-3 text-muted">Tổng đơn hàng:</h5>
-                    <span class="fs-4 fw-bold text-primary"><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</span>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tạm tính:</span>
+                        <span class="fw-semibold"><?= number_format($itemsSubtotal, 0, ',', '.') ?>đ</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                        <span class="text-muted">Phí vận chuyển & COD:</span>
+                        <?php if ($shipFee == 0): ?>
+                            <span class="text-success fw-semibold"><i class="bi bi-patch-check-fill me-1"></i>Miễn phí (Freeship)</span>
+                        <?php else: ?>
+                            <span class="fw-semibold text-dark"><?= number_format($shipFee, 0, ',', '.') ?>đ</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold m-0">Tổng thanh toán:</h5>
+                        <span class="fs-4 fw-bold text-primary"><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</span>
+                    </div>
                 </div>
             </div>
         </div>
