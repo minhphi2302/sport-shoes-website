@@ -154,64 +154,13 @@ h1, h2, h3, h4, h5, h6 {
     color: #ffffff;
 }
 
-/* --- Header & Navigation (ANTA Style Clean White Header) --- */
-.top-bar {
-    background-color: #111111;
-    color: #ffffff;
-    font-size: 0.88rem;
-    padding: 9px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    position: relative;
-    z-index: 1020;
-    transition: var(--transition-fast);
-}
-
-.top-bar .announcement-text {
-    color: #ffffff;
-    text-decoration: none;
-    font-size: clamp(0.78rem, 1.8vw, 0.9rem);
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: inline-block;
-    max-width: calc(100% - 60px);
-    transition: var(--transition-fast);
-}
-
-.top-bar .announcement-text:hover {
-    color: var(--anta-red);
-}
-
-.btn-close-topbar {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    border: none;
-    color: #aaaaaa;
-    font-size: 1.1rem;
-    cursor: pointer;
-    padding: 4px 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition-fast);
-}
-
-.btn-close-topbar:hover {
-    color: var(--anta-red);
-    transform: translateY(-50%) scale(1.15);
-}
-
+/* --- Main Navbar --- */
 .navbar-main {
     background-color: #ffffff !important;
     padding: 10px 0;
     border-bottom: 1px solid var(--border-color);
     box-shadow: var(--box-shadow-sm);
+    z-index: 1030; /* ✅ Đảm bảo navbar cao hơn các phần tử khác */
 }
 
 .navbar-brand-logo {
@@ -220,6 +169,7 @@ h1, h2, h3, h4, h5, h6 {
     letter-spacing: 1.5px;
     color: var(--primary-black) !important;
     text-transform: uppercase;
+    z-index: 1031; /* ✅ Logo luôn ở trên cùng */
 }
 
 .navbar-brand-logo span {
@@ -297,6 +247,7 @@ h1, h2, h3, h4, h5, h6 {
     background: #ffffff;
     min-width: 210px;
     animation: fadeInDown 0.22s ease-out;
+    z-index: 1050; /* ✅ Đảm bảo dropdown menu cao hơn navbar */
 }
 
 /* Cầu nối ẩn giúp rê chuột từ tên menu xuống danh mục con không bị mất */
@@ -339,42 +290,47 @@ h1, h2, h3, h4, h5, h6 {
     display: block !important;
 }
 
-.auth-dropdown-menu {
-    min-width: 140px;
+/* ✅ User account dropdown menu - sửa z-index */
+.auth-dropdown-menu, 
+.dropdown-menu {
+    min-width: 180px;
     padding: 6px 0;
-    left: 50% !important;
-    right: auto !important;
-    top: 100%;
-    transform: translateX(-50%);
-    border-radius: 6px;
+    border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    animation: fadeInDownCenter 0.2s ease-out forwards;
+    animation: fadeInDown 0.2s ease-out forwards;
+    z-index: 1055; /* ✅ Cao hơn custom-dropdown-menu */
+    border: 1px solid #e0e0e0;
 }
 
-@keyframes fadeInDownCenter {
-    from {
-        opacity: 0;
-        transform: translate(-50%, 8px);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, 0);
-    }
-}
-
-.auth-dropdown-menu .dropdown-item {
+.auth-dropdown-menu .dropdown-item, 
+.dropdown-menu .dropdown-item {
     font-size: 0.85rem;
     padding: 8px 16px !important;
     font-weight: 500;
     text-align: left !important;
     white-space: nowrap;
     transition: var(--transition-fast);
+    color: #222222;
 }
 
-.auth-dropdown-menu .dropdown-item:hover {
-    padding-left: 16px !important;
+.auth-dropdown-menu .dropdown-item:hover, 
+.dropdown-menu .dropdown-item:hover {
     background-color: #f8f9fa;
-    color: var(--anta-red);
+    color: var(--anta-red) !important;
+}
+
+/* ✅ Form trong dropdown không bị lỗi style */
+.dropdown-menu form {
+    margin: 0;
+}
+
+.dropdown-menu .dropdown-item.text-danger {
+    color: #dc3545 !important;
+}
+
+.dropdown-menu .dropdown-item.text-danger:hover {
+    background-color: #fff5f5;
+    color: #dc3545 !important;
 }
 
 @media (min-width: 992px) {
@@ -662,10 +618,41 @@ h1, h2, h3, h4, h5, h6 {
     height: 100%;
     object-fit: cover;
     transition: transform 0.4s ease;
+    /* ✅ Loại bỏ filter blur gây ảnh mờ */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
 .product-card:hover .product-img-wrapper img {
     transform: scale(1.06);
+}
+
+/* ✅ Style cho ảnh sản phẩm trong home và product list - KHÔNG MỜ */
+.product-img-fixed, 
+.card-img-top {
+    width: 100% !important;
+    height: 300px !important;
+    object-fit: cover !important;
+    object-position: center;
+    /* Tối ưu rendering để không bị mờ */
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges !important;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    /* ✅ Thêm filter để tăng độ sắc nét, tránh mờ */
+    filter: contrast(1.05) brightness(1.02);
+}
+
+/* ✅ Ảnh trong giỏ hàng và checkout không bị mờ/đen */
+.cart img, .checkout img, 
+img[alt][src*="product"], 
+img[src*="uploads/products/"] {
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges !important;
+    filter: contrast(1.05) brightness(1.02) !important;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 .product-actions-overlay {

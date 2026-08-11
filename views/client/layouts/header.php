@@ -1,7 +1,9 @@
 <?php
-require_once dirname(__DIR__, 3) . '/app/bootstrap.php';
-
 use App\Core\Auth;
+
+// Ensure session is initialized
+Auth::initSession();
+
 $isLoggedIn = Auth::check();
 $user = Auth::user();
 $cartCount = isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'quantity')) : 0;

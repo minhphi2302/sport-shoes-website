@@ -1,4 +1,7 @@
-<?php require_once __DIR__ . '/layouts/header.php'; ?>
+<?php 
+require_once dirname(__DIR__, 2) . '/bootstrap.php';
+require_once __DIR__ . '/layouts/header.php'; 
+?>
 
 <!-- Hero Section -->
 <section class="bg-primary text-white py-5 mb-5">

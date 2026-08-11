@@ -22,6 +22,8 @@ $router->post('/logout',         [App\Controllers\AuthController::class, 'logout
 
 // ── Profile ───────────────────────────────────────────────────
 $router->get('/profile',                 [App\Controllers\ProfileController::class, 'index']);
+$router->get('/account',                 [App\Controllers\ProfileController::class, 'index']); // Alias cho /profile
+$router->post('/profile/update',         [App\Controllers\ProfileController::class, 'updateInfo']);
 $router->post('/profile/password',       [App\Controllers\ProfileController::class, 'updatePassword']);
 $router->post('/profile/delete',         [App\Controllers\ProfileController::class, 'deleteAccount']);
 
