@@ -32,8 +32,29 @@ class Product extends Model
             $params['search'] = "%{$filters['search']}%";
             $params['search_exact'] = $filters['search'];
         }
+        if (!empty($filters['gender'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.size LIKE :gender)";
+            $params['gender'] = $filters['gender'] . ' - %';
+        }
+        if (!empty($filters['size'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.size LIKE :size)";
+            $params['size'] = '% - ' . $filters['size'];
+        }
+        if (!empty($filters['color'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.color = :color)";
+            $params['color'] = $filters['color'];
+        }
 
         $whereClause = implode(' AND ', $where);
+
+        // Sắp xếp theo yêu cầu — whitelist để tránh SQL injection
+        $orderBy = match ($filters['sort'] ?? '') {
+            'newest' => 'p.created_at DESC',
+            'bestseller' => '(SELECT COALESCE(SUM(od.quantity), 0) FROM order_details od INNER JOIN orders o ON od.order_id = o.order_id WHERE od.product_id = p.product_id AND o.status IN ("completed","confirmed")) DESC, p.created_at DESC',
+            'price_asc' => 'COALESCE(NULLIF(p.sale_price, 0), p.price) ASC',
+            'price_desc' => 'COALESCE(NULLIF(p.sale_price, 0), p.price) DESC',
+            default => 'p.created_at DESC',
+        };
 
         $sql = "SELECT p.*, c.name as category_name, b.name as brand_name,
                        (SELECT GROUP_CONCAT(DISTINCT size ORDER BY size SEPARATOR ', ') FROM product_variants WHERE product_id = p.product_id) as variant_sizes,
@@ -42,7 +63,7 @@ class Product extends Model
                 LEFT JOIN categories c ON p.category_id = c.category_id
                 LEFT JOIN brands b ON p.brand_id = b.brand_id
                 WHERE {$whereClause}
-                ORDER BY p.created_at DESC
+                ORDER BY {$orderBy}
                 LIMIT :limit OFFSET :offset";
 
         $stmt = $this->db->prepare($sql);
@@ -78,13 +99,26 @@ class Product extends Model
             $params['search_exact'] = $filters['search'];
         }
 
+        if (!empty($filters['gender'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.product_id AND pv.size LIKE :gender)";
+            $params['gender'] = $filters['gender'] . ' - %';
+        }
+        if (!empty($filters['size'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.product_id AND pv.size LIKE :size)";
+            $params['size'] = '% - ' . $filters['size'];
+        }
+        if (!empty($filters['color'])) {
+            $where[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.product_id AND pv.color = :color)";
+            $params['color'] = $filters['color'];
+        }
+
         $whereClause = implode(' AND ', $where);
 
         $sql = "SELECT COUNT(*) FROM {$this->table} WHERE {$whereClause}";
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return (int)$stmt->fetchColumn();
+        return (int) $stmt->fetchColumn();
     }
 
     public function getFeatured(int $limit = 4): array
@@ -105,7 +139,7 @@ class Product extends Model
     {
         $sql = "SELECT * FROM {$this->table} WHERE status = 'active' ORDER BY created_at DESC LIMIT :limit";
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
     }
@@ -113,14 +147,14 @@ class Product extends Model
     public function saveVariants(int $productId, array $skus, array $models, array $sizes, array $colors, array $prices, array $qtys): void
     {
         $product = $this->findById($productId);
-        $basePrice = $product ? (float)$product['price'] : 0;
-        
+        $basePrice = $product ? (float) $product['price'] : 0;
+
         // 1. Lấy variants hiện có từ DB
         $existingVariants = $this->getVariants($productId);
         $existingMap = [];
         foreach ($existingVariants as $ev) {
             $key = trim($ev['model']) . '|' . trim($ev['size']) . '|' . trim($ev['color']);
-            $evPrice = (float)$ev['price'];
+            $evPrice = (float) $ev['price'];
             $existingMap[$key] = [
                 'variant_id' => $ev['variant_id'],
                 'sku' => $ev['sku'],
@@ -128,25 +162,25 @@ class Product extends Model
                 'size' => $ev['size'],
                 'color' => $ev['color'],
                 'price' => $evPrice,
-                'quantity' => (int)$ev['quantity']
+                'quantity' => (int) $ev['quantity']
             ];
         }
-        
+
         // 2. Chuẩn hóa variants mới từ form
         $newVariants = [];
         for ($i = 0; $i < count($sizes); $i++) {
             $model = trim($models[$i] ?? 'Mặc định');
             $size = trim($sizes[$i]);
             $color = trim($colors[$i]);
-            $price = isset($prices[$i]) && $prices[$i] !== '' ? (float)$prices[$i] : null;
-            $qty = (int)$qtys[$i];
+            $price = isset($prices[$i]) && $prices[$i] !== '' ? (float) $prices[$i] : null;
+            $qty = (int) $qtys[$i];
             $sku = mb_strtoupper(trim($skus[$i] ?? ''), 'UTF-8');
-            
+
             // Giới hạn giá không vượt giá gốc
             if ($price !== null && $price > $basePrice) {
                 $price = $basePrice;
             }
-            
+
             if ($model !== '' && $size !== '' && $color !== '' && $qty >= 0) {
                 $key = $model . '|' . $size . '|' . $color;
                 $newVariants[] = [
@@ -160,7 +194,7 @@ class Product extends Model
                 ];
             }
         }
-        
+
         // 3. Kiểm tra trùng lặp TRONG form submit
         // Business rule: CHỈ CHO PHÉP thêm biến thể nếu hoàn toàn mới (không trùng model+size+màu)
         // Nếu trùng → BÁO LỖI, KHÔNG cộng dồn
@@ -176,16 +210,16 @@ class Product extends Model
             }
             $seenInForm[$key] = $nv;
         }
-        
+
         // 4. Kiểm tra trùng với variants ĐÃ TỒN TẠI trong DB
         $finalVariants = [];
-        
+
         foreach ($seenInForm as $key => $newVar) {
             if (isset($existingMap[$key])) {
                 // Biến thể ĐÃ TỒN TẠI trong DB → Cho phép CẬP NHẬT (giá, số lượng, SKU)
                 // Đây là trường hợp EDIT biến thể hiện có, không phải thêm mới
                 $existingVar = $existingMap[$key];
-                
+
                 $finalVariants[$key] = [
                     'variant_id' => $existingVar['variant_id'],
                     'sku' => $newVar['sku'] ?? $existingVar['sku'],
@@ -209,7 +243,7 @@ class Product extends Model
                 ];
             }
         }
-        
+
         // 5. Xóa các variants KHÔNG còn trong form (bị user xóa khỏi danh sách)
         foreach ($existingMap as $key => $ev) {
             if (!isset($finalVariants[$key])) {
@@ -217,17 +251,17 @@ class Product extends Model
                 $deleteStmt->execute(['id' => $ev['variant_id']]);
             }
         }
-        
+
         // 6. INSERT hoặc UPDATE variants
         $insertSql = "INSERT INTO product_variants (product_id, sku, model, size, color, price, quantity) 
                       VALUES (:product_id, :sku, :model, :size, :color, :price, :quantity)";
         $insertStmt = $this->db->prepare($insertSql);
-        
+
         $updateSql = "UPDATE product_variants 
                       SET sku = :sku, model = :model, size = :size, color = :color, price = :price, quantity = :quantity
                       WHERE id = :variant_id";
         $updateStmt = $this->db->prepare($updateSql);
-        
+
         $totalQty = 0;
         foreach ($finalVariants as $variant) {
             if ($variant['is_update']) {
@@ -255,7 +289,7 @@ class Product extends Model
             }
             $totalQty += $variant['quantity'];
         }
-        
+
         // 7. Cập nhật tổng số lượng vào bảng products
         $updateProductStmt = $this->db->prepare("UPDATE products SET quantity = :qty WHERE product_id = :id");
         $updateProductStmt->execute(['qty' => $totalQty, 'id' => $productId]);
@@ -293,7 +327,7 @@ class Product extends Model
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
-        return (int)$stmt->fetchColumn() > 0;
+        return (int) $stmt->fetchColumn() > 0;
     }
 
     public function create(array $data): int|false
@@ -305,7 +339,7 @@ class Product extends Model
 
         $sql = 'INSERT INTO products (sku, name, description, category_id, brand_id, price, sale_price, quantity, image_url, created_at, updated_at) 
                 VALUES (:sku, :name, :description, :category_id, :brand_id, :price, :sale_price, :quantity, :image_url, NOW(), NOW())';
-        
+
         $stmt = $this->db->prepare($sql);
         $success = $stmt->execute([
             'sku' => $data['sku'],
@@ -319,7 +353,7 @@ class Product extends Model
             'image_url' => $data['image_url'] ?? null
         ]);
 
-        return $success ? (int)$this->db->lastInsertId() : false;
+        return $success ? (int) $this->db->lastInsertId() : false;
     }
 
     public function update(int $id, array $data): bool
@@ -338,7 +372,7 @@ class Product extends Model
                 price = :price, 
                 sale_price = :sale_price,
                 quantity = :quantity';
-        
+
         $params = [
             'sku' => $data['sku'],
             'name' => $data['name'],
@@ -366,7 +400,7 @@ class Product extends Model
     {
         // Get product to find image
         $product = $this->findById($id);
-        
+
         $stmt = $this->db->prepare('DELETE FROM products WHERE product_id = :id');
         $success = $stmt->execute(['id' => $id]);
 
@@ -386,15 +420,15 @@ class Product extends Model
             throw new ValidationException('sku', 'Mã sản phẩm đã tồn tại');
         }
 
-        if ((float)$data['price'] <= 0) {
+        if ((float) $data['price'] <= 0) {
             throw new ValidationException('price', 'Giá bán phải lớn hơn 0');
         }
 
-        if (!empty($data['sale_price']) && (float)$data['sale_price'] > (float)$data['price']) {
+        if (!empty($data['sale_price']) && (float) $data['sale_price'] > (float) $data['price']) {
             throw new ValidationException('sale_price', 'Giá khuyến mãi không được lớn hơn giá bán');
         }
 
-        if ((int)$data['quantity'] < 0) {
+        if ((int) $data['quantity'] < 0) {
             throw new ValidationException('quantity', 'Tồn kho không được âm');
         }
     }

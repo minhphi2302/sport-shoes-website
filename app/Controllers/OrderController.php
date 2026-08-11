@@ -33,19 +33,40 @@ class OrderController extends Controller
             $this->redirect('/cart');
         }
 
-        $user = Auth::user();
-        $cart = $_SESSION['cart'];
-        $total = 0;
+        $user    = Auth::user();
+        $cartRaw = $_SESSION['cart'] ?? [];
+        $cartItems = [];
+        $totalAmount = 0;
 
-        foreach ($cart as $item) {
-            $priceToUse = (!empty($item['sale_price']) && $item['sale_price'] < $item['price']) ? $item['sale_price'] : $item['price'];
-            $total += $priceToUse * $item['quantity'];
+        foreach ($cartRaw as $key => $item) {
+            $priceToUse = (!empty($item['sale_price']) && $item['sale_price'] < $item['price'])
+                ? $item['sale_price']
+                : $item['price'];
+            $totalAmount += $priceToUse * $item['quantity'];
+            $cartItems[$key] = $item;
+        }
+
+        $shippingFee = ($totalAmount >= 500000) ? 0 : 30000;
+        $finalAmount = $totalAmount + $shippingFee;
+
+        // Lấy thông tin hồ sơ người dùng từ DB để tự điền vào form
+        $userProfile = null;
+        try {
+            $pdo  = \App\Core\Database::getInstance();
+            $stmt = $pdo->prepare('SELECT name, phone, email, address FROM users WHERE user_id = :id');
+            $stmt->execute([':id' => Auth::id()]);
+            $userProfile = $stmt->fetch(\PDO::FETCH_ASSOC);
+        } catch (\Throwable $e) {
+            // Không có dữ liệu, để form trống
         }
 
         $this->view('client/checkout', [
-            'user' => $user,
-            'cart' => $cart,
-            'total' => $total
+            'user'        => $user,
+            'cartItems'   => $cartItems,
+            'totalAmount' => $totalAmount,
+            'shippingFee' => $shippingFee,
+            'finalAmount' => $finalAmount,
+            'userProfile' => $userProfile,
         ]);
     }
 
@@ -66,24 +87,26 @@ class OrderController extends Controller
             $this->redirect('/cart');
         }
 
-        $userId = Auth::id();
-        $name = trim($_POST['name'] ?? '');
-        $phone = trim($_POST['phone'] ?? '');
-        $address = trim($_POST['address'] ?? '');
+        $userId        = Auth::id();
+        $name          = trim($_POST['recipient_name']  ?? '');
+        $phone         = trim($_POST['recipient_phone'] ?? '');
+        $streetAddress = trim($_POST['street_address']  ?? '');
+        $wardCity      = trim($_POST['ward_district_city'] ?? '');
+        $address       = $streetAddress . ($wardCity ? ', ' . $wardCity : '');
         $paymentMethod = $_POST['payment_method'] ?? 'COD';
-        $notes = trim($_POST['notes'] ?? '');
+        $notes         = trim($_POST['notes'] ?? '');
 
-        if (empty($name) || empty($phone) || empty($address)) {
-            $_SESSION['error'] = 'Vui lòng nhập đầy đủ tên, số điện thoại và địa chỉ giao hàng.';
+        if (empty($name) || empty($phone) || empty($streetAddress)) {
+            $_SESSION['checkout_error'] = 'Vui lòng nhập đầy đủ tên, số điện thoại và địa chỉ giao hàng.';
             $this->redirect('/checkout');
         }
 
         $shippingInfo = [
-            'name' => $name,
-            'phone' => $phone,
-            'address' => $address,
+            'name'           => $name,
+            'phone'          => $phone,
+            'address'        => $address,
             'payment_method' => $paymentMethod,
-            'notes' => $notes
+            'notes'          => $notes,
         ];
 
         try {

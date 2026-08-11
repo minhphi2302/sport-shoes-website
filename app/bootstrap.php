@@ -23,3 +23,9 @@ if (!class_exists('App\Core\Auth')) {
         \App\Core\Env::load($envFile);
     }
 }
+
+if (!function_exists('base_url')) {
+    function base_url($path = '') {
+        return rtrim($_ENV['APP_URL'] ?? '', '/') . '/' . ltrim($path, '/');
+    }
+}

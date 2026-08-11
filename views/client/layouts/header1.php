@@ -79,13 +79,13 @@
     </script>
 
     <nav class="navbar navbar-expand-lg navbar-main sticky-top">
-        <?php \App\Core\Auth::initSession();
+        <?php
         // Lấy dữ liệu danh mục và thương hiệu từ DB
         $categoryModel = new \App\Models\Category();
-        $categories = $categoryModel->all();
+        $categories = $categoryModel->getAllCategories();
 
         $brandModel = new \App\Models\Brand();
-        $brands = $brandModel->all();
+        $brands = $brandModel->getAllBrands();
         ?>
         <div class="container">
             <!-- Brand Logo Image -->
@@ -107,7 +107,7 @@
                         <a class="nav-link nav-link-custom <?= ($currentPage ?? '') === 'home' ? 'active' : '' ?>"
                             href="<?= base_url('/') ?>">Trang chủ</a>
                     </li>
-                    <?php \App\Core\Auth::initSession();
+                    <?php
                     $isProducts = ($currentPage ?? '') === 'products' && empty($_GET['category_id']) && empty($_GET['brand_id']);
                     $isCategory = !empty($_GET['category_id']);
                     $isBrand = !empty($_GET['brand_id']);
@@ -131,12 +131,12 @@
                             Danh mục<i class="fa-solid fa-chevron-down ms-1 dropdown-icon"></i>
                         </a>
                         <ul class="dropdown-menu custom-dropdown-menu">
-                            <?php \App\Core\Auth::initSession(); foreach ($categories as $cat): ?>
+                            <?php foreach ($categories as $cat): ?>
                                 <li><a class="dropdown-item"
                                         href="<?= base_url('products?category_id=' . $cat['category_id']) ?>">
                                         <?= htmlspecialchars($cat['name']) ?>
                                     </a></li>
-                            <?php \App\Core\Auth::initSession(); endforeach; ?>
+                            <?php endforeach; ?>
                         </ul>
                     </li>
                     <li class="nav-item dropdown dropdown-hover">
@@ -145,12 +145,12 @@
                             Thương hiệu <i class="fa-solid fa-chevron-down ms-1 dropdown-icon"></i>
                         </a>
                         <ul class="dropdown-menu custom-dropdown-menu">
-                            <?php \App\Core\Auth::initSession(); foreach ($brands as $brand): ?>
+                            <?php foreach ($brands as $brand): ?>
                                 <li><a class="dropdown-item"
                                         href="<?= base_url('products?brand_id=' . $brand['brand_id']) ?>">
                                         <?= htmlspecialchars($brand['name']) ?>
                                     </a></li>
-                            <?php \App\Core\Auth::initSession(); endforeach; ?>
+                            <?php endforeach; ?>
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -211,35 +211,34 @@
 
                     <!-- User Account / Auth Hover Dropdown -->
                     <div class="dropdown dropdown-hover d-inline-block position-relative ms-1">
-                        <?php \App\Core\Auth::initSession(); if (\App\Core\Auth::check()): ?>
+                        <?php if (isset($_SESSION['user'])): ?>
                             <a href="<?= base_url('account') ?>" class="header-icon-link dropdown-toggle" title="Tài khoản">
                                 <i class="fa-regular fa-user"></i>
                             </a>
-                        <?php \App\Core\Auth::initSession(); else: ?>
+                        <?php else: ?>
                             <a href="<?= base_url('login') ?>" class="header-icon-link dropdown-toggle"
                                 title="Tài khoản / Đăng nhập">
                                 <i class="fa-regular fa-user"></i>
                             </a>
-                        <?php \App\Core\Auth::initSession(); endif; ?>
+                        <?php endif; ?>
 
                         <ul class="dropdown-menu custom-dropdown-menu auth-dropdown-menu">
-                            <?php \App\Core\Auth::initSession(); if (\App\Core\Auth::check()): ?>
+                            <?php if (isset($_SESSION['user'])): ?>
                                 <li class="px-3 py-1 border-bottom mb-1 text-start">
                                     <div class="fw-bold text-dark small">
-                                        <?= htmlspecialchars(\App\Core\Auth::user()['name']) ?>
+                                        <?= htmlspecialchars($_SESSION['user']['name']) ?>
                                     </div>
                                 </li>
                                 <li><a class="dropdown-item text-start" href="<?= base_url('account') ?>">Tài khoản</a></li>
                                 <li><a class="dropdown-item text-start text-danger" href="<?= base_url('logout') ?>">Đăng
                                         xuất</a></li>
-                            <?php \App\Core\Auth::initSession(); else: ?>
+                            <?php else: ?>
                                 <li><a class="dropdown-item" href="<?= base_url('login') ?>">Đăng nhập</a></li>
                                 <li><a class="dropdown-item" href="<?= base_url('register') ?>">Đăng ký</a></li>
-                            <?php \App\Core\Auth::initSession(); endif; ?>
+                            <?php endif; ?>
                         </ul>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
-

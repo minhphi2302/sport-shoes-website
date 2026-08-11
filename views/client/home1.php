@@ -87,14 +87,14 @@ require __DIR__ . '/layouts/header.php';
                             $logo = !empty($brand['logo_url']) ? trim($brand['logo_url']) : '';
                             // Nếu người dùng chỉ nhập tên file (ví dụ: nike.jpg) thay vì đường dẫn đầy đủ
                             if (!empty($logo) && strpos($logo, '/') === false) {
-                                $logo = 'image/brand/' . $logo;
+                                $logo = 'public/image/brand/' . $logo;
                             }
 
                             if (empty($logo)) {
                                 $brandSlug = strtolower(str_replace(' ', '', $brand['name']));
-                                $jpgPath = 'image/brand/' . $brandSlug . '.jpg';
-                                $pngPath = 'image/brand/' . $brandSlug . '.png';
-                                if (file_exists(__DIR__ . '/../../public/' . $jpgPath)) {
+                                $jpgPath = 'public/image/brand/' . $brandSlug . '.jpg';
+                                $pngPath = 'public/image/brand/' . $brandSlug . '.png';
+                                if (file_exists(__DIR__ . '/../../../' . $jpgPath)) {
                                     $logo = $jpgPath;
                                 } else {
                                     $logo = $pngPath; // Default fallback to png
@@ -185,13 +185,10 @@ require __DIR__ . '/layouts/header.php';
                                             </div>
                                             <?php
                                             $fallbackImg = 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif';
-                                            $imgSrc = !empty($product['image_url']) ? 'uploads/' . $product['image_url'] : $fallbackImg;
-                                            if (!file_exists(__DIR__ . '/../../public/' . $imgSrc)) {
-                                                $imgSrc = $fallbackImg;
-                                            }
-                                        ?>
+                                            $imgSrc = !empty($product['image_url']) ? $product['image_url'] : $fallbackImg;
+                                            ?>
                                             <div class="position-relative">
-                                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>"
+                                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>"
                                                     class="text-decoration-none d-block">
                                                     <div style="background-color: #f8f9fa;" class="text-center p-2">
                                                         <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" class="img-fluid"
@@ -200,7 +197,7 @@ require __DIR__ . '/layouts/header.php';
                                                     </div>
                                                 </a>
                                                 <div class="product-center-action">
-                                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>"
+                                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>"
                                                         class="search-icon-btn" title="Xem chi tiết"><i
                                                             class="fa-solid fa-magnifying-glass"></i></a>
                                                 </div>
@@ -243,7 +240,7 @@ require __DIR__ . '/layouts/header.php';
                                                 <?php endif; ?>
                                             </div>
                                             <div class="card-body px-2 py-3 text-start">
-                                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>"
+                                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>"
                                                     class="text-dark text-decoration-none fw-semibold d-block mb-1"
                                                     style="font-size: 0.95rem; line-height: 1.4;"><?= htmlspecialchars($product['name']) ?></a>
                                                 <?php if (!empty($product['sku'])): ?>
@@ -348,17 +345,14 @@ require __DIR__ . '/layouts/header.php';
 
                                     <?php
                                     $fallbackImg = 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif';
-                                    $imgSrc = !empty($product['image_url']) ? 'uploads/' . $product['image_url'] : $fallbackImg;
-                                    if (!file_exists(__DIR__ . '/../../public/' . $imgSrc)) {
-                                        $imgSrc = $fallbackImg;
-                                    }
-                                ?>
-                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>">
+                                    $imgSrc = !empty($product['image_url']) ? $product['image_url'] : $fallbackImg;
+                                    ?>
+                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>">
                                         <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>"
                                             alt="<?= htmlspecialchars($product['name']) ?>">
                                     </a>
                                     <div class="product-center-action">
-                                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>"
+                                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>"
                                             class="search-icon-btn" title="Xem chi tiết"><i
                                                 class="fa-solid fa-magnifying-glass"></i></a>
                                     </div>
@@ -398,7 +392,7 @@ require __DIR__ . '/layouts/header.php';
                                 </div>
 
                                 <div class="product-body">
-                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>"
+                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>"
                                         class="product-title mb-1"><?= htmlspecialchars($product['name']) ?></a>
                                     <?php if (!empty($product['sku'])): ?>
                                         <div class="text-muted mb-2" style="font-size: 0.85rem;">
@@ -441,12 +435,12 @@ require __DIR__ . '/layouts/header.php';
                                         <div class="badge-ribbon badge-ribbon-red">SALE</div>
                                     <?php endif; ?>
 
-                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $dp['id'] ?>"
+                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $dp['id'] ?>"
                                         class="d-block position-absolute w-100 h-100" style="top:0; left:0; z-index: 5;">
                                         <img src="<?= $dp['img'] ?>" alt="<?= $dp['name'] ?>">
                                     </a>
                                     <div class="product-actions-overlay">
-                                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $dp['id'] ?>"
+                                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $dp['id'] ?>"
                                             class="btn-action-icon" title="Xem chi tiết"><i
                                                 class="fa-solid fa-magnifying-glass"></i></a>
                                     </div>
@@ -486,7 +480,7 @@ require __DIR__ . '/layouts/header.php';
                                 </div>
                                 <div class="product-body">
                                     <span class="product-brand-tag"><?= $dp['brand'] ?></span>
-                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $dp['id'] ?>"
+                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $dp['id'] ?>"
                                         class="product-title mb-1"><?= $dp['name'] ?></a>
                                     <?php if (!empty($dp['sku'])): ?>
                                         <div class="text-muted mb-2" style="font-size: 0.85rem;"><?= htmlspecialchars($dp['sku']) ?>
@@ -618,4 +612,3 @@ require __DIR__ . '/layouts/header.php';
 <?php
 require __DIR__ . '/layouts/footer.php';
 ?>
-

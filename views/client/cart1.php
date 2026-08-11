@@ -78,11 +78,11 @@ require __DIR__ . '/layouts/header.php';
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="<?= htmlspecialchars(base_url((!empty($item['image_url']) ? 'uploads/' . $item['image_url'] : 'uploads/default-product.jpg'))) ?>" width="70"
+                                                <img src="<?= htmlspecialchars(base_url($item['image_url'])) ?>" width="70"
                                                     height="70" class="rounded me-3 object-fit-cover border"
                                                     alt="<?= htmlspecialchars($item['name']) ?>">
                                                 <div>
-                                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $item['product_id'] ?>"
+                                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $item['product_id'] ?>"
                                                         class="fw-bold text-dark text-decoration-none d-block mb-1"><?= htmlspecialchars($item['name']) ?>
                                                         <span class="text-muted fw-normal" style="font-size: 0.85rem;">(SKU:
                                                             <?= htmlspecialchars($item['sku'] ?? 'N/A') ?>)</span></a>
@@ -128,12 +128,9 @@ require __DIR__ . '/layouts/header.php';
                                         </td>
                                         <td class="fw-bold text-center"><?= number_format($item['price'], 0, ',', '.') ?>đ</td>
                                         <td class="text-center">
-                                            <form method="POST" action="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/remove" style="display:inline;">
-                                                <input type="hidden" name="cart_key" value="<?= htmlspecialchars($item['cart_key']) ?>">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
-                                                    <i class="fa-solid fa-trash-can"></i>
-                                                </button>
-                                            </form>
+                                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/remove/<?= $item['cart_key'] ?>"
+                                                class="btn btn-sm btn-outline-danger" title="Xóa"><i
+                                                    class="fa-solid fa-trash-can"></i></a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -213,41 +210,39 @@ require __DIR__ . '/layouts/header.php';
         const attachListeners = () => {
             const updateBtns = document.querySelectorAll('.cart-update-btn');
             updateBtns.forEach(btn => {
-                btn.addEventListener('change', function () {
+                btn.addEventListener('change', function (e) {
                     const form = document.getElementById('updateCartForm');
-                    if (!form) return;
                     const formData = new FormData(form);
 
                     fetch(form.action, {
                         method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
                         body: formData
                     })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Update badge count in header
-                        const badge = document.querySelector('.badge-badge-count');
-                        if (badge && data.cart_count !== undefined) {
-                            badge.textContent = data.cart_count;
-                        }
-                        // Reload cart content from server
-                        return fetch(window.location.href, { headers: { 'X-Reload': '1' } });
-                    })
-                    .then(res => res.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
 
-                        const newCartContent = doc.querySelector('.container.pb-5');
-                        const oldCartContent = document.querySelector('.container.pb-5');
-                        if (newCartContent && oldCartContent) {
-                            oldCartContent.innerHTML = newCartContent.innerHTML;
-                            attachListeners(); // Re-attach after DOM update
-                        }
-                    })
-                    .catch(err => console.error('Error updating cart:', err));
+                            // Replace the cart container content
+                            const newCartContent = doc.querySelector('.container.pb-5');
+                            const oldCartContent = document.querySelector('.container.pb-5');
+                            if (newCartContent && oldCartContent) {
+                                oldCartContent.innerHTML = newCartContent.innerHTML;
+                            }
+
+                            // Replace the badge count in the header
+                            const newBadge = doc.querySelector('.badge-badge-count');
+                            const oldBadge = document.querySelector('.badge-badge-count');
+                            if (newBadge && oldBadge) {
+                                oldBadge.innerHTML = newBadge.innerHTML;
+                            }
+
+                            // Re-attach listeners to the newly rendered DOM elements
+                            attachListeners();
+                        })
+                        .catch(err => {
+                            console.error('Error updating cart:', err);
+                        });
                 });
             });
         };
@@ -259,4 +254,3 @@ require __DIR__ . '/layouts/header.php';
 <?php
 require __DIR__ . '/layouts/footer.php';
 ?>
-

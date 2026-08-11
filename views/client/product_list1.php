@@ -83,14 +83,16 @@ require __DIR__ . '/layouts/header.php';
                             <label class="form-check-label" for="gender_all">Tất cả</label>
                         </div>
                         <?php
-                        $genders = $availableGenders ?? ['Nam', 'Nữ', 'Trẻ em'];
+                        $genders = $availableGenders ?? ['male', 'female'];
+                        $genderLabels = ['male' => 'Nam', 'female' => 'Nữ'];
                         foreach ($genders as $g):
+                            $label = $genderLabels[$g] ?? ucfirst($g);
                             ?>
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="radio" name="gender" value="<?= $g ?>"
-                                    id="gender_<?= md5((string)$g) ?>" <?= (isset($_GET['gender']) && $_GET['gender'] == $g) ? 'checked' : '' ?> onchange="this.form.submit()">
-                                <label class="form-check-label" for="gender_<?= md5((string)$g) ?>">
-                                    <?= htmlspecialchars((string)$g) ?>
+                                    id="gender_<?= $g ?>" <?= (isset($_GET['gender']) && $_GET['gender'] == $g) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                <label class="form-check-label" for="gender_<?= $g ?>">
+                                    <?= $label ?>
                                 </label>
                             </div>
                         <?php endforeach; ?>
@@ -242,4 +244,3 @@ require __DIR__ . '/layouts/header.php';
 
 
 <?php require __DIR__ . '/layouts/footer.php'; ?>
-

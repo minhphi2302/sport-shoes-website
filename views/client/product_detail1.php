@@ -28,10 +28,7 @@ require __DIR__ . '/layouts/header.php';
                 <!-- Ảnh lớn chính -->
                 <?php
                 $fallbackImg = 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif';
-                $imgSrc = !empty($product['image_url']) ? 'uploads/' . $product['image_url'] : $fallbackImg;
-                if (!file_exists(__DIR__ . '/../../public/' . $imgSrc)) {
-                    $imgSrc = $fallbackImg;
-                }
+                $imgSrc = !empty($product['image_url']) ? $product['image_url'] : $fallbackImg;
                 ?>
                 <img id="mainProductImg" src="<?= htmlspecialchars(base_url($imgSrc)) ?>" class="main-img"
                     alt="<?= htmlspecialchars($product['name'] ?? 'Product') ?>">
@@ -94,41 +91,20 @@ require __DIR__ . '/layouts/header.php';
                 <!-- Form chọn Size, Màu & Số lượng -->
                 <form id="addToCartForm" action="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add" method="POST">
                     <input type="hidden" name="product_id" value="<?= $product['product_id'] ?? 1 ?>">
-                    <input type="hidden" name="variant_id" id="variantIdInput" value="">
 
                     <!-- Chọn Size -->
                     <div class="mb-4">
                         <label class="form-label fw-bold text-uppercase fs-7 d-block">Chọn Kích thước (Size EU):</label>
                         <div class="size-btn-group flex-wrap gap-2 d-flex">
                             <?php
-                            $actualGenders = [];
-                            $actualSizes = [];
-                            $actualColors = [];
-                            if (!empty($variants)) {
-                                foreach ($variants as $v) {
-                                    $parts = explode(' - ', $v['size']);
-                                    $g = count($parts) > 1 ? trim($parts[0]) : 'Nam';
-                                    $s = count($parts) > 1 ? trim($parts[1]) : trim($parts[0]);
-                                    $actualGenders[] = $g;
-                                    $actualSizes[] = $s;
-                                    $actualColors[] = $v['color'];
-                                }
-                            } else {
-                                $actualSizes = [39, 40, 41, 42, 43, 44];
-                                $actualColors = ['Đen', 'Đỏ'];
-                                $actualGenders = ['Nam', 'Nữ'];
-                            }
-                            $availableSizes = array_unique($actualSizes);
+                            $availableSizes = !empty($variants) ? array_unique(array_column($variants, 'size')) : [39, 40, 41, 42, 43, 44];
                             sort($availableSizes);
-                            $availableColors = array_unique($actualColors);
-                            $availableGenders = array_unique($actualGenders);
                             ?>
-                            
                             <?php foreach (array_values($availableSizes) as $idx => $s): ?>
-                                <input type="radio" class="btn-check" name="size" id="detail_size_<?= md5((string)$s) ?>"
-                                    value="<?= htmlspecialchars((string)$s) ?>" autocomplete="off" <?= $idx === 0 ? 'checked' : '' ?>>
-                                <label class="btn btn-outline-dark" for="detail_size_<?= md5((string)$s) ?>">
-                                    <?= htmlspecialchars((string)$s) ?>
+                                <input type="radio" class="btn-check" name="size" id="detail_size_<?= $s ?>"
+                                    value="<?= htmlspecialchars($s) ?>" autocomplete="off" <?= $idx === 0 ? 'checked' : '' ?>>
+                                <label class="btn btn-outline-dark" for="detail_size_<?= $s ?>">
+                                    <?= htmlspecialchars($s) ?>
                                 </label>
                             <?php endforeach; ?>
                         </div>
@@ -138,6 +114,9 @@ require __DIR__ . '/layouts/header.php';
                     <div class="mb-4">
                         <label class="form-label fw-bold text-uppercase fs-7 d-block">Chọn Phối Màu:</label>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <?php
+                            $availableColors = !empty($variants) ? array_unique(array_column($variants, 'color')) : ['Đen', 'Đỏ'];
+                            ?>
                             <?php foreach (array_values($availableColors) as $idx => $c): ?>
                                 <?php $colorId = 'color_' . md5((string) $c); ?>
                                 <input type="radio" class="btn-check" name="color" id="<?= $colorId ?>"
@@ -150,20 +129,22 @@ require __DIR__ . '/layouts/header.php';
                     </div>
 
                     <!-- Chọn Giới tính -->
-                    <?php if (!empty($availableGenders)): ?>
                     <div class="mb-4">
                         <label class="form-label fw-bold text-uppercase fs-7 d-block">Chọn Giới tính:</label>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <?php foreach (array_values($availableGenders) as $idx => $gLabel): ?>
-                                <input type="radio" class="btn-check" name="gender" id="gender_<?= md5((string)$gLabel) ?>"
-                                    value="<?= htmlspecialchars((string)$gLabel) ?>" <?= $idx === 0 ? 'checked' : '' ?>>
-                                <label class="btn btn-outline-dark btn-sm rounded-pill" for="gender_<?= md5((string)$gLabel) ?>">
-                                    <?= htmlspecialchars((string)$gLabel) ?>
+                            <?php
+                            $genders = ['male' => 'Nam', 'female' => 'Nữ'];
+                            $productGender = $product['gender'] ?? 'male';
+                            ?>
+                            <?php foreach ($genders as $gKey => $gLabel): ?>
+                                <input type="radio" class="btn-check" name="gender" id="gender_<?= $gKey ?>"
+                                    value="<?= $gKey ?>" <?= ($productGender == $gKey) ? 'checked' : '' ?>>
+                                <label class="btn btn-outline-dark btn-sm rounded-pill" for="gender_<?= $gKey ?>">
+                                    <?= $gLabel ?>
                                 </label>
                             <?php endforeach; ?>
                         </div>
                     </div>
-                    <?php endif; ?>
 
                     <!-- Chọn Số lượng -->
                     <div class="mb-4">
@@ -264,10 +245,8 @@ require __DIR__ . '/layouts/header.php';
                             <div class="product-img-wrapper">
                                 <?php
                                 $fallbackImgRel = 'image/slide/slide' . (($rel['product_id'] % 3) + 1) . '.avif';
-                                $imgSrcRel = !empty($rel['image_url']) ? 'uploads/' . $rel['image_url'] : $fallbackImgRel;
-                                if (!file_exists(__DIR__ . '/../../public/' . $imgSrcRel)) {
-                                    $imgSrcRel = $fallbackImgRel;
-                                }
+                                $imgSrcRel = !empty($rel['image_url']) ? $rel['image_url'] : $fallbackImgRel;
+
                                 $isNew = isset($rel['created_at']) && (strtotime($rel['created_at']) > strtotime('-7 days'));
                                 $hasSale = (($rel['sale_price'] ?? 0) > 0 && $rel['sale_price'] < $rel['price']);
                                 ?>
@@ -285,7 +264,7 @@ require __DIR__ . '/layouts/header.php';
                                 <img src="<?= htmlspecialchars(base_url($imgSrcRel)) ?>"
                                     alt="<?= htmlspecialchars($rel['name']) ?>">
                                 <div class="product-center-action">
-                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $rel['product_id'] ?>"
+                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $rel['product_id'] ?>"
                                         class="search-icon-btn" title="Xem chi tiết">
                                         <i class="fa-solid fa-magnifying-glass"></i>
                                     </a>
@@ -295,7 +274,7 @@ require __DIR__ . '/layouts/header.php';
                                 <span class="product-brand-tag">
                                     <?= htmlspecialchars($rel['brand_name'] ?? 'Chính Hãng') ?>
                                 </span>
-                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $rel['product_id'] ?>"
+                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $rel['product_id'] ?>"
                                     class="product-title mb-1">
                                     <?= htmlspecialchars($rel['name']) ?>
                                 </a>
@@ -330,54 +309,6 @@ require __DIR__ . '/layouts/header.php';
 </div>
 
 <script>
-    const variants = <?= json_encode($variants ?? []) ?>;
-    const defaultProductPrice = <?= $product['price'] ?? 0 ?>;
-    const defaultProductSalePrice = <?= $product['sale_price'] ?? 'null' ?>;
-
-    function updateVariantInfo() {
-        const selectedSize = document.querySelector('input[name="size"]:checked')?.value;
-        const selectedColor = document.querySelector('input[name="color"]:checked')?.value;
-        const selectedGender = document.querySelector('input[name="gender"]:checked')?.value;
-        
-        let foundVariant = null;
-        if (variants && variants.length > 0) {
-            foundVariant = variants.find(v => {
-                let parts = v.size.split(' - ');
-                let g = parts.length > 1 ? parts[0].trim() : 'Nam';
-                let s = parts.length > 1 ? parts[1].trim() : parts[0].trim();
-                return s == selectedSize && v.color == selectedColor && g == selectedGender;
-            });
-        }
-
-        const variantIdInput = document.getElementById('variantIdInput');
-        const priceDisplay = document.querySelector('.fs-2.fw-bold.text-red');
-        
-        if (foundVariant) {
-            variantIdInput.value = foundVariant.variant_id;
-            
-            // Format price to VND
-            let currentPrice = foundVariant.price ? foundVariant.price : defaultProductPrice;
-            // Update UI with new price
-            if (priceDisplay) {
-                priceDisplay.innerHTML = new Intl.NumberFormat('vi-VN').format(currentPrice) + 'đ';
-            }
-        } else {
-            variantIdInput.value = '';
-            // Can show default price or error
-            if (priceDisplay) {
-                priceDisplay.innerHTML = new Intl.NumberFormat('vi-VN').format(defaultProductPrice) + 'đ';
-            }
-        }
-    }
-
-    // Attach listeners
-    document.querySelectorAll('input[name="size"], input[name="color"], input[name="gender"]').forEach(el => {
-        el.addEventListener('change', updateVariantInfo);
-    });
-
-    // Run once on load
-    updateVariantInfo();
-
     function changeImage(src) {
         document.getElementById('mainProductImg').src = src;
         document.querySelectorAll('.thumbnail-img').forEach(img => img.classList.remove('active'));
@@ -402,4 +333,3 @@ require __DIR__ . '/layouts/header.php';
 <?php
 require __DIR__ . '/layouts/footer.php';
 ?>
-

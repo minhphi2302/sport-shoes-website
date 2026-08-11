@@ -21,24 +21,46 @@ class CartController extends Controller
 
     public function index(): void
     {
-        $cart = $_SESSION['cart'];
+        $cartRaw = $_SESSION['cart'] ?? [];
+        $cartItems = [];
         $total = 0;
 
-        foreach ($cart as $item) {
-            $priceToUse = (!empty($item['sale_price']) && $item['sale_price'] < $item['price']) ? $item['sale_price'] : $item['price'];
-            $total += $priceToUse * $item['quantity'];
+        foreach ($cartRaw as $key => $item) {
+            $price = $item['price'] ?? 0;
+            $salePrice = $item['sale_price'] ?? null;
+            $priceToUse = (!empty($salePrice) && $salePrice < $price) ? $salePrice : $price;
+            $total += $priceToUse * ($item['quantity'] ?? 1);
+
+            // Parse available sizes/colors/genders from variant size field "Gender - Size"
+            $variants = $this->productModel->getVariants((int)$item['product_id']);
+            $availableSizes = [];
+            $availableColors = [];
+            $availableGenders = [];
+            foreach ($variants as $v) {
+                $parts = explode(' - ', $v['size']);
+                $g = count($parts) > 1 ? trim($parts[0]) : 'Nam';
+                $s = count($parts) > 1 ? trim($parts[1]) : trim($parts[0]);
+                $availableSizes[] = $s;
+                $availableColors[] = $v['color'];
+                $availableGenders[] = $g;
+            }
+            $cartItems[$key] = array_merge($item, [
+                'available_sizes'   => array_unique($availableSizes) ?: [$item['size']],
+                'available_colors'  => array_unique($availableColors) ?: [$item['color']],
+                'available_genders' => array_unique($availableGenders) ?: ['Nam'],
+            ]);
         }
 
         $this->view('client/cart', [
-            'cart' => $cart,
-            'total' => $total
+            'cartItems' => $cartItems,
+            'total'     => $total
         ]);
     }
 
-    public function add(): void
+    public function add(mixed $id = null): void
     {
-        $productId = (int)($_POST['product_id'] ?? 0);
-        $quantity = (int)($_POST['quantity'] ?? 1);
+        $productId = (int)($id ?: ($_POST['product_id'] ?? $_GET['product_id'] ?? 0));
+        $quantity = (int)($_POST['quantity'] ?? $_GET['quantity'] ?? 1);
         $referer = $_SERVER['HTTP_REFERER'] ?? ($_ENV['APP_URL'] ?? '') . '/products';
 
         if (Auth::check() && Auth::user()['role'] === 'admin') {
@@ -73,7 +95,7 @@ class CartController extends Controller
             $variants = $this->productModel->getVariants($productId);
             $foundVariant = false;
             foreach ($variants as $v) {
-                if ($v['id'] === $variantId) {
+                if ($v['variant_id'] === $variantId) {
                     $maxQty = $v['quantity'];
                     $priceToUse = isset($v['price']) ? $v['price'] : $product['price'];
                     $skuToUse = !empty($v['sku']) ? $v['sku'] : $product['sku'];
@@ -89,11 +111,21 @@ class CartController extends Controller
                 $this->redirect($referer);
             }
         } else {
-            // Check if product actually HAS variants, if yes, user MUST select one
+            // Check if product HAS variants, if yes, select the first available variant for quick add
             $variants = $this->productModel->getVariants($productId);
             if (!empty($variants)) {
-                $_SESSION['error'] = "Vui lòng chọn phân loại sản phẩm.";
-                $this->redirect($referer);
+                $firstV = $variants[0];
+                $variantId = (int)$firstV['variant_id']; // Using variant_id from db
+                $maxQty = (int)$firstV['quantity'];
+                $priceToUse = isset($firstV['price']) ? $firstV['price'] : $product['price'];
+                $skuToUse = !empty($firstV['sku']) ? $firstV['sku'] : $product['sku'];
+                $variantModel = $firstV['model'] ?? 'Mặc định';
+                $variantSize = $firstV['size'] ?? '';
+                $variantColor = $firstV['color'] ?? '';
+                
+                $cartKey = $productId . '_v' . $variantId;
+                $currentQtyInCart = isset($_SESSION['cart'][$cartKey]) ? $_SESSION['cart'][$cartKey]['quantity'] : 0;
+                $newQty = $currentQtyInCart + $quantity;
             }
         }
 
@@ -120,13 +152,14 @@ class CartController extends Controller
         $_SESSION['success'] = "Đã thêm \"" . $product['name'] . "\" vào giỏ hàng thành công.";
 
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            $msg = $_SESSION['success'];
+            unset($_SESSION['success']); // Xoá ngay để không hiện lại khi reload
             header('Content-Type: application/json');
             echo json_encode([
-                'success' => true,
-                'message' => $_SESSION['success'],
+                'success'    => true,
+                'message'    => $msg,
                 'cart_count' => array_sum(array_column($_SESSION['cart'], 'quantity'))
             ]);
-            unset($_SESSION['success']);
             exit;
         }
 
@@ -135,53 +168,55 @@ class CartController extends Controller
 
     public function update(): void
     {
-        $cartKey = $_POST['cart_key'] ?? '';
-        $quantity = (int)($_POST['quantity'] ?? 0);
-
         if (Auth::check() && Auth::user()['role'] === 'admin') {
             $_SESSION['error'] = "Tài khoản admin không được phép sử dụng chức năng mua hàng.";
             $this->redirect('/cart');
         }
 
-        if (empty($cartKey)) {
-            $this->redirect('/cart');
-        }
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
-        if ($quantity <= 0) {
-            unset($_SESSION['cart'][$cartKey]);
-            $_SESSION['success'] = "Đã xóa sản phẩm khỏi giỏ hàng.";
-            $this->redirect('/cart');
-        }
-        
-        $productId = isset($_SESSION['cart'][$cartKey]) ? $_SESSION['cart'][$cartKey]['product_id'] : 0;
-        $product = $this->productModel->findById($productId);
-        
-        if (!$product || !isset($_SESSION['cart'][$cartKey])) {
-            unset($_SESSION['cart'][$cartKey]);
-            $this->redirect('/cart');
-        }
+        // Batch update: quantity[cart_key] => qty
+        $quantityMap = $_POST['quantity'] ?? [];
 
-        $variantId = $_SESSION['cart'][$cartKey]['variant_id'] ?? 0;
-        
-        $maxQty = $product['quantity'];
-        if ($variantId > 0) {
-            $variants = $this->productModel->getVariants($productId);
-            foreach ($variants as $v) {
-                if ($v['id'] === $variantId) {
-                    $maxQty = $v['quantity'];
-                    break;
+        if (!empty($quantityMap) && is_array($quantityMap)) {
+            foreach ($quantityMap as $cartKey => $qty) {
+                $qty = (int)$qty;
+                if (!isset($_SESSION['cart'][$cartKey])) continue;
+
+                if ($qty <= 0) {
+                    unset($_SESSION['cart'][$cartKey]);
+                    continue;
                 }
+
+                $productId = $_SESSION['cart'][$cartKey]['product_id'];
+                $product   = $this->productModel->findById((int)$productId);
+                if (!$product) { unset($_SESSION['cart'][$cartKey]); continue; }
+
+                $variantId = $_SESSION['cart'][$cartKey]['variant_id'] ?? 0;
+                $maxQty    = $product['quantity'];
+                if ($variantId > 0) {
+                    $variants = $this->productModel->getVariants((int)$productId);
+                    foreach ($variants as $v) {
+                        if ($v['variant_id'] === (int)$variantId) {
+                            $maxQty = $v['quantity'];
+                            break;
+                        }
+                    }
+                }
+                $_SESSION['cart'][$cartKey]['quantity'] = min($qty, $maxQty);
             }
         }
 
-        if ($quantity > $maxQty) {
-            $_SESSION['error'] = "Phân loại này chỉ còn {$maxQty} sản phẩm trong kho.";
-            $this->redirect('/cart');
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success'    => true,
+                'cart_count' => array_sum(array_column($_SESSION['cart'], 'quantity'))
+            ]);
+            exit;
         }
 
-        $_SESSION['cart'][$cartKey]['quantity'] = $quantity;
         $_SESSION['success'] = "Đã cập nhật giỏ hàng.";
-
         $this->redirect('/cart');
     }
 

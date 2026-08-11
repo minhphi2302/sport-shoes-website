@@ -49,6 +49,21 @@ class ProductController extends Controller
         if (!empty($_GET['search'])) {
             $filters['search'] = trim($_GET['search']);
         }
+        if (!empty($_GET['gender'])) {
+            $filters['gender'] = trim($_GET['gender']);
+        }
+        if (!empty($_GET['size'])) {
+            $filters['size'] = trim($_GET['size']);
+        }
+        if (!empty($_GET['color'])) {
+            $filters['color'] = trim($_GET['color']);
+        }
+        // Sắp xếp: newest | bestseller | price_asc | price_desc
+        $allowedSorts = ['newest', 'bestseller', 'price_asc', 'price_desc'];
+        $sort = trim($_GET['sort'] ?? '');
+        if (in_array($sort, $allowedSorts, true)) {
+            $filters['sort'] = $sort;
+        }
 
         $products = $this->productModel->findAllWithFilters($filters, $page, $perPage);
         $totalProducts = $this->productModel->countAllWithFilters($filters);
@@ -57,13 +72,34 @@ class ProductController extends Controller
         $categories = $this->categoryModel->all();
         $brands = $this->brandModel->all();
 
+        // Nếu là AJAX request (lọc / phân trang), chỉ trả về partial product_grid
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            // Expose vars needed by product_grid.php
+            $currentPageNum = $page;
+            extract([
+                'products'      => $products,
+                'totalProducts' => $totalProducts,
+                'totalPages'    => $totalPages,
+                'currentPageNum'=> $page,
+                'filters'       => $filters,
+            ]);
+            ob_start();
+            require dirname(__DIR__, 2) . '/views/client/partials/product_grid.php';
+            $html = ob_get_clean();
+            header('Content-Type: text/html; charset=UTF-8');
+            echo $html;
+            exit;
+        }
+
         $this->view('client/product_list', [
-            'products' => $products,
-            'categories' => $categories,
-            'brands' => $brands,
-            'currentPage' => $page,
-            'totalPages' => $totalPages,
-            'filters' => $filters
+            'products'       => $products,
+            'categories'     => $categories,
+            'brands'         => $brands,
+            'currentPage'    => $page,
+            'currentPageNum' => $page,      // dùng bởi product_grid.php pagination
+            'totalPages'     => $totalPages,
+            'totalProducts'  => $totalProducts,
+            'filters'        => $filters,
         ]);
     }
 

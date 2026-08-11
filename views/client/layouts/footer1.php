@@ -111,21 +111,7 @@
     </a>
 </footer>
 
-<?php
-// Đảm bảo session đã được khởi động để đọc và xóa message
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-?>
 <!-- Custom Toast Notification -->
-<?php if (!empty($_SESSION['success'])): ?>
-    <span id="session-success-message" data-message="<?= htmlspecialchars($_SESSION['success']) ?>" style="display:none;"></span>
-    <?php unset($_SESSION['success']); ?>
-<?php endif; ?>
-<?php if (!empty($_SESSION['error'])): ?>
-    <span id="session-error-message" data-message="<?= htmlspecialchars($_SESSION['error']) ?>" style="display:none;"></span>
-    <?php unset($_SESSION['error']); ?>
-<?php endif; ?>
 <div id="cartToast" class="custom-toast shadow">
     <div class="toast-progress"></div>
     <div class="toast-content d-flex align-items-center">
