@@ -21,25 +21,29 @@ class CartController extends Controller
 
     public function index(): void
     {
-        $cart = $_SESSION['cart'];
+        $cart = $_SESSION['cart'] ?? [];
         $total = 0;
 
         foreach ($cart as $item) {
-            $priceToUse = (!empty($item['sale_price']) && $item['sale_price'] < $item['price']) ? $item['sale_price'] : $item['price'];
-            $total += $priceToUse * $item['quantity'];
+            $price = $item['price'] ?? 0;
+            $salePrice = $item['sale_price'] ?? null;
+            $priceToUse = (!empty($salePrice) && $salePrice < $price) ? $salePrice : $price;
+            $qty = $item['quantity'] ?? 1;
+            $total += $priceToUse * $qty;
         }
 
         $this->view('client/cart', [
             'cart' => $cart,
+            'cartItems' => $cart,
             'total' => $total
         ]);
     }
 
-    public function add(): void
+    public function add(mixed $id = null): void
     {
-        $productId = (int)($_POST['product_id'] ?? 0);
-        $quantity = (int)($_POST['quantity'] ?? 1);
-        $referer = $_SERVER['HTTP_REFERER'] ?? ($_ENV['APP_URL'] ?? '') . '/products';
+        $productId = (int)($id ?: ($_POST['product_id'] ?? $_GET['product_id'] ?? 0));
+        $quantity = (int)($_POST['quantity'] ?? $_GET['quantity'] ?? 1);
+        $referer = $_SERVER['HTTP_REFERER'] ?? base_url('products');
 
         if (Auth::check() && Auth::user()['role'] === 'admin') {
             $_SESSION['error'] = "Tài khoản admin không được phép sử dụng chức năng mua hàng.";
@@ -89,11 +93,20 @@ class CartController extends Controller
                 $this->redirect($referer);
             }
         } else {
-            // Check if product actually HAS variants, if yes, user MUST select one
+            // Check if product HAS variants, if yes, select the first available variant for quick add
             $variants = $this->productModel->getVariants($productId);
             if (!empty($variants)) {
-                $_SESSION['error'] = "Vui lòng chọn phân loại sản phẩm.";
-                $this->redirect($referer);
+                $firstV = $variants[0];
+                $variantId = $firstV['id'];
+                $maxQty = $firstV['quantity'];
+                $priceToUse = isset($firstV['price']) ? $firstV['price'] : $product['price'];
+                $skuToUse = !empty($firstV['sku']) ? $firstV['sku'] : $product['sku'];
+                $variantModel = $firstV['model'] ?? 'Mặc định';
+                $variantSize = $firstV['size'];
+                $variantColor = $firstV['color'];
+                $cartKey = $productId . '_v' . $variantId;
+                $currentQtyInCart = isset($_SESSION['cart'][$cartKey]) ? $_SESSION['cart'][$cartKey]['quantity'] : 0;
+                $newQty = $currentQtyInCart + $quantity;
             }
         }
 

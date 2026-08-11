@@ -22,4 +22,9 @@ if (!class_exists('App\Core\Auth')) {
     if (file_exists($envFile)) {
         \App\Core\Env::load($envFile);
     }
+
+    $configFile = __DIR__ . '/../config/config.php';
+    if (file_exists($configFile)) {
+        require_once $configFile;
+    }
 }

@@ -11,13 +11,6 @@ $cart = $cart ?? $cartItems ?? $_SESSION['cart'] ?? [];
         </div>
     </div>
 
-    <?php if (isset($_SESSION['error'])): ?>
-        <div class="alert alert-danger alert-dismissible fade show">
-            <?= htmlspecialchars($_SESSION['error']) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-
     <?php if (empty($cart)): ?>
         <div class="text-center py-5 bg-white rounded-4 shadow-sm border-0">
             <i class="bi bi-cart-x display-1 text-muted mb-3 d-block"></i>

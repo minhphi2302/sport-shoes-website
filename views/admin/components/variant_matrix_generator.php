@@ -111,7 +111,8 @@
     </div>
 </div>
 <script>
-window.showMatrixNotice = function(msg, type = 'danger') {
+let matrixNoticeTimer = null;
+window.showMatrixNotice = function(msg, type = 'danger', duration = 5000) {
     const alertBox = document.getElementById('matrix-error-alert');
     const textSpan = document.getElementById('matrix-error-text');
     if (alertBox && textSpan) {
@@ -119,12 +120,25 @@ window.showMatrixNotice = function(msg, type = 'danger') {
         alertBox.className = `alert alert-${type} alert-dismissible fade show mb-3`;
         alertBox.style.display = 'block';
         alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        if (matrixNoticeTimer) {
+            clearTimeout(matrixNoticeTimer);
+        }
+        if (duration > 0) {
+            matrixNoticeTimer = setTimeout(function() {
+                window.hideMatrixNotice();
+            }, duration);
+        }
     }
 };
 
 window.hideMatrixNotice = function() {
     const alertBox = document.getElementById('matrix-error-alert');
     if (alertBox) alertBox.style.display = 'none';
+    if (matrixNoticeTimer) {
+        clearTimeout(matrixNoticeTimer);
+        matrixNoticeTimer = null;
+    }
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -256,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Snapshot các row hiện có TRƯỚC KHI thêm mới
             const existingRowsSnapshot = Array.from(document.querySelectorAll('#variants-table tbody tr'));
-            const proposedVariants = [];
+            let duplicateVariants = [];
 
             // Sinh và kiểm tra dữ liệu
             models.forEach(modelObj => {
@@ -313,50 +327,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             if (rModel === checkModel && rGender === checkGender && rSize === checkSize && rColor === checkColor) {
                                 isDuplicate = true;
+                                row.style.transition = "background-color 0.5s";
+                                row.style.backgroundColor = "#f8d7da";
+                                setTimeout(() => { row.style.backgroundColor = ""; }, 5000);
                             }
                         });
 
-                        if (isDuplicate) {
-                            window.showMatrixNotice(`Biến thể [Mẫu: ${displayModel} - Size: ${sizePart} - Màu: ${colorObj.name}] đã tồn tại trong danh sách. Vui lòng bỏ chọn biến thể này!`);
-                            hasError = true;
-                            return;
-                        }
+                        if (isDuplicate || document.querySelector(`tr[data-key="${key}"]`)) {
+                            duplicateVariants.push(`[${displayModel} - ${genderPart} ${sizePart} - ${colorObj.name}]`);
+                        } else {
+                            const tr = document.createElement('tr');
+                            tr.setAttribute('data-key', key);
 
-                        proposedVariants.push({
-                            key, variantSku, displayModel, genderPart, sizePart, colorName: colorObj.name, price: Math.round(calculatedPrice)
-                        });
+                            tr.innerHTML = `
+                                <td><input type="text" name="variant_skus[]" class="form-control form-control-sm" value="${variantSku}"></td>
+                                <td><input type="text" name="variant_models[]" class="form-control form-control-sm" value="${displayModel}"></td>
+                                <td>
+                                    <select name="variant_genders[]" class="form-select form-select-sm">
+                                        <option value="Nam" ${genderPart === 'Nam' ? 'selected' : ''}>Nam</option>
+                                        <option value="Nữ" ${genderPart === 'Nữ' ? 'selected' : ''}>Nữ</option>
+                                        <option value="Trẻ em" ${genderPart === 'Trẻ em' ? 'selected' : ''}>Trẻ em</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" name="variant_raw_sizes[]" class="form-control form-control-sm" value="${sizePart}"></td>
+                                <td><input type="text" name="variant_colors[]" class="form-control form-control-sm" value="${colorObj.name}"></td>
+                                <td><input type="number" name="variant_prices[]" class="form-control form-control-sm variant-price" value="${Math.round(calculatedPrice)}" min="0"></td>
+                                <td><input type="number" name="variant_qtys[]" class="form-control form-control-sm variant-qty" value="${commonQty}" min="0" required></td>
+                                <td class="text-center"><button type="button" class="btn btn-danger btn-sm btn-remove-variant"><i class="bi bi-trash"></i></button></td>
+                            `;
+                            const tableBody = document.querySelector('#variants-table tbody');
+                            if (tableBody) tableBody.appendChild(tr);
+                        }
                     });
                 });
             });
 
             if (hasError) return;
 
-            // Thêm các biến thể đã hợp lệ vào danh sách
-            proposedVariants.forEach(pv => {
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-key', pv.key);
-
-                tr.innerHTML = `
-                    <td><input type="text" name="variant_skus[]" class="form-control form-control-sm" value="${pv.variantSku}"></td>
-                    <td><input type="text" name="variant_models[]" class="form-control form-control-sm" value="${pv.displayModel}"></td>
-                    <td>
-                        <select name="variant_genders[]" class="form-select form-select-sm">
-                            <option value="Nam" ${pv.genderPart === 'Nam' ? 'selected' : ''}>Nam</option>
-                            <option value="Nữ" ${pv.genderPart === 'Nữ' ? 'selected' : ''}>Nữ</option>
-                            <option value="Trẻ em" ${pv.genderPart === 'Trẻ em' ? 'selected' : ''}>Trẻ em</option>
-                        </select>
-                    </td>
-                    <td><input type="text" name="variant_raw_sizes[]" class="form-control form-control-sm" value="${pv.sizePart}"></td>
-                    <td><input type="text" name="variant_colors[]" class="form-control form-control-sm" value="${pv.colorName}"></td>
-                    <td><input type="number" name="variant_prices[]" class="form-control form-control-sm variant-price" value="${pv.price}" min="0"></td>
-                    <td><input type="number" name="variant_qtys[]" class="form-control form-control-sm variant-qty" value="${commonQty}" min="0" required></td>
-                    <td class="text-center"><button type="button" class="btn btn-danger btn-sm btn-remove-variant"><i class="bi bi-trash"></i></button></td>
-                `;
-                const tableBody = document.querySelector('#variants-table tbody');
-                if (tableBody) tableBody.appendChild(tr);
-            });
-
-            window.showMatrixNotice(`Đã thêm ${proposedVariants.length} biến thể mới!`, 'success');
+            if (duplicateVariants.length > 0) {
+                window.showMatrixNotice(`Biến thể giày đã tồn tại: ${duplicateVariants.join(', ')}`);
+            } else {
+                window.showMatrixNotice(`Đã thêm các biến thể mới!`, 'success');
+            }
 
             // Reset toàn bộ form sau khi thêm thành công
             // 1. Bỏ chọn tất cả size và color

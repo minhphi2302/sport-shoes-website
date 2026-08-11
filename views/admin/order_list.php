@@ -53,8 +53,14 @@
                                 <div><?= htmlspecialchars($order['customer_name']) ?></div>
                                 <small class="text-muted"><?= htmlspecialchars($order['customer_email']) ?></small>
                             </td>
-                            <td><?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></td>
-                            <td class="text-end fw-bold"><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</td>
+                            <td class="text-end">
+                                <span class="fw-bold"><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</span>
+                                <?php if (isset($order['shipping_fee']) && $order['shipping_fee'] == 0): ?>
+                                    <small class="d-block text-success font-monospace" style="font-size: 0.75rem;"><i class="bi bi-truck me-1"></i>Freeship</small>
+                                <?php elseif (isset($order['shipping_fee']) && $order['shipping_fee'] > 0): ?>
+                                    <small class="d-block text-muted font-monospace" style="font-size: 0.75rem;">(Phí ship: <?= number_format($order['shipping_fee'], 0, ',', '.') ?>đ)</small>
+                                <?php endif; ?>
+                            </td>
                             <td class="text-center">
                                 <?php
                                 $badgeClass = match($order['status']) {

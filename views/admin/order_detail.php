@@ -61,10 +61,31 @@
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
+                        <?php 
+                            $adminItemsSubtotal = array_sum(array_column($orderDetails, 'subtotal'));
+                            $adminShipFee = (float)($order['shipping_fee'] ?? 0);
+                        ?>
                         <tfoot>
                             <tr>
-                                <td colspan="3" class="text-end fw-bold pt-4">Tổng cộng:</td>
-                                <td class="text-end fw-bold pt-4 fs-5 text-primary"><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</td>
+                                <td colspan="3" class="text-end text-muted pt-3">Tạm tính tiền hàng:</td>
+                                <td class="text-end fw-semibold pt-3"><?= number_format($adminItemsSubtotal, 0, ',', '.') ?>đ</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end text-muted">Phí vận chuyển & COD:</td>
+                                <td class="text-end">
+                                    <?php if ($adminShipFee == 0): ?>
+                                        <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
+                                            <i class="bi bi-truck me-1"></i> Miễn phí (Freeship)
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="fw-bold text-dark me-1"><?= number_format($adminShipFee, 0, ',', '.') ?>đ</span>
+                                        <small class="badge bg-warning-subtle text-warning-emphasis border border-warning">Chưa đủ mốc Freeship</small>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold fs-5 text-dark pt-2">Tổng thanh toán:</td>
+                                <td class="text-end fw-bold fs-4 text-primary pt-2"><?= number_format($order['total_amount'], 0, ',', '.') ?>đ</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -108,6 +129,15 @@
                     
                     <dt class="col-sm-4 text-muted fw-normal">Phương thức</dt>
                     <dd class="col-sm-8 fw-semibold"><?= htmlspecialchars($order['payment_method']) ?></dd>
+
+                    <dt class="col-sm-4 text-muted fw-normal">Vận chuyển</dt>
+                    <dd class="col-sm-8">
+                        <?php if ($adminShipFee == 0): ?>
+                            <span class="badge bg-success"><i class="bi bi-patch-check-fill me-1"></i> Freeship (0đ)</span>
+                        <?php else: ?>
+                            <span class="badge bg-warning text-dark"><i class="bi bi-truck me-1"></i> Phí ship: <?= number_format($adminShipFee, 0, ',', '.') ?>đ</span>
+                        <?php endif; ?>
+                    </dd>
 
                     <?php if (!empty($order['notes'])): ?>
                     <dt class="col-sm-4 text-muted fw-normal">Ghi chú</dt>

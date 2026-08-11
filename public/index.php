@@ -27,6 +27,8 @@ $router->post('/profile/delete',         [App\Controllers\ProfileController::cla
 
 // ── Giỏ hàng ─────────────────────────────────────────────────
 $router->get('/cart',            [App\Controllers\CartController::class, 'index']);
+$router->get('/cart/add/{id}',   [App\Controllers\CartController::class, 'add']);
+$router->get('/cart/add',        [App\Controllers\CartController::class, 'add']);
 $router->post('/cart/add',       [App\Controllers\CartController::class, 'add']);
 $router->post('/cart/update',    [App\Controllers\CartController::class, 'update']);
 $router->post('/cart/remove',    [App\Controllers\CartController::class, 'remove']);

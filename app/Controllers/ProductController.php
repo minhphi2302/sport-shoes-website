@@ -25,12 +25,20 @@ class ProductController extends Controller
 
     public function home(): void
     {
-        $featuredProducts = $this->productModel->getFeatured(6);
+        $featuredProducts = $this->productModel->getFeatured(8);
         $categories = $this->categoryModel->all();
+        $brands = $this->brandModel->all();
+
+        $allProducts = $this->productModel->getFeatured(16);
+        $saleProducts = array_values(array_filter($allProducts, function ($p) {
+            return !empty($p['sale_price']) && $p['sale_price'] < $p['price'];
+        }));
         
         $this->view('client/home', [
             'featuredProducts' => $featuredProducts,
-            'categories' => $categories
+            'categories' => $categories,
+            'brands' => $brands,
+            'saleProducts' => $saleProducts
         ]);
     }
 
