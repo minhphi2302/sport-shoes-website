@@ -1,0 +1,594 @@
+
+   /* 1. STYLES CHO TRANG CHỦ (HOME - SIÊU KHUYẾN MÃI) */
+
+#sieu-khuyen-mai .promo-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+#sieu-khuyen-mai .promo-card:hover {
+    border-color: #ff0000;
+    transform: translateY(-3px);
+}
+
+#sieu-khuyen-mai .carousel-indicators [data-bs-target] {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ccc;
+    border: none;
+    margin: 0 6px;
+}
+#sieu-khuyen-mai .carousel-indicators .active {
+    background-color: #dc3545;
+}
+#sieu-khuyen-mai .carousel-control-prev, 
+#sieu-khuyen-mai .carousel-control-next {
+    opacity: 0;
+    transition: all 0.3s ease;
+    transform: translateY(15px);
+}
+#sieu-khuyen-mai #promoCarousel:hover .carousel-control-prev, 
+#sieu-khuyen-mai #promoCarousel:hover .carousel-control-next {
+    opacity: 1;
+    transform: translateY(0);
+}
+#sieu-khuyen-mai .promo-nav-btn {
+    width: 60px; 
+    height: 100px;
+    background-color: transparent !important; /* Bỏ nền hoàn toàn theo yêu cầu */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+#sieu-khuyen-mai .promo-nav-btn .arrow-icon {
+    display: inline-block;
+    width: 24px;
+    height: 40px;
+    background: linear-gradient(to top, #e60012 50%, #000000 50%); /* Gốc đen, hover đổ đỏ từ dưới lên */
+    background-size: 100% 200%;
+    background-position: top;
+    transition: background-position 0.4s ease, transform 0.3s ease;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    -webkit-mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+    mask-position: center;
+}
+#sieu-khuyen-mai .promo-nav-btn .arrow-icon.prev-icon {
+    -webkit-mask-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg viewBox='0 0 24 40' fill='none' stroke='black' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M18 4 L6 20 L18 36'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg viewBox='0 0 24 40' fill='none' stroke='black' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M18 4 L6 20 L18 36'/%3E%3C/svg%3E");
+}
+#sieu-khuyen-mai .promo-nav-btn .arrow-icon.next-icon {
+    -webkit-mask-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg viewBox='0 0 24 40' fill='none' stroke='black' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 4 L18 20 L6 36'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg viewBox='0 0 24 40' fill='none' stroke='black' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 4 L18 20 L6 36'/%3E%3C/svg%3E");
+}
+#sieu-khuyen-mai .promo-nav-btn:hover .arrow-icon {
+    background-position: bottom;
+    transform: scale(0.85); /* Bé lại khi hover */
+}
+
+
+   /* 2. STYLES CHO TRANG CHECKOUT */
+
+body {
+    background-color: #f8f9fa;
+}
+.address-dropdown .list-group-item {
+    cursor: pointer;
+    border: none;
+    padding: 10px 20px;
+    transition: background-color 0.2s;
+}
+.address-dropdown .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+.address-dropdown .nav-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 0.95rem;
+}
+.address-dropdown .nav-tabs .nav-link.active {
+    border-bottom: 2px solid #e60012;
+    color: #e60012 !important;
+    font-weight: 600;
+}
+.custom-checkout-input {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+.custom-checkout-input:focus {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 0.15rem rgba(230, 0, 18, 0.15);
+}
+.custom-checkout-input:focus ~ label {
+    color: #8c98a4 !important; /* Không đổi sang màu cam khi focus, giữ nguyên màu xám mờ */
+}
+.form-floating > label {
+    color: #8c98a4 !important; /* Làm mờ chữ label */
+    font-weight: 400 !important;
+}
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    transform: scale(0.85) translateY(-0.6rem) translateX(0.15rem); /* Tùy chỉnh vị trí floating */
+}
+
+/* Ẩn hiện luân phiên giữa Placeholder (dài) và Label (ngắn) */
+.custom-floating > .form-control::placeholder {
+    color: transparent !important;
+}
+.custom-floating > .form-control:placeholder-shown:not(:focus) ~ label {
+    opacity: 0 !important;
+}
+.custom-floating > .form-control:placeholder-shown:not(:focus)::placeholder {
+    color: #8c98a4 !important;
+    opacity: 1 !important;
+}
+
+/* Fix lỗi nền xanh (blue) khi trình duyệt tự động điền (Autofill) */
+.custom-checkout-input:-webkit-autofill,
+.custom-checkout-input:-webkit-autofill:hover, 
+.custom-checkout-input:-webkit-autofill:focus, 
+.custom-checkout-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 50px white inset !important;
+    -webkit-text-fill-color: #212529 !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Ẩn thanh dọc (vr) khi nút xóa (clear-btn) bị ẩn */
+.clear-btn[style*="display: none"] ~ .vr {
+    display: none !important;
+}
+
+.custom-checkout-input.is-invalid {
+    border-color: #dc3545 !important;
+    border-width: 2px;
+    background-image: none !important;
+}
+.custom-floating > .form-control.is-invalid:focus {
+    box-shadow: none !important;
+}
+
+/* ---------------------------------------------------
+   3. STYLES CHO TRANG SẢN PHẨM (PRODUCT LIST)
+--------------------------------------------------- */
+.color-dot {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    margin-right: 10px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+}
+.btn-check:checked + .color-dot {
+    border: 2px solid #e63946;
+    box-shadow: 0 0 0 2px #fff inset;
+}
+
+/* --- Nút Thêm vào giỏ hàng kiểu mới (Expanding Pill) --- */
+.btn-cart-hover {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between; /* Push text to left and icon to right */
+    background-color: #424040;
+    color: #ffffff;
+    height: 32px; /* Chiều cao hẹp lại */
+    border-radius: 16px;
+    padding: 0;
+    text-decoration: none;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    border: none;
+    cursor: pointer;
+    width: 32px; /* Bắt đầu là hình tròn tương ứng */
+    position: absolute; /* Thay đổi thành absolute để cố định vị trí */
+    right: 10px; /* Cố định mép phải */
+    bottom: 10px; /* Cách mép dưới 10px */
+    z-index: 20;
+}
+.btn-cart-hover .cart-text {
+    font-size: 12px; /* Nhỏ hơn nữa */
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    opacity: 0;
+    max-width: 0; /* Dùng max-width thay vì width để animate mượt */
+    padding-left: 0;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    color: #ffffff;
+}
+.btn-cart-hover .cart-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    flex-shrink: 0;
+}
+.btn-cart-hover .cart-icon-wrapper i {
+    color: #ffffff;
+    transition: color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    font-size: 1.1rem;
+}
+/* Hover effect */
+.btn-cart-hover:hover {
+    width: 140px; /* Nới rộng ra để hiển thị đủ chữ */
+    background-color: #424040;
+    color: #ffffff;
+}
+.btn-cart-hover:hover .cart-text {
+    opacity: 1;
+    max-width: 100px; /* Cung cấp không gian cho chữ */
+    padding-left: 12px;
+    padding-right: 2px;
+}
+.btn-cart-hover:hover .cart-icon-wrapper {
+    background-color: #ffffff;
+    width: 28px;
+    height: 28px;
+    margin-right: 2px;
+}
+.btn-cart-hover:hover .cart-icon-wrapper svg,
+.btn-cart-hover:hover .cart-icon-wrapper i {
+    color: #0066cc; /* Màu xanh của icon khi hover */
+}
+/* SVG mask background for the custom bag icon */
+.btn-cart-hover .bag-bg-circle {
+    fill: #424040;
+    transition: fill 0.3s ease;
+}
+.btn-cart-hover:hover .bag-bg-circle {
+    fill: #ffffff;
+}
+
+.btn-out-of-stock:hover {
+    width: 150px
+}
+
+
+/* --- Promotion Tags (Badge Ribbon) --- */
+.badge-ribbon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 6px 0 10px 0;
+    color: white;
+    font-weight: 700;
+    font-size: 0.75rem;
+    z-index: 10;
+    text-align: center;
+    clip-path: polygon(0 0, 100% 0, 100% 80%, 50% 100%, 0 80%);
+    width: 36px;
+}
+.badge-ribbon-red {
+    background-color: #cc0000;
+}
+.badge-ribbon-black {
+    background-color: #000000;
+}
+
+/* --- New Hover Actions --- */
+.product-center-action {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+.product-card:hover .product-center-action {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+.search-icon-btn {
+    width: 48px;
+    height: 48px;
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    font-size: 1.2rem;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+.search-icon-btn:hover {
+    transform: scale(1.1);
+}
+
+.product-bottom-right-action {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    z-index: 10;
+}
+.cart-icon-btn {
+    width: 38px;
+    height: 38px;
+    background-color: #4a4a4a !important;
+    color: #ffffff !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    text-decoration: none;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.cart-icon-btn:hover {
+    background-color: #222222 !important;
+    transform: scale(1.1);
+}
+
+/* --- Brand Filter Buttons --- */
+.btn-brand-filter {
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    border-color: #dee2e6 !important;
+}
+.btn-brand-filter:hover, .btn-brand-filter:focus {
+    border-width: 2px;
+    background-image: none !important;
+}
+.custom-floating > .form-control.is-invalid:focus {
+    box-shadow: none !important;
+}
+
+/* ---------------------------------------------------
+   3. STYLES CHO TRANG SẢN PHẨM (PRODUCT LIST)
+--------------------------------------------------- */
+.color-dot {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    margin-right: 10px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+}
+.btn-check:checked + .color-dot {
+    border: 2px solid #e63946;
+    box-shadow: 0 0 0 2px #fff inset;
+}
+
+/* --- Nút Thêm vào giỏ hàng kiểu mới (Expanding Pill) --- */
+.btn-cart-hover {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between; /* Push text to left and icon to right */
+    background-color: #424040;
+    color: #ffffff;
+    height: 32px; /* Chiều cao hẹp lại */
+    border-radius: 16px;
+    padding: 0;
+    text-decoration: none;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    border: none;
+    cursor: pointer;
+    width: 32px; /* Bắt đầu là hình tròn tương ứng */
+    position: absolute; /* Thay đổi thành absolute để cố định vị trí */
+    right: 10px; /* Cố định mép phải */
+    bottom: 10px; /* Cách mép dưới 10px */
+    z-index: 20;
+}
+.btn-cart-hover .cart-text {
+    font-size: 12px; /* Nhỏ hơn nữa */
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    opacity: 0;
+    max-width: 0; /* Dùng max-width thay vì width để animate mượt */
+    padding-left: 0;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    color: #ffffff;
+}
+.btn-cart-hover .cart-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    flex-shrink: 0;
+}
+.btn-cart-hover .cart-icon-wrapper i {
+    color: #ffffff;
+    transition: color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    font-size: 1.1rem;
+}
+/* Hover effect */
+.btn-cart-hover:hover {
+    width: 140px; /* Nới rộng ra để hiển thị đủ chữ */
+    background-color: #424040;
+    color: #ffffff;
+}
+.btn-cart-hover:hover .cart-text {
+    opacity: 1;
+    max-width: 100px; /* Cung cấp không gian cho chữ */
+    padding-left: 12px;
+    padding-right: 2px;
+}
+.btn-cart-hover:hover .cart-icon-wrapper {
+    background-color: #ffffff;
+    width: 28px;
+    height: 28px;
+    margin-right: 2px;
+}
+.btn-cart-hover:hover .cart-icon-wrapper svg,
+.btn-cart-hover:hover .cart-icon-wrapper i {
+    color: #0066cc; /* Màu xanh của icon khi hover */
+}
+/* SVG mask background for the custom bag icon */
+.btn-cart-hover .bag-bg-circle {
+    fill: #424040;
+    transition: fill 0.3s ease;
+}
+.btn-cart-hover:hover .bag-bg-circle {
+    fill: #ffffff;
+}
+
+.btn-out-of-stock:hover {
+    width: 150px
+}
+
+
+/* --- Promotion Tags (Badge Ribbon) --- */
+.badge-ribbon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 6px 0 10px 0;
+    color: white;
+    font-weight: 700;
+    font-size: 0.75rem;
+    z-index: 10;
+    text-align: center;
+    clip-path: polygon(0 0, 100% 0, 100% 80%, 50% 100%, 0 80%);
+    width: 36px;
+}
+.badge-ribbon-red {
+    background-color: #cc0000;
+}
+.badge-ribbon-black {
+    background-color: #000000;
+}
+
+/* --- New Hover Actions --- */
+.product-center-action {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+.product-card:hover .product-center-action {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+.search-icon-btn {
+    width: 48px;
+    height: 48px;
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    font-size: 1.2rem;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+.search-icon-btn:hover {
+    transform: scale(1.1);
+}
+
+.product-bottom-right-action {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    z-index: 10;
+}
+.cart-icon-btn {
+    width: 38px;
+    height: 38px;
+    background-color: #4a4a4a !important;
+    color: #ffffff !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    text-decoration: none;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.cart-icon-btn:hover {
+    background-color: #222222 !important;
+    transform: scale(1.1);
+}
+
+/* --- Brand Filter Buttons --- */
+.btn-brand-filter {
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    border-color: #dee2e6 !important;
+}
+.btn-brand-filter:hover, .btn-brand-filter:focus {
+    border-color: #cc0000 !important;
+    color: #cc0000 !important;
+    background-color: #ffffff !important;
+}
+.btn-brand-filter.active {
+    background-color: #aa0000 !important;
+    color: #ffffff !important;
+    border-color: #aa0000 !important;
+}
+
+/* Custom Toast Notification */
+.custom-toast {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 290px;
+    background-color: #388e3c;
+    color: white;
+    border-radius: 4px;
+    z-index: 10000;
+    transform: translateY(-50px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+.custom-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+.custom-toast .toast-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background-color: #cddc39; /* Yellow green */
+    width: 100%;
+}
+.custom-toast.show .toast-progress {
+    animation: toast-progress 3s linear forwards;
+}
+@keyframes toast-progress {
+    0% { width: 100%; }
+    100% { width: 0%; }
+}
+.custom-toast .toast-content {
+    padding: 10px 12px;
+}
+.custom-toast .toast-icon i {
+    font-size: 1.4rem;
+}
+.custom-toast .btn-close {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
