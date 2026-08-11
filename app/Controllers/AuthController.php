@@ -183,7 +183,7 @@ class AuthController extends Controller
     public function showResetPassword(): void
     {
         $token = $_GET['token'] ?? '';
-        
+
         if (empty($token)) {
             $this->redirect('/login');
         }
@@ -226,7 +226,8 @@ class AuthController extends Controller
             return;
         }
 
-        // Cập nhật mật khẩu và xóa token        $hash = password_hash($password, PASSWORD_DEFAULT);
+        // Cập nhật mật khẩu và xóa token
+        $hash = password_hash($password, PASSWORD_DEFAULT);
         $this->userModel->update($user['user_id'], ['password' => $hash]);
         $this->userModel->clearResetToken($user['user_id']);
 
