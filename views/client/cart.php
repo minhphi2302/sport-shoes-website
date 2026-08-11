@@ -1,4 +1,7 @@
-<?php require_once __DIR__ . '/layouts/header.php'; ?>
+<?php 
+require_once __DIR__ . '/layouts/header.php'; 
+$cart = $cart ?? $cartItems ?? $_SESSION['cart'] ?? [];
+?>
 
 <div class="container py-5">
     <div class="row mb-4 align-items-center">
@@ -13,7 +16,7 @@
             <i class="bi bi-cart-x display-1 text-muted mb-3 d-block"></i>
             <h4 class="fw-bold mb-2">Giỏ hàng của bạn đang trống</h4>
             <p class="text-muted mb-4">Hãy chọn cho mình những đôi giày thể thao ưng ý nhất nhé!</p>
-            <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-primary rounded-pill px-5 py-3 fw-bold"><i class="bi bi-shop me-2"></i> Khám phá sản phẩm ngay</a>
+            <a href="<?= base_url('products') ?>" class="btn btn-primary rounded-pill px-5 py-3 fw-bold"><i class="bi bi-shop me-2"></i> Khám phá sản phẩm ngay</a>
         </div>
     <?php else: ?>
         <div class="row g-4">
@@ -34,27 +37,30 @@
                                 <tbody>
                                     <?php foreach ($cart as $item): ?>
                                         <?php 
-                                            $priceToUse = (!empty($item['sale_price']) && $item['sale_price'] < $item['price']) ? $item['sale_price'] : $item['price'];
-                                            $subtotal = $priceToUse * $item['quantity'];
+                                            $price = $item['price'] ?? 0;
+                                            $salePrice = $item['sale_price'] ?? null;
+                                            $priceToUse = (!empty($salePrice) && $salePrice < $price) ? $salePrice : $price;
+                                            $subtotal = $priceToUse * ($item['quantity'] ?? 1);
                                         ?>
                                         <tr>
                                             <td class="ps-3 py-3">
                                                 <div class="d-flex align-items-center">
                                                     <?php 
-                                                        $imgSrc = !empty($item['image_url']) ? '/uploads/' . $item['image_url'] : '/uploads/default-product.jpg';
-                                                        $baseUrl = htmlspecialchars($_ENV['APP_URL'] ?? '');
+                                                        $imgSrc = get_product_image_url($item['image_url'] ?? null, $item['product_id'] ?? 1);
                                                     ?>
-                                                    <img src="<?= $baseUrl . htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="img-fluid rounded-3 me-3 border" style="width: 80px; height: 80px; object-fit: cover;" onerror="this.src='<?= $baseUrl ?>/uploads/default-product.jpg'">
+                                                    <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="img-fluid rounded-3 me-3 border" style="width: 80px; height: 80px; object-fit: cover;" onerror="this.src='<?= base_url('image/slide/slide1.avif') ?>'">
                                                     <div>
-                                                        <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $item['product_id'] ?>" class="text-dark fw-bold text-decoration-none d-block mb-1">
+                                                        <a href="<?= base_url('product/' . $item['product_id']) ?>" class="text-dark fw-bold text-decoration-none d-block mb-1">
                                                             <?= htmlspecialchars($item['name']) ?>
                                                         </a>
-                                                        <small class="text-muted d-block" style="font-size: 0.8rem;">Mã SKU: <?= htmlspecialchars($item['sku']) ?></small>
+                                                        <?php if (!empty($item['sku'])): ?>
+                                                            <small class="text-muted d-block" style="font-size: 0.8rem;">Mã SKU: <?= htmlspecialchars($item['sku']) ?></small>
+                                                        <?php endif; ?>
                                                         <?php if (!empty($item['size'])): ?>
-                                                            <small class="text-muted d-block" style="font-size: 0.8rem;">Size: <span class="fw-semibold text-dark"><?= htmlspecialchars($item['size']) ?></span></small>
+                                                            <small class="text-muted d-block" style="font-size: 0.8rem;">Size: <span class="fw-semibold text-dark"><?= htmlspecialchars((string)$item['size']) ?></span></small>
                                                         <?php endif; ?>
                                                         <?php if (!empty($item['color'])): ?>
-                                                            <small class="text-muted d-block" style="font-size: 0.8rem;">Màu sắc: <span class="fw-semibold text-dark"><?= htmlspecialchars($item['color']) ?></span></small>
+                                                            <small class="text-muted d-block" style="font-size: 0.8rem;">Màu sắc: <span class="fw-semibold text-dark"><?= htmlspecialchars((string)$item['color']) ?></span></small>
                                                         <?php endif; ?>
                                                         <div class="mt-1 text-primary fw-bold" style="font-size: 0.9rem;">
                                                             <?= number_format($priceToUse, 0, ',', '.') ?>đ
@@ -63,7 +69,7 @@
                                                 </div>
                                             </td>
                                             <td class="text-center">
-                                                <form action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/cart/update" method="POST" class="d-flex align-items-center justify-content-center">
+                                                <form action="<?= base_url('cart/update') ?>" method="POST" class="d-flex align-items-center justify-content-center">
                                                     <input type="hidden" name="cart_key" value="<?= $item['cart_key'] ?? $item['product_id'] ?>">
                                                     <input type="number" name="quantity" value="<?= $item['quantity'] ?>" min="1" class="form-control text-center rounded-3 mx-1" style="width: 70px;" onchange="this.form.submit()">
                                                 </form>
@@ -72,7 +78,7 @@
                                                 <?= number_format($subtotal, 0, ',', '.') ?>đ
                                             </td>
                                             <td class="text-end pe-3">
-                                                <form action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/cart/remove" method="POST" class="d-inline">
+                                                <form action="<?= base_url('cart/remove') ?>" method="POST" class="d-inline">
                                                     <input type="hidden" name="cart_key" value="<?= $item['cart_key'] ?? $item['product_id'] ?>">
                                                     <button type="submit" class="btn btn-link text-danger p-0 text-decoration-none" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')" title="Xóa">
                                                         <i class="bi bi-trash3 fs-5"></i>
@@ -88,10 +94,10 @@
                 </div>
                 
                 <div class="mt-4 d-flex justify-content-between align-items-center">
-                    <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-outline-secondary rounded-pill px-4">
+                    <a href="<?= base_url('products') ?>" class="btn btn-outline-secondary rounded-pill px-4">
                         <i class="bi bi-arrow-left me-1"></i> Tiếp tục chọn đồ
                     </a>
-                    <form action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/cart/clear" method="POST">
+                    <form action="<?= base_url('cart/clear') ?>" method="POST">
                         <button type="submit" class="btn btn-outline-danger rounded-pill px-4" onclick="return confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')">
                             <i class="bi bi-trash me-1"></i> Xóa toàn bộ giỏ hàng
                         </button>
@@ -135,7 +141,7 @@
                             <span class="fw-bold fs-4 text-primary"><?= number_format($total, 0, ',', '.') ?>đ</span>
                         </div>
 
-                        <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/checkout" class="btn btn-primary w-100 py-3 rounded-pill fw-bold text-uppercase fs-5">
+                        <a href="<?= base_url('checkout') ?>" class="btn btn-primary w-100 py-3 rounded-pill fw-bold text-uppercase fs-5">
                             Tiến hành đặt hàng <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>

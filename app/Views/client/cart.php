@@ -1,228 +1,154 @@
-<?php
-require __DIR__ . '/layouts/header.php';
+<?php 
+require_once __DIR__ . '/layouts/header.php'; 
+$cart = $cart ?? $cartItems ?? $_SESSION['cart'] ?? [];
 ?>
 
-<!-- Breadcrumb -->
-<div class="bg-light py-3 border-bottom mb-4">
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="<?= ($_ENV['APP_URL'] ?? '') ?>/" class="text-decoration-none text-dark">Trang chủ</a></li>
-                <li class="breadcrumb-item active text-red fw-semibold" aria-current="page">Giỏ hàng của bạn</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-
-<div class="container pb-5">
-    <h2 class="section-title mb-4">Giỏ hàng (<span class="text-red"><?= count($cartItems ?? []) ?></span> sản phẩm)</h2>
-
-    <?php if (!empty($cartItems)): ?>
-        <?php 
-            $totalAmount = 0;
-            foreach ($cartItems as $item) {
-                $totalAmount += $item['price'] * $item['quantity'];
-            }
-            $freeShipThreshold = 500000;
-            $progress = min(100, ($totalAmount / $freeShipThreshold) * 100);
-            $remaining = max(0, $freeShipThreshold - $totalAmount);
-        ?>
-        
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span></span>
-                    <span class="text-success fw-bold"><?= round($progress) ?>%</span>
-                </div>
-                <div class="progress mb-3" style="height: 10px;">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: <?= $progress ?>%; border-radius: 5px;" aria-valuenow="<?= $progress ?>" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-                <?php if ($progress >= 100): ?>
-                    <p class="mb-0 text-muted">Chúc mừng ! Đơn hàng của bạn đã đủ điều kiện được Freeship 🎉 Đến trang thanh toán để nhận giảm giá ngay nào!</p> 
-                <?php else: ?>
-                    <p class="mb-0 text-muted">Mua thêm <span class="fw-bold text-red"><?= number_format($remaining, 0, ',', '.') ?>đ</span> nữa để được miễn phí vận chuyển 🎉</p>
-                <?php endif; ?>
-            </div>
+<div class="container py-5">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h2 class="fw-bold text-uppercase m-0">Giỏ hàng của bạn</h2>
+            <small class="text-muted">Quản lý và kiểm tra các sản phẩm đã chọn</small>
         </div>
+    </div>
 
-        <div class="row g-4">
-            <!-- CỘT TRÁI: BẢNG SẢN PHẨM IN CART -->
-            <div class="col-lg-8">
-                <div class="table-responsive border rounded-3 shadow-sm">
-                    <form id="updateCartForm" action="<?= base_url('cart/update') ?>" method="POST">
-                        <table class="table cart-table align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Sản phẩm</th>
-                                <th class="text-center">Số lượng</th>
-                                <th class="text-center">Size</th>
-                                <th class="text-center">Màu sắc</th>
-                                <th class="text-center">Giới tính</th>
-                                <th class="text-center">Đơn giá</th>
-                                <th class="text-center">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php $totalAmount = 0; ?>
-                            <?php foreach ($cartItems as $item): ?>
-                                <?php 
-                                    $itemSubtotal = $item['price'] * $item['quantity'];
-                                    $totalAmount += $itemSubtotal;
-                                ?>
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <img src="<?= htmlspecialchars(base_url($item['image_url'])) ?>" width="70" height="70" class="rounded me-3 object-fit-cover border" alt="<?= htmlspecialchars($item['name']) ?>">
-                                            <div>
-                                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $item['product_id'] ?>" class="fw-bold text-dark text-decoration-none d-block mb-1"><?= htmlspecialchars($item['name']) ?> <span class="text-muted fw-normal" style="font-size: 0.85rem;">(SKU: <?= htmlspecialchars($item['sku'] ?? 'N/A') ?>)</span></a> 
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <div class="quantity-selector mx-auto" style="width: 48px;">
-                                            <input type="number" name="quantity[<?= $item['cart_key'] ?>]" class="form-control text-center cart-update-btn shadow-none fw-semibold bg-light px-1" style="border-radius: 6px; border: 1px solid #e9ecef; height: 30px; font-size: 0.85rem;" value="<?= $item['quantity'] ?>" min="1">
-                                        </div>
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <select name="size[<?= $item['cart_key'] ?>]" class="form-select form-select-sm cart-update-btn shadow-none mx-auto fw-semibold bg-light" style="width: 44px; border-radius: 6px; border: 1px solid #e9ecef; height: 28px; font-size: 0.8rem; cursor: pointer; padding: 0 12px 0 4px; text-align: center; background-position: right 4px center; background-size: 6px 4px; margin: 0 auto;">
-                                            <?php foreach($item['available_sizes'] as $s): ?>
-                                                <option value="<?= htmlspecialchars((string)$s) ?>" <?= ($item['size'] ?? 41) == $s ? 'selected' : '' ?>><?= htmlspecialchars((string)$s) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <select name="color[<?= $item['cart_key'] ?>]" class="form-select form-select-sm cart-update-btn shadow-none mx-auto fw-semibold bg-light" style="width: 66px; border-radius: 6px; border: 1px solid #e9ecef; height: 28px; font-size: 0.8rem; cursor: pointer; padding: 0 12px 0 4px; text-align: center; background-position: right 4px center; background-size: 6px 4px; margin: 0 auto;">
-                                            <?php foreach($item['available_colors'] as $c): ?>
-                                                <option value="<?= htmlspecialchars((string)$c) ?>" <?= ($item['color'] ?? 'Black') == $c ? 'selected' : '' ?>><?= htmlspecialchars((string)$c) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </td>
-                                    <td class="text-center align-middle">
-                                        <select name="gender[<?= $item['cart_key'] ?>]" class="form-select form-select-sm cart-update-btn shadow-none mx-auto fw-semibold bg-light" style="width: 62px; border-radius: 6px; border: 1px solid #e9ecef; height: 28px; font-size: 0.8rem; cursor: pointer; padding: 0 12px 0 4px; text-align: center; background-position: right 4px center; background-size: 6px 4px; margin: 0 auto;">
-                                            <?php foreach($item['available_genders'] as $g): ?>
-                                                <option value="<?= htmlspecialchars($g) ?>" <?= ($item['gender'] ?? 'male') == $g ? 'selected' : '' ?>><?= $g == 'male' ? 'Nam' : ($g == 'female' ? 'Nữ' : ucfirst($g)) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </td>
-                                    <td class="fw-bold text-center"><?= number_format($item['price'], 0, ',', '.') ?>đ</td>
-                                    <td class="text-center">
-                                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/remove/<?= $item['cart_key'] ?>" class="btn btn-sm btn-outline-danger" title="Xóa"><i class="fa-solid fa-trash-can"></i></a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                        </table>
-                    </form>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-outline-dark-custom btn-sm"><i class="fa-solid fa-arrow-left me-1"></i> Quay Lại</a>
-                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/clear" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-broom me-1"></i> Xóa tất cả</a>
-                </div>
-            </div>
-
-            <!-- CỘT PHẢI: TỔNG TIỀN & MÃ GIẢM GIÁ -->
-            <div class="col-lg-4">
-                <div class="summary-card">
-                    <h5 class="fw-bold mb-3 border-bottom pb-2">TỔNG ĐƠN HÀNG</h5>
-                    
-                    <!-- Mã giảm giá -->
-                    <div class="mb-4">
-                        <label class="form-label fs-7 fw-bold">MÃ GIẢM GIÁ / VOUCHER</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" placeholder="Nhập mã ưu đãi">
-                            <button class="btn btn-dark" type="button">Áp dụng</button>
-                        </div>
-                    </div>
-
-                    <!-- Tóm tắt chi phí -->
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-secondary">Tạm tính:</span>
-                        <span class="fw-bold"><?= number_format($totalAmount, 0, ',', '.') ?>đ</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-secondary">Giảm giá:</span>
-                        <span class="text-success fw-bold">-0đ</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span class="text-secondary">Phí vận chuyển:</span>
-                        <?php if (isset($shippingFee) && $shippingFee > 0): ?>
-                            <span class="fw-semibold text-dark"><?= number_format($shippingFee, 0, ',', '.') ?>đ</span>
-                        <?php else: ?>
-                            <span class="text-success fw-semibold">MIỄN PHÍ</span>
-                        <?php endif; ?>
-                    </div>
-
-                    <hr>
-
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <span class="fw-bold fs-5">TỔNG TIỀN:</span>
-                        <span class="fw-extrabold fs-4 text-red"><?= number_format($finalAmount ?? $totalAmount, 0, ',', '.') ?>đ</span>
-                    </div>
-
-                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/checkout" class="btn btn-red w-100 py-3 fw-bold fs-6">
-                        Mua Ngay <i class="fa-solid fa-arrow-right ms-2"></i>
-                    </a>
-                </div>
-            </div>
+    <?php if (empty($cart)): ?>
+        <div class="text-center py-5 bg-white rounded-4 shadow-sm border-0">
+            <i class="bi bi-cart-x display-1 text-muted mb-3 d-block"></i>
+            <h4 class="fw-bold mb-2">Giỏ hàng của bạn đang trống</h4>
+            <p class="text-muted mb-4">Hãy chọn cho mình những đôi giày thể thao ưng ý nhất nhé!</p>
+            <a href="<?= base_url('products') ?>" class="btn btn-primary rounded-pill px-5 py-3 fw-bold"><i class="bi bi-shop me-2"></i> Khám phá sản phẩm ngay</a>
         </div>
     <?php else: ?>
-        <!-- GIỎ HÀNG TRỐNG -->
-        <div class="text-center py-5">
-            <i class="fa-solid fa-cart-arrow-down fs-1 text-muted mb-3" style="font-size: 4rem !important;"></i>
-            <h3 class="fw-bold mt-2">Giỏ hàng của bạn đang trống!</h3>
-            <p class="text-secondary">Hãy chọn sản phẩm ưng ý và thêm vào giỏ hàng ngay nhé.</p>
-            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-red btn-lg px-4 py-2 mt-2"><i class="fa-solid fa-bag-shopping me-2"></i> KHÁM PHÁ SẢN PHẨM</a>
+        <div class="row g-4">
+            <!-- Danh sách sản phẩm -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" class="border-0 text-uppercase fw-bold text-muted ps-3">Sản phẩm</th>
+                                        <th scope="col" class="border-0 text-uppercase fw-bold text-muted text-center">Số lượng</th>
+                                        <th scope="col" class="border-0 text-uppercase fw-bold text-muted text-end">Thành tiền</th>
+                                        <th scope="col" class="border-0 text-uppercase fw-bold text-muted text-end pe-3">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($cart as $item): ?>
+                                        <?php 
+                                            $price = $item['price'] ?? 0;
+                                            $salePrice = $item['sale_price'] ?? null;
+                                            $priceToUse = (!empty($salePrice) && $salePrice < $price) ? $salePrice : $price;
+                                            $subtotal = $priceToUse * ($item['quantity'] ?? 1);
+                                        ?>
+                                        <tr>
+                                            <td class="ps-3 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <?php 
+                                                        $imgSrc = get_product_image_url($item['image_url'] ?? null, $item['product_id'] ?? 1);
+                                                    ?>
+                                                    <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="img-fluid rounded-3 me-3 border" style="width: 80px; height: 80px; object-fit: cover;" onerror="this.src='<?= base_url('image/slide/slide1.avif') ?>'">
+                                                    <div>
+                                                        <a href="<?= base_url('product/' . $item['product_id']) ?>" class="text-dark fw-bold text-decoration-none d-block mb-1">
+                                                            <?= htmlspecialchars($item['name']) ?>
+                                                        </a>
+                                                        <?php if (!empty($item['sku'])): ?>
+                                                            <small class="text-muted d-block" style="font-size: 0.8rem;">Mã SKU: <?= htmlspecialchars($item['sku']) ?></small>
+                                                        <?php endif; ?>
+                                                        <?php if (!empty($item['size'])): ?>
+                                                            <small class="text-muted d-block" style="font-size: 0.8rem;">Size: <span class="fw-semibold text-dark"><?= htmlspecialchars((string)$item['size']) ?></span></small>
+                                                        <?php endif; ?>
+                                                        <?php if (!empty($item['color'])): ?>
+                                                            <small class="text-muted d-block" style="font-size: 0.8rem;">Màu sắc: <span class="fw-semibold text-dark"><?= htmlspecialchars((string)$item['color']) ?></span></small>
+                                                        <?php endif; ?>
+                                                        <div class="mt-1 text-primary fw-bold" style="font-size: 0.9rem;">
+                                                            <?= number_format($priceToUse, 0, ',', '.') ?>đ
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <form action="<?= base_url('cart/update') ?>" method="POST" class="d-flex align-items-center justify-content-center">
+                                                    <input type="hidden" name="cart_key" value="<?= $item['cart_key'] ?? $item['product_id'] ?>">
+                                                    <input type="number" name="quantity" value="<?= $item['quantity'] ?>" min="1" class="form-control text-center rounded-3 mx-1" style="width: 70px;" onchange="this.form.submit()">
+                                                </form>
+                                            </td>
+                                            <td class="text-end fw-bold text-danger">
+                                                <?= number_format($subtotal, 0, ',', '.') ?>đ
+                                            </td>
+                                            <td class="text-end pe-3">
+                                                <form action="<?= base_url('cart/remove') ?>" method="POST" class="d-inline">
+                                                    <input type="hidden" name="cart_key" value="<?= $item['cart_key'] ?? $item['product_id'] ?>">
+                                                    <button type="submit" class="btn btn-link text-danger p-0 text-decoration-none" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')" title="Xóa">
+                                                        <i class="bi bi-trash3 fs-5"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 d-flex justify-content-between align-items-center">
+                    <a href="<?= base_url('products') ?>" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="bi bi-arrow-left me-1"></i> Tiếp tục chọn đồ
+                    </a>
+                    <form action="<?= base_url('cart/clear') ?>" method="POST">
+                        <button type="submit" class="btn btn-outline-danger rounded-pill px-4" onclick="return confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')">
+                            <i class="bi bi-trash me-1"></i> Xóa toàn bộ giỏ hàng
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tóm tắt đơn hàng -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 100px;">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4">Tóm tắt đơn hàng</h4>
+                        
+                        <?php 
+                            $threshold = defined('FREE_COD_THRESHOLD') ? FREE_COD_THRESHOLD : 1000000;
+                            $needed = $threshold - $total;
+                        ?>
+                        <?php if ($needed > 0): ?>
+                            <div class="alert alert-warning border-0 rounded-3 mb-3 p-3" style="font-size: 0.85rem;">
+                                <i class="bi bi-truck me-1"></i> Mua thêm <strong><?= number_format($needed, 0, ',', '.') ?>đ</strong> để được <strong class="text-success">Miễn phí vận chuyển (Freeship)</strong>!
+                            </div>
+                        <?php else: ?>
+                            <div class="alert alert-success border-0 rounded-3 mb-3 p-3" style="font-size: 0.85rem;">
+                                <i class="bi bi-check-circle-fill me-1"></i> Đơn hàng của bạn đã đạt mốc <strong class="text-success">Miễn phí vận chuyển (Freeship)</strong>!
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="text-muted">Tạm tính tiền hàng</span>
+                            <span class="fw-semibold"><?= number_format($total, 0, ',', '.') ?>đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="text-muted">Dự kiến giao hàng</span>
+                            <span class="fw-semibold text-dark">Toàn quốc (1-3 ngày)</span>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="fw-bold fs-5">Tạm tính:</span>
+                            <span class="fw-bold fs-4 text-primary"><?= number_format($total, 0, ',', '.') ?>đ</span>
+                        </div>
+
+                        <a href="<?= base_url('checkout') ?>" class="btn btn-primary w-100 py-3 rounded-pill fw-bold text-uppercase fs-5">
+                            Tiến hành đặt hàng <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     <?php endif; ?>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const attachListeners = () => {
-        const updateBtns = document.querySelectorAll('.cart-update-btn');
-        updateBtns.forEach(btn => {
-            btn.addEventListener('change', function(e) {
-                const form = document.getElementById('updateCartForm');
-                const formData = new FormData(form);
-                
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    
-                    // Replace the cart container content
-                    const newCartContent = doc.querySelector('.container.pb-5');
-                    const oldCartContent = document.querySelector('.container.pb-5');
-                    if (newCartContent && oldCartContent) {
-                        oldCartContent.innerHTML = newCartContent.innerHTML;
-                    }
-                    
-                    // Replace the badge count in the header
-                    const newBadge = doc.querySelector('.badge-badge-count');
-                    const oldBadge = document.querySelector('.badge-badge-count');
-                    if (newBadge && oldBadge) {
-                        oldBadge.innerHTML = newBadge.innerHTML;
-                    }
-                    
-                    // Re-attach listeners to the newly rendered DOM elements
-                    attachListeners();
-                })
-                .catch(err => {
-                    console.error('Error updating cart:', err);
-                });
-            });
-        });
-    };
-
-    attachListeners();
-});
-</script>
-
-<?php
-require __DIR__ . '/layouts/footer.php';
-?>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

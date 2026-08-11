@@ -34,6 +34,7 @@ class CartController extends Controller
 
         $this->view('client/cart', [
             'cart' => $cart,
+            'cartItems' => $cart,
             'total' => $total
         ]);
     }
