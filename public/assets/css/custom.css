@@ -592,3 +592,76 @@ body {
     font-size: 0.7rem;
     opacity: 0.8;
 }
+
+/* --- Mandatory Black & Red Theme Overrides --- */
+.btn-primary, .btn-brand-red, .btn-red {
+    background-color: #e60012 !important;
+    border-color: #e60012 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active,
+.btn-brand-red:hover, .btn-red:hover {
+    background-color: #c40010 !important;
+    border-color: #c40010 !important;
+    color: #ffffff !important;
+}
+
+.btn-outline-primary {
+    color: #e60012 !important;
+    border-color: #e60012 !important;
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
+    background-color: #e60012 !important;
+    border-color: #e60012 !important;
+    color: #ffffff !important;
+}
+
+.bg-primary {
+    background-color: #e60012 !important;
+}
+
+.text-primary {
+    color: #e60012 !important;
+}
+
+.border-primary {
+    border-color: #e60012 !important;
+}
+
+.badge.bg-primary {
+    background-color: #e60012 !important;
+}
+
+.form-check-input:checked {
+    background-color: #e60012 !important;
+    border-color: #e60012 !important;
+}
+
+.page-item.active .page-link {
+    background-color: #111111 !important;
+    border-color: #111111 !important;
+    color: #ffffff !important;
+}
+
+.page-link {
+    color: #111111;
+}
+
+.page-link:hover {
+    color: #e60012;
+}
+
+.sidebar .nav-link.active {
+    color: #ffffff !important;
+    background-color: #e60012 !important;
+    border-radius: 6px;
+}
+
+.sidebar .nav-link:hover {
+    color: #ffffff !important;
+    background: rgba(230, 0, 18, 0.2) !important;
+    border-radius: 6px;
+}

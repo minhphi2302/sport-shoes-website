@@ -138,10 +138,10 @@ $cart = $cart ?? $cartItems ?? $_SESSION['cart'] ?? [];
                         
                         <div class="d-flex justify-content-between mb-4">
                             <span class="fw-bold fs-5">Tạm tính:</span>
-                            <span class="fw-bold fs-4 text-primary"><?= number_format($total, 0, ',', '.') ?>đ</span>
+                            <span class="fw-bold fs-4 text-red"><?= number_format($total, 0, ',', '.') ?>đ</span>
                         </div>
 
-                        <a href="<?= base_url('checkout') ?>" class="btn btn-primary w-100 py-3 rounded-pill fw-bold text-uppercase fs-5">
+                        <a href="<?= base_url('checkout') ?>" class="btn btn-red w-100 py-3 rounded-pill fw-bold text-uppercase fs-5">
                             Tiến hành đặt hàng <i class="bi bi-arrow-right ms-1"></i>
                         </a>
                     </div>
