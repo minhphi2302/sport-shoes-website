@@ -74,3 +74,19 @@ desktop.ini
 .phpunit.result.cache
 .php-cs-fixer.cache
 .phpstan.cache
+
+# ==========================================
+# 9. Debug & Temp Files (không commit vào repo)
+# ==========================================
+FIX_*.md
+FIXED_*.md
+CHANGELOG_*.md
+TEST_*.md
+TEST_*.html
+test_*.html
+test_*.php
+CLEAR_CACHE_*.txt
+RESTART_APACHE*.txt
+run_*_migration.php
+public/test_*.php
+public/test_*.html
