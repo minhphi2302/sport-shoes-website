@@ -53,6 +53,8 @@
                         <textarea class="form-control" name="description" rows="4"><?= htmlspecialchars($product['description'] ?? '') ?></textarea>
                     </div>
 
+                    <?php require __DIR__ . '/components/variant_matrix_generator.php'; ?>
+
                         <!-- BULK UPDATE VARIANTS (Lọc theo SKU) -->
                         <div class="card border-info mb-3">
                             <div class="card-header bg-info text-white fw-bold py-2">
@@ -127,9 +129,14 @@
                         <div id="variant-global-error" class="text-danger fw-bold mb-2" style="display: none;"></div>
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="fw-bold mb-0">Danh sách biến thể</h6>
-                            <button type="button" class="btn btn-outline-danger btn-sm" id="btn-clear-all-variants">
-                                <i class="bi bi-trash me-1"></i> Xóa tất cả
-                            </button>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-success me-2" id="btn-add-single-variant">
+                                    <i class="bi bi-plus-lg me-1"></i> Thêm 1 biến thể thủ công
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="btn-clear-all-variants">
+                                    <i class="bi bi-trash me-1"></i> Xóa tất cả
+                                </button>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle" id="variants-table">

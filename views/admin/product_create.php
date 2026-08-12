@@ -57,9 +57,14 @@
                         <div id="variant-global-error" class="text-danger fw-bold mb-2" style="display: none;"></div>
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="fw-bold mb-0">Danh sách biến thể</h6>
-                            <button type="button" class="btn btn-outline-danger btn-sm" id="btn-clear-all-variants">
-                                <i class="bi bi-trash me-1"></i> Xóa tất cả
-                            </button>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-success me-2" id="btn-add-single-variant">
+                                    <i class="bi bi-plus-lg me-1"></i> Thêm 1 biến thể thủ công
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="btn-clear-all-variants">
+                                    <i class="bi bi-trash me-1"></i> Xóa tất cả
+                                </button>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle" id="variants-table">
@@ -113,7 +118,7 @@
                 <div class="col-md-4">
                     <div class="mb-3 position-relative">
                         <label class="form-label fw-semibold">Danh mục *</label>
-                        <select class="form-select" name="category_id">
+                        <select class="form-select" name="category_id" id="category_select">
                             <option value="">-- Chọn danh mục --</option>
                             <?php foreach ($categories as $cat): ?>
                                 <option value="<?= $cat['category_id'] ?>" <?= (isset($product['category_id']) && $product['category_id'] == $cat['category_id']) ? 'selected' : '' ?>>
@@ -153,4 +158,42 @@
 <script src="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/assets/js/admin_product.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+</script>
+
+    // Lọc size theo category được chọn
+    const categorySelect = document.getElementById('category_select');
+    let allSizes = <?= json_encode($sizes) ?>;
+    let filteredSizes = allSizes;
+
+    categorySelect.addEventListener('change', async function() {
+        const categoryId = this.value;
+        
+        if (!categoryId) {
+            filteredSizes = allSizes;
+            return;
+        }
+
+        try {
+            const response = await fetch(`<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/admin/api/sizes-by-category/${categoryId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                filteredSizes = data.sizes;
+                console.log(`Loaded ${filteredSizes.length} sizes for gender: ${data.gender}`);
+                
+                // Cập nhật size options trong variant matrix generator
+                if (typeof updateSizeOptions === 'function') {
+                    updateSizeOptions(filteredSizes);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading sizes:', error);
+        }
+    });
+
+    // Trigger on page load if category already selected
+    if (categorySelect.value) {
+        categorySelect.dispatchEvent(new Event('change'));
+    }
+});
 </script>

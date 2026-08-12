@@ -215,6 +215,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // 3.5 Logic Thêm 1 biến thể thủ công
+    const btnAddSingle = document.getElementById('btn-add-single-variant');
+    if (btnAddSingle) {
+        btnAddSingle.addEventListener('click', function() {
+            const skuInput = document.querySelector('input[name="sku"]');
+            const baseSku = (skuInput ? skuInput.value.trim().toUpperCase() : 'SKU') || 'SKU';
+            const basePriceInput = document.querySelector('input[name="price"]');
+            const basePrice = basePriceInput ? (parseFloat(basePriceInput.value) || 0) : 0;
+
+            const tbody = document.querySelector('#variants-table tbody');
+            if (!tbody) return;
+
+            const rowCount = tbody.querySelectorAll('tr').length + 1;
+            const defaultSku = `${baseSku}-VAR-${rowCount}`;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" name="variant_skus[]" class="form-control form-control-sm" value="${defaultSku}" placeholder="SKU"></td>
+                <td><input type="text" name="variant_models[]" class="form-control form-control-sm" value="Mặc định"></td>
+                <td>
+                    <select name="variant_genders[]" class="form-select form-select-sm">
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ" selected>Nữ</option>
+                        <option value="Trẻ em">Trẻ em</option>
+                    </select>
+                </td>
+                <td><input type="text" name="variant_raw_sizes[]" class="form-control form-control-sm" value="40" placeholder="Size"></td>
+                <td><input type="text" name="variant_colors[]" class="form-control form-control-sm" value="Đen" placeholder="Màu"></td>
+                <td><input type="number" name="variant_prices[]" class="form-control form-control-sm variant-price" value="${basePrice}" min="0"></td>
+                <td><input type="number" name="variant_qtys[]" class="form-control form-control-sm variant-qty" value="10" min="0" required></td>
+                <td class="text-center"><button type="button" class="btn btn-danger btn-sm btn-remove-variant"><i class="bi bi-trash"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+
+            if (typeof window.updateTotalQuantity === 'function') {
+                window.updateTotalQuantity();
+            }
+
+            // Highlight row vừa thêm
+            tr.style.transition = "background-color 0.5s";
+            tr.style.backgroundColor = "#d1ecf1";
+            setTimeout(() => { tr.style.backgroundColor = ""; }, 1000);
+        });
+    }
+
     // 4. Tự động ẩn các thông báo alert trên trang sau 5 giây
     document.querySelectorAll('.alert:not(#matrix-error-alert)').forEach(alertEl => {
         setTimeout(() => {

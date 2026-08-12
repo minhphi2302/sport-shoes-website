@@ -58,4 +58,35 @@ class Size extends Model
         $stmt->execute($params);
         return (int)$stmt->fetchColumn() > 0;
     }
+
+    /**
+     * Lấy tất cả size theo giới tính
+     */
+    public function findByGender(string $gender): array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM sizes WHERE gender = :gender ORDER BY name ASC');
+        $stmt->execute(['gender' => $gender]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Lấy tất cả size nhóm theo gender
+     */
+    public function getAllGroupedByGender(): array
+    {
+        $stmt = $this->db->query('SELECT * FROM sizes ORDER BY gender, CAST(name AS UNSIGNED) ASC');
+        $allSizes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $grouped = [
+            'Nam' => [],
+            'Nữ' => [],
+            'Trẻ em' => []
+        ];
+
+        foreach ($allSizes as $size) {
+            $grouped[$size['gender']][] = $size;
+        }
+
+        return $grouped;
+    }
 }
