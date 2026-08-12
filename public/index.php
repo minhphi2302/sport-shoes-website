@@ -11,6 +11,7 @@ $router = new Router();
 $router->get('/',                [App\Controllers\ProductController::class, 'home']);
 $router->get('/products',        [App\Controllers\ProductController::class, 'index']);
 $router->get('/products/{id}',   [App\Controllers\ProductController::class, 'show']);
+$router->get('/product/{id}',    [App\Controllers\ProductController::class, 'show']); // Backward compatibility
 
 // ── Auth ──────────────────────────────────────────────────────
 $router->get('/login',           [App\Controllers\AuthController::class, 'showLogin']);
@@ -20,13 +21,18 @@ $router->post('/register',       [App\Controllers\AuthController::class, 'regist
 $router->get('/logout',          [App\Controllers\AuthController::class, 'logout']);
 $router->post('/logout',         [App\Controllers\AuthController::class, 'logout']);
 
-// ── Profile ───────────────────────────────────────────────────
+// ── Profile / Account ────────────────────────────────────────
+$router->get('/account',                 [App\Controllers\ProfileController::class, 'index']);
 $router->get('/profile',                 [App\Controllers\ProfileController::class, 'index']);
+$router->post('/account/update',         [App\Controllers\ProfileController::class, 'updateInfo']);
+$router->post('/account/password',       [App\Controllers\ProfileController::class, 'updatePassword']);
 $router->post('/profile/password',       [App\Controllers\ProfileController::class, 'updatePassword']);
+$router->post('/account/delete',         [App\Controllers\ProfileController::class, 'deleteAccount']);
 $router->post('/profile/delete',         [App\Controllers\ProfileController::class, 'deleteAccount']);
 
 // ── Giỏ hàng ─────────────────────────────────────────────────
 $router->get('/cart',            [App\Controllers\CartController::class, 'index']);
+$router->get('/cart/count',      [App\Controllers\CartController::class, 'count']); // API: Get cart count
 $router->get('/cart/add/{id}',   [App\Controllers\CartController::class, 'add']);
 $router->get('/cart/add',        [App\Controllers\CartController::class, 'add']);
 $router->post('/cart/add',       [App\Controllers\CartController::class, 'add']);
@@ -37,6 +43,7 @@ $router->post('/cart/clear',     [App\Controllers\CartController::class, 'clear'
 // ── Đặt hàng & lịch sử ──────────────────────────────────────
 $router->get('/checkout',                [App\Controllers\OrderController::class, 'showCheckout']);
 $router->post('/checkout',               [App\Controllers\OrderController::class, 'placeOrder']);
+$router->post('/checkout/process',       [App\Controllers\OrderController::class, 'placeOrder']); // Alias
 $router->get('/orders/{id}/success',     [App\Controllers\OrderController::class, 'showSuccess']);
 $router->get('/orders',                  [App\Controllers\OrderController::class, 'myOrders']);
 $router->get('/orders/{id}',             [App\Controllers\OrderController::class, 'show']);
@@ -85,6 +92,9 @@ $router->post('/admin/attributes/sizes', [App\Controllers\Admin\AttributeAdminCo
 $router->get('/admin/attributes/sizes/{id}/delete', [App\Controllers\Admin\AttributeAdminController::class, 'deleteSize']);
 $router->post('/admin/attributes/colors', [App\Controllers\Admin\AttributeAdminController::class, 'storeColor']);
 $router->get('/admin/attributes/colors/{id}/delete', [App\Controllers\Admin\AttributeAdminController::class, 'deleteColor']);
+
+// ── Admin: API ───────────────────────────────────────────────
+$router->get('/admin/api/sizes-by-category/{id}', [App\Controllers\Admin\SizeController::class, 'getSizesByCategory']);
 
 // ── Dispatch ─────────────────────────────────────────────────
 $router->resolve($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);

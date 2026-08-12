@@ -35,3 +35,47 @@ if (!function_exists('get_product_image_url')) {
         return base_url('image/slide/slide' . $slideNum . '.avif');
     }
 }
+
+if (!function_exists('get_brand_image_url')) {
+    /**
+     * Lấy đường dẫn ảnh thương hiệu
+     * Ảnh brand nằm trong public/image/brand/
+     */
+    function get_brand_image_url(?string $logoUrl, string $brandName): string {
+        // Nếu có logo_url trong DB
+        if (!empty($logoUrl)) {
+            $logoUrl = ltrim($logoUrl, '/');
+            
+            // Nếu đã có prefix image/ hoặc public/image/
+            if (str_starts_with($logoUrl, 'image/brand/')) {
+                return base_url($logoUrl);
+            }
+            if (str_starts_with($logoUrl, 'public/image/brand/')) {
+                return base_url(str_replace('public/', '', $logoUrl));
+            }
+            
+            // Nếu chỉ có tên file (vd: nike.jpg)
+            if (strpos($logoUrl, '/') === false) {
+                return base_url('image/brand/' . $logoUrl);
+            }
+            
+            // Fallback: trả về như cũ
+            return base_url($logoUrl);
+        }
+        
+        // Tự động tìm file theo tên brand
+        $brandSlug = strtolower(str_replace(' ', '', $brandName));
+        $basePath = dirname(__DIR__) . '/public/image/brand/';
+        
+        // Thử các extension
+        $extensions = ['jpg', 'png', 'webp', 'jpeg'];
+        foreach ($extensions as $ext) {
+            if (file_exists($basePath . $brandSlug . '.' . $ext)) {
+                return base_url('image/brand/' . $brandSlug . '.' . $ext);
+            }
+        }
+        
+        // Fallback: logo ANTA mặc định
+        return base_url('image/logo.webp');
+    }
+}
