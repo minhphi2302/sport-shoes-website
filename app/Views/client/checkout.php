@@ -17,6 +17,8 @@ require __DIR__ . '/layouts/header.php';
 
 <div class="container pb-5">
     <h2 class="section-title mb-4">Thanh toán & Đặt hàng</h2>
+    
+
 
     <?php if (isset($_SESSION['checkout_error'])): ?>
         <div class="alert alert-danger shadow-sm rounded-3">
@@ -68,7 +70,7 @@ require __DIR__ . '/layouts/header.php';
                     <div class="row g-3">
                         <div class="col-12">
                             <div class="form-floating custom-floating position-relative">
-                                <input type="text" name="recipient_name" id="recipient_name" class="form-control custom-checkout-input pe-5" placeholder="Nhập họ và tên" required value="<?= htmlspecialchars($_SESSION['user']['full_name'] ?? '') ?>">
+                                <input type="text" name="recipient_name" id="recipient_name" class="form-control custom-checkout-input pe-5" placeholder="Nhập họ và tên" required value="<?= htmlspecialchars($user['name'] ?? $user['full_name'] ?? '') ?>">
                                 <label for="recipient_name" class="text-muted">Họ và tên</label>
                                 <span class="position-absolute end-0 me-3 d-flex align-items-center" style="top: 29px; transform: translateY(-50%); z-index: 5;">
                                     <i class="fa-solid fa-circle-xmark text-secondary clear-btn" data-target="recipient_name" style="cursor: pointer; display: none; font-size: 0.95rem;"></i>
@@ -78,7 +80,7 @@ require __DIR__ . '/layouts/header.php';
                         </div>
                         <div class="col-12">
                             <div class="form-floating custom-floating position-relative">
-                                <input type="tel" name="recipient_phone" id="recipient_phone" class="form-control custom-checkout-input" style="padding-right: 80px;" placeholder="Nhập số điện thoại" required value="<?= htmlspecialchars($_SESSION['user']['phone'] ?? '') ?>">
+                                <input type="tel" name="recipient_phone" id="recipient_phone" class="form-control custom-checkout-input" style="padding-right: 80px;" placeholder="Nhập số điện thoại" required value="<?= htmlspecialchars($user['phone'] ?? '') ?>">
                                 <label for="recipient_phone" class="text-muted">Số điện thoại</label>
                                 <span class="position-absolute end-0 me-3 d-flex align-items-center" style="top: 29px; transform: translateY(-50%); z-index: 5;">
                                     <i class="fa-solid fa-circle-xmark text-secondary clear-btn" data-target="recipient_phone" style="cursor: pointer; display: none; font-size: 0.95rem;"></i>
@@ -90,7 +92,7 @@ require __DIR__ . '/layouts/header.php';
                         </div>
                         <div class="col-12">
                             <div class="form-floating custom-floating position-relative">
-                                <input type="email" name="email" id="email" class="form-control custom-checkout-input pe-5" placeholder="Nhập Email" required value="<?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?>">
+                                <input type="email" name="email" id="email" class="form-control custom-checkout-input pe-5" placeholder="Nhập Email" required value="<?= htmlspecialchars($user['email'] ?? '') ?>">
                                 <label for="email" class="text-muted">Email</label>
                                 <span class="position-absolute end-0 me-3 d-flex align-items-center" style="top: 29px; transform: translateY(-50%); z-index: 5;">
                                     <i class="fa-solid fa-circle-xmark text-secondary clear-btn" data-target="email" style="cursor: pointer; display: none; font-size: 0.95rem;"></i>
@@ -106,7 +108,7 @@ require __DIR__ . '/layouts/header.php';
                         </div>
                         <div class="col-12">
                             <div class="form-floating custom-floating position-relative">
-                                <input type="text" name="street_address" id="street_address" class="form-control custom-checkout-input pe-5" placeholder="Địa chỉ, tên đường" required>
+                                <input type="text" name="street_address" id="street_address" class="form-control custom-checkout-input pe-5" placeholder="Địa chỉ, tên đường" required value="<?= htmlspecialchars($user['address'] ?? '') ?>">
                                 <label for="street_address" class="text-muted">Địa chỉ, tên đường</label>
                                 <span class="position-absolute end-0 me-3 d-flex align-items-center" style="top: 29px; transform: translateY(-50%); z-index: 5;">
                                     <i class="fa-solid fa-circle-xmark text-secondary clear-btn" data-target="street_address" style="cursor: pointer; display: none; font-size: 0.95rem;"></i>
@@ -114,41 +116,7 @@ require __DIR__ . '/layouts/header.php';
                                 <div class="invalid-feedback" id="err-street_address"></div>
                             </div>
                         </div>
-                        <div class="col-12">
-                            <div class="form-floating custom-floating position-relative">
-                                <input type="text" name="ward_district_city" id="ward_district_city" class="form-control custom-checkout-input bg-white" placeholder="Nhập Tỉnh/TP, Quận/Huyện, Phường/Xã" required readonly style="cursor: pointer;">
-                                <label for="ward_district_city" class="text-muted">Tỉnh/TP, Quận/Huyện, Phường/Xã</label>
-                                <div class="invalid-feedback" id="err-ward_district_city"></div>
-                                
-                                <!-- Dropdown chọn địa chỉ -->
-                                <div id="address-dropdown" class="address-dropdown shadow rounded-3 bg-white border" style="display: none; position: absolute; z-index: 1050; width: 100%; margin-top: 5px;">
-                                    <ul class="nav nav-tabs nav-justified pt-2" id="addressTabs" role="tablist">
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link active text-dark pb-2" id="tab-province" data-bs-toggle="tab" data-bs-target="#pane-province" type="button" role="tab">Tỉnh / TP</button>
-                                        </li>
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link text-dark disabled pb-2" id="tab-district" data-bs-toggle="tab" data-bs-target="#pane-district" type="button" role="tab">Quận / Huyện</button>
-                                        </li>
-                                        <li class="nav-item" role="presentation">
-                                            <button class="nav-link text-dark disabled pb-2" id="tab-ward" data-bs-toggle="tab" data-bs-target="#pane-ward" type="button" role="tab">Phường / Xã</button>
-                                        </li>
-                                    </ul>
-                                    <div class="tab-content" id="addressTabsContent" style="max-height: 250px; overflow-y: auto;">
-                                        <div class="tab-pane fade show active" id="pane-province" role="tabpanel">
-                                            <ul class="list-group list-group-flush" id="list-province">
-                                                <li class="list-group-item text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span> Đang tải...</li>
-                                            </ul>
-                                        </div>
-                                        <div class="tab-pane fade" id="pane-district" role="tabpanel">
-                                            <ul class="list-group list-group-flush" id="list-district"></ul>
-                                        </div>
-                                        <div class="tab-pane fade" id="pane-ward" role="tabpanel">
-                                            <ul class="list-group list-group-flush" id="list-ward"></ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
                         <div class="col-12">
                             <div class="form-floating custom-floating">
                                 <textarea name="notes" id="notes" class="form-control custom-checkout-input" style="height: 80px" placeholder="Ghi chú đơn hàng (Tùy chọn)"></textarea>
@@ -185,8 +153,11 @@ require __DIR__ . '/layouts/header.php';
                     <div class="checkout-items-list mb-4" style="max-height: 300px; overflow-y: auto;">
                         <?php if (!empty($cartItems)): ?>
                             <?php foreach ($cartItems as $item): ?>
+                                <?php 
+                                    $imgSrc = get_product_image_url($item['image_url'] ?? null, $item['product_id'] ?? 1);
+                                ?>
                                 <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
-                                    <img src="<?= htmlspecialchars(base_url($item['image_url'])) ?>" width="55" height="55" class="rounded me-3 object-fit-cover border" alt="<?= htmlspecialchars($item['name']) ?>">
+                                    <img src="<?= htmlspecialchars($imgSrc) ?>" width="55" height="55" class="rounded me-3 object-fit-cover border" alt="<?= htmlspecialchars($item['name']) ?>" onerror="this.src='<?= base_url('image/slide/slide1.avif') ?>'">
                                     <div class="flex-grow-1">
                                         <h6 class="mb-0 fs-7 fw-bold"><?= htmlspecialchars($item['name']) ?></h6>
                                         <small class="text-muted">SKU: <?= htmlspecialchars($item['sku'] ?? 'N/A') ?> | Size: <?= $item['size'] ?? '41' ?> | SL: <?= $item['quantity'] ?></small>
@@ -238,124 +209,6 @@ require __DIR__ . '/layouts/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const addressInput = document.getElementById('ward_district_city');
-    const dropdown = document.getElementById('address-dropdown');
-    const listProvince = document.getElementById('list-province');
-    const listDistrict = document.getElementById('list-district');
-    const listWard = document.getElementById('list-ward');
-    
-    const tabProvince = new bootstrap.Tab(document.getElementById('tab-province'));
-    const tabDistrictBtn = document.getElementById('tab-district');
-    const tabDistrict = new bootstrap.Tab(tabDistrictBtn);
-    const tabWardBtn = document.getElementById('tab-ward');
-    const tabWard = new bootstrap.Tab(tabWardBtn);
-
-    let selectedProvince = null;
-    let selectedDistrict = null;
-    let selectedWard = null;
-
-    // Fetch provinces on load
-    fetch('https://provinces.open-api.vn/api/p/')
-        .then(response => response.json())
-        .then(data => {
-            renderProvinces(data);
-        })
-        .catch(error => {
-            listProvince.innerHTML = '<li class="list-group-item text-center text-danger">Lỗi tải dữ liệu</li>';
-        });
-
-    addressInput.addEventListener('click', function(e) {
-        dropdown.style.display = 'block';
-        e.stopPropagation();
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!dropdown.contains(e.target) && e.target !== addressInput) {
-            dropdown.style.display = 'none';
-        }
-    });
-
-    dropdown.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-
-    function renderProvinces(provinces) {
-        listProvince.innerHTML = '';
-        provinces.forEach(p => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item list-group-item-action';
-            li.textContent = p.name;
-            li.onclick = () => {
-                selectedProvince = p;
-                selectedDistrict = null;
-                selectedWard = null;
-                updateInput();
-                
-                tabDistrictBtn.classList.remove('disabled');
-                listDistrict.innerHTML = '<li class="list-group-item text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span> Đang tải...</li>';
-                tabDistrict.show();
-                tabWardBtn.classList.add('disabled');
-                
-                fetch(`https://provinces.open-api.vn/api/p/${p.code}?depth=2`)
-                    .then(res => res.json())
-                    .then(data => renderDistricts(data.districts));
-            };
-            listProvince.appendChild(li);
-        });
-    }
-
-    function renderDistricts(districts) {
-        listDistrict.innerHTML = '';
-        districts.forEach(d => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item list-group-item-action';
-            li.textContent = d.name;
-            li.onclick = () => {
-                selectedDistrict = d;
-                selectedWard = null;
-                updateInput();
-                
-                tabWardBtn.classList.remove('disabled');
-                listWard.innerHTML = '<li class="list-group-item text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span> Đang tải...</li>';
-                tabWard.show();
-                
-                fetch(`https://provinces.open-api.vn/api/d/${d.code}?depth=2`)
-                    .then(res => res.json())
-                    .then(data => renderWards(data.wards));
-            };
-            listDistrict.appendChild(li);
-        });
-    }
-
-    function renderWards(wards) {
-        listWard.innerHTML = '';
-        wards.forEach(w => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item list-group-item-action';
-            li.textContent = w.name;
-            li.onclick = () => {
-                selectedWard = w;
-                updateInput();
-                dropdown.style.display = 'none';
-            };
-            listWard.appendChild(li);
-        });
-    }
-
-    function updateInput() {
-        let parts = [];
-        if (selectedWard) parts.push(selectedWard.name);
-        if (selectedDistrict) parts.push(selectedDistrict.name);
-        if (selectedProvince) parts.push(selectedProvince.name);
-        addressInput.value = parts.join(', ');
-        addressInput.dispatchEvent(new Event('change'));
-        
-        // Remove error state if valid
-        if (addressInput.value.trim()) {
-            addressInput.classList.remove('is-invalid');
-        }
-    }
-
     // Form Validation on Submit & Blur
     const checkoutForm = document.getElementById('checkoutForm');
     const validateField = (input, errorDivId, emptyMsg, patternMsg, pattern) => {
@@ -379,23 +232,24 @@ document.addEventListener('DOMContentLoaded', function() {
         { el: document.getElementById('recipient_name'), err: 'err-recipient_name', empty: 'Vui lòng nhập họ và tên', patternMsg: null, pattern: null },
         { el: document.getElementById('recipient_phone'), err: 'err-recipient_phone', empty: 'Vui lòng nhập số điện thoại', patternMsg: 'Số điện thoại không hợp lệ', pattern: /^[0-9]{9,12}$/ },
         { el: document.getElementById('email'), err: 'err-email', empty: 'Vui lòng nhập email', patternMsg: 'Email không hợp lệ', pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-        { el: document.getElementById('street_address'), err: 'err-street_address', empty: 'Vui lòng nhập địa chỉ nhận hàng', patternMsg: null, pattern: null },
-        { el: document.getElementById('ward_district_city'), err: 'err-ward_district_city', empty: 'Vui lòng chọn Tỉnh/TP, Quận/Huyện, Phường/Xã', patternMsg: null, pattern: null }
+        { el: document.getElementById('street_address'), err: 'err-street_address', empty: 'Vui lòng nhập địa chỉ nhận hàng', patternMsg: null, pattern: null }
     ];
 
     inputsToValidate.forEach(item => {
-        item.el.addEventListener('blur', () => validateField(item.el, item.err, item.empty, item.patternMsg, item.pattern));
-        item.el.addEventListener('input', () => {
-            if (item.el.classList.contains('is-invalid')) {
-                validateField(item.el, item.err, item.empty, item.patternMsg, item.pattern);
-            }
-        });
+        if (item.el) {
+            item.el.addEventListener('blur', () => validateField(item.el, item.err, item.empty, item.patternMsg, item.pattern));
+            item.el.addEventListener('input', () => {
+                if (item.el.classList.contains('is-invalid')) {
+                    validateField(item.el, item.err, item.empty, item.patternMsg, item.pattern);
+                }
+            });
+        }
     });
 
     checkoutForm.addEventListener('submit', function(e) {
         let isValid = true;
         inputsToValidate.forEach(item => {
-            if (!validateField(item.el, item.err, item.empty, item.patternMsg, item.pattern)) {
+            if (item.el && !validateField(item.el, item.err, item.empty, item.patternMsg, item.pattern)) {
                 isValid = false;
             }
         });
