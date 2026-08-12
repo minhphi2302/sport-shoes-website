@@ -62,6 +62,14 @@ class ProductController extends Controller
         $totalProducts = $this->productModel->countAllWithFilters($filters);
         $totalPages = ceil($totalProducts / $perPage);
 
+        // Nếu request AJAX từ homepage filter (trả về partial grid sản phẩm)
+        if (isset($_GET['home']) && $_GET['home'] == '1') {
+            $this->view('client/partials/home_product_list', [
+                'products' => $products
+            ]);
+            return;
+        }
+
         $categories = $this->categoryModel->all();
         $brands = $this->brandModel->all();
 
