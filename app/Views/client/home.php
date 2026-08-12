@@ -42,10 +42,15 @@ require_once __DIR__ . '/layouts/header.php';
                             <h6 class="brand-name-text"><?= htmlspecialchars(mb_strtoupper($brand['name'])) ?></h6>
                         </a>
                     </div>
-                </div>
-            </a>
+                <?php endforeach; ?>
+            <?php endif; ?>
+            <div class="col-6 col-md-4 col-lg-2">
+                <a href="<?= base_url('products') ?>" class="brand-card bg-dark text-white">
+                    <i class="fa-solid fa-arrow-right text-red fs-4 mb-2"></i>
+                    <h6 class="brand-name-text text-white">XEM TẤT CẢ</h6>
+                </a>
+            </div>
         </div>
-        <?php endforeach; ?>
     </div>
 </section>
 
