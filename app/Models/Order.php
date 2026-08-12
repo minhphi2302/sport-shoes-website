@@ -29,12 +29,26 @@ class Order extends Model
             $itemsWithCurrentPrice = [];
             
             foreach ($cartItems as $item) {
+                // Dùng giá đã lưu trong cart (giá biến thể đã được chọn khi thêm vào giỏ)
+                // Không re-fetch giá gốc từ sản phẩm để tránh sai lệch giá biến thể
+                if (!isset($item['product_id'])) {
+                    throw new Exception("Dữ liệu giỏ hàng không hợp lệ.");
+                }
                 $product = $productModel->findById($item['product_id']);
                 if (!$product) {
                     throw new Exception("Sản phẩm #{$item['product_id']} không tồn tại.");
                 }
-                
-                $priceToUse = (!empty($product['sale_price']) && $product['sale_price'] < $product['price']) ? $product['sale_price'] : $product['price'];
+
+                // Ưu tiên dùng giá lưu trong cart (giá biến thể/sale đã chọn)
+                if (!empty($item['price'])) {
+                    $priceToUse = (float)$item['price'];
+                } else {
+                    // Fallback: đọc từ sản phẩm gốc nếu cart không có giá
+                    $priceToUse = (!empty($product['sale_price']) && $product['sale_price'] < $product['price'])
+                        ? (float)$product['sale_price']
+                        : (float)$product['price'];
+                }
+
                 $subtotal = $priceToUse * $item['quantity'];
                 $subtotalAmount += $subtotal;
                 
@@ -55,21 +69,49 @@ class Order extends Model
             }
             $totalAmount = $subtotalAmount + $shippingFee;
 
-            $orderSql = "INSERT INTO orders (user_id, recipient_name, recipient_phone, shipping_address, total_amount, shipping_fee, payment_method, notes, status, created_at, updated_at) 
-                         VALUES (:user_id, :recipient_name, :recipient_phone, :shipping_address, :total_amount, :shipping_fee, :payment_method, :notes, 'pending', NOW(), NOW())";
+            // Kiểm tra cột shipping_fee đã tồn tại chưa (tương thích migration)
+            $hasShippingFeeColumn = false;
+            try {
+                $checkCol = $this->db->query("SELECT shipping_fee FROM orders LIMIT 0");
+                $hasShippingFeeColumn = ($checkCol !== false);
+            } catch (\Exception $e) {
+                $hasShippingFeeColumn = false;
+            }
+
+            if ($hasShippingFeeColumn) {
+                // Lưu shipping_fee riêng để admin hiển thị đúng
+                $orderSql = "INSERT INTO orders (user_id, recipient_name, recipient_phone, shipping_address, total_amount, shipping_fee, payment_method, notes, status, created_at, updated_at) 
+                             VALUES (:user_id, :recipient_name, :recipient_phone, :shipping_address, :total_amount, :shipping_fee, :payment_method, :notes, 'pending', NOW(), NOW())";
+                $params = [
+                    'user_id'          => $userId,
+                    'recipient_name'   => $shippingInfo['name'],
+                    'recipient_phone'  => $shippingInfo['phone'],
+                    'shipping_address' => $shippingInfo['address'],
+                    'total_amount'     => $totalAmount,
+                    'shipping_fee'     => $shippingFee,
+                    'payment_method'   => $paymentMethod,
+                    'notes'            => $shippingInfo['notes'] ?? null,
+                ];
+            } else {
+                // Fallback nếu cột shipping_fee chưa có (chưa chạy migration 024)
+                $orderSql = "INSERT INTO orders (user_id, recipient_name, recipient_phone, shipping_address, total_amount, payment_method, notes, status, created_at, updated_at) 
+                             VALUES (:user_id, :recipient_name, :recipient_phone, :shipping_address, :total_amount, :payment_method, :notes, 'pending', NOW(), NOW())";
+                $params = [
+                    'user_id'          => $userId,
+                    'recipient_name'   => $shippingInfo['name'],
+                    'recipient_phone'  => $shippingInfo['phone'],
+                    'shipping_address' => $shippingInfo['address'],
+                    'total_amount'     => $totalAmount,
+                    'payment_method'   => $paymentMethod,
+                    'notes'            => $shippingInfo['notes'] ?? null,
+                ];
+            }
+
             $stmt = $this->db->prepare($orderSql);
-            $stmt->execute([
-                'user_id' => $userId,
-                'recipient_name' => $shippingInfo['name'],
-                'recipient_phone' => $shippingInfo['phone'],
-                'shipping_address' => $shippingInfo['address'],
-                'total_amount' => $totalAmount,
-                'shipping_fee' => $shippingFee,
-                'payment_method' => $paymentMethod,
-                'notes' => $shippingInfo['notes'] ?? null,
-            ]);
-            
+            $stmt->execute($params);
+
             $orderId = (int)$this->db->lastInsertId();
+
 
             foreach ($itemsWithCurrentPrice as $item) {
                 if (!empty($item['size']) && !empty($item['color'])) {
@@ -147,6 +189,24 @@ class Order extends Model
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['user_id' => $userId]);
         return (int)$stmt->fetchColumn();
+    }
+
+    /**
+     * Lấy đơn hàng gần nhất của user để pre-fill thông tin giao hàng.
+     *
+     * @param int $userId Mã khách hàng.
+     * @return array|null Đơn hàng cuối cùng hoặc null nếu chưa có.
+     */
+    public function getLastOrderByUserId(int $userId): ?array
+    {
+        $sql = "SELECT recipient_phone, shipping_address FROM {$this->table}
+                WHERE user_id = :user_id
+                ORDER BY created_at DESC
+                LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['user_id' => $userId]);
+        $result = $stmt->fetch();
+        return $result ?: null;
     }
 
     public function findAll(array $filters = [], int $page = 1, int $perPage = 20): array

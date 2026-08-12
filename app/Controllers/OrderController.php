@@ -47,12 +47,28 @@ class OrderController extends Controller
         $shippingFee = ($subtotal >= $threshold) ? 0 : $codFeeConfig;
         $grandTotal = $subtotal + $shippingFee;
 
+        // Điền sẵn SĐT và địa chỉ từ đơn hàng gần nhất nếu profile chưa có
+        if (empty($user['phone']) || empty($user['address'])) {
+            $lastOrder = $this->orderModel->getLastOrderByUserId($user['user_id']);
+            if ($lastOrder) {
+                if (empty($user['phone'])) {
+                    $user['phone'] = $lastOrder['recipient_phone'];
+                }
+                if (empty($user['address'])) {
+                    $user['address'] = $lastOrder['shipping_address'];
+                }
+            }
+        }
+
         $this->view('client/checkout', [
             'user' => $user,
             'cart' => $cart,
+            'cartItems' => $cart, // View sử dụng biến này
             'subtotal' => $subtotal,
+            'totalAmount' => $subtotal, // View sử dụng biến này
             'shippingFee' => $shippingFee,
             'grandTotal' => $grandTotal,
+            'finalAmount' => $grandTotal, // View sử dụng biến này
             'freeThreshold' => $threshold,
             'codFeeConfig' => $codFeeConfig
         ]);
@@ -76,20 +92,24 @@ class OrderController extends Controller
         }
 
         $userId = Auth::id();
-        $name = trim($_POST['name'] ?? '');
-        $phone = trim($_POST['phone'] ?? '');
-        $address = trim($_POST['address'] ?? '');
+        // Lấy đúng tên field từ form checkout
+        $name = trim($_POST['recipient_name'] ?? '');
+        $phone = trim($_POST['recipient_phone'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $streetAddress = trim($_POST['street_address'] ?? '');
+        $address = $streetAddress; // Chỉ dùng địa chỉ đường
         $paymentMethod = $_POST['payment_method'] ?? 'COD';
         $notes = trim($_POST['notes'] ?? '');
 
-        if (empty($name) || empty($phone) || empty($address)) {
-            $_SESSION['error'] = 'Vui lòng nhập đầy đủ tên, số điện thoại và địa chỉ giao hàng.';
+        if (empty($name) || empty($phone) || empty($streetAddress)) {
+            $_SESSION['checkout_error'] = 'Vui lòng nhập đầy đủ thông tin giao hàng.';
             $this->redirect('/checkout');
         }
 
         $shippingInfo = [
             'name' => $name,
             'phone' => $phone,
+            'email' => $email,
             'address' => $address,
             'payment_method' => $paymentMethod,
             'notes' => $notes
@@ -104,11 +124,12 @@ class OrderController extends Controller
             $this->redirect("/orders/{$orderId}/success");
 
         } catch (InsufficientStockException $e) {
-            $_SESSION['error'] = $e->getMessage();
+            $_SESSION['checkout_error'] = $e->getMessage();
             $this->redirect('/cart');
         } catch (\Exception $e) {
-            // Log error in real app
-            $_SESSION['error'] = 'Đã có lỗi xảy ra trong quá trình đặt hàng. Vui lòng thử lại.';
+            // Debug: hiển thị lỗi chi tiết
+            $_SESSION['checkout_error'] = 'Lỗi: ' . $e->getMessage() . ' (File: ' . basename($e->getFile()) . ' Line: ' . $e->getLine() . ')';
+            error_log('Order Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             $this->redirect('/checkout');
         }
     }

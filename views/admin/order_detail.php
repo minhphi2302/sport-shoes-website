@@ -63,7 +63,12 @@
                         </tbody>
                         <?php 
                             $adminItemsSubtotal = array_sum(array_column($orderDetails, 'subtotal'));
-                            $adminShipFee = (float)($order['shipping_fee'] ?? 0);
+                            // Nếu có cột shipping_fee trong DB thì dùng, ngược lại suy ngược từ total_amount - items_subtotal
+                            if (array_key_exists('shipping_fee', $order)) {
+                                $adminShipFee = (float)$order['shipping_fee'];
+                            } else {
+                                $adminShipFee = max(0, (float)$order['total_amount'] - $adminItemsSubtotal);
+                            }
                         ?>
                         <tfoot>
                             <tr>

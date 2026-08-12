@@ -1,5 +1,7 @@
-<?php require_once __DIR__ . '/layouts/header.php'; ?>
-
+<?php 
+require_once __DIR__ . '/../../app/bootstrap.php';
+require_once __DIR__ . '/layouts/header.php'; 
+?>
 <div class="container py-5">
     <div class="mb-4 d-flex align-items-center">
         <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/orders" class="text-decoration-none text-muted me-3">
@@ -168,3 +170,4 @@
 </div>
 
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>
+
