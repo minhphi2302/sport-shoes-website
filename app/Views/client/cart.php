@@ -69,18 +69,18 @@ $cart = $cart ?? $cartItems ?? $_SESSION['cart'] ?? [];
                                                 </div>
                                             </td>
                                             <td class="text-center">
-                                                <form action="<?= base_url('cart/update') ?>" method="POST" class="d-flex align-items-center justify-content-center">
+                                                <form action="<?= base_url('cart/update') ?>" method="POST" class="cart-update-form d-flex align-items-center justify-content-center">
                                                     <input type="hidden" name="cart_key" value="<?= $item['cart_key'] ?? $item['product_id'] ?>">
-                                                    <input type="number" name="quantity" value="<?= $item['quantity'] ?>" min="1" class="form-control text-center rounded-3 mx-1" style="width: 70px;" onchange="this.form.submit()">
+                                                    <input type="number" name="quantity" value="<?= $item['quantity'] ?>" min="1" class="form-control text-center rounded-3 mx-1 cart-quantity-input" style="width: 70px;" data-cart-key="<?= $item['cart_key'] ?? $item['product_id'] ?>" data-max="<?= $item['max_quantity'] ?? 999 ?>">
                                                 </form>
                                             </td>
                                             <td class="text-end fw-bold text-danger">
                                                 <?= number_format($subtotal, 0, ',', '.') ?>đ
                                             </td>
                                             <td class="text-end pe-3">
-                                                <form action="<?= base_url('cart/remove') ?>" method="POST" class="d-inline">
+                                                <form action="<?= base_url('cart/remove') ?>" method="POST" class="d-inline cart-remove-form">
                                                     <input type="hidden" name="cart_key" value="<?= $item['cart_key'] ?? $item['product_id'] ?>">
-                                                    <button type="submit" class="btn btn-link text-danger p-0 text-decoration-none" onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')" title="Xóa">
+                                                    <button type="submit" class="btn btn-link text-danger p-0 text-decoration-none" title="Xóa">
                                                         <i class="bi bi-trash3 fs-5"></i>
                                                     </button>
                                                 </form>
@@ -150,5 +150,116 @@ $cart = $cart ?? $cartItems ?? $_SESSION['cart'] ?? [];
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+/* Cart Page JavaScript - Version 2.0 - Fixed double confirm issue */
+document.addEventListener('DOMContentLoaded', function() {
+    // AJAX Update Quantity - trigger on change
+    const quantityInputs = document.querySelectorAll('.cart-quantity-input');
+    
+    quantityInputs.forEach(input => {
+        let debounceTimer;
+        
+        input.addEventListener('change', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => updateCartQuantity(this), 500);
+        });
+        
+        // Optional: Update while typing (after user stops for 1 second)
+        input.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => updateCartQuantity(this), 1000);
+        });
+    });
+    
+    function updateCartQuantity(input) {
+        const cartKey = input.dataset.cartKey;
+        const quantity = parseInt(input.value);
+        const form = input.closest('.cart-update-form');
+        
+        if (quantity < 1) {
+            if (confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+                // Submit form normally for deletion
+                form.submit();
+            } else {
+                input.value = 1; // Reset to minimum
+            }
+            return;
+        }
+        
+        // Show loading state
+        input.disabled = true;
+        input.style.opacity = '0.5';
+        
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('cart_key', cartKey);
+        formData.append('quantity', quantity);
+        
+        // Send AJAX request
+        fetch('<?= base_url("cart/update") ?>', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(data => {
+            // Reload page to update totals
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi cập nhật giỏ hàng. Vui lòng thử lại.');
+            input.disabled = false;
+            input.style.opacity = '1';
+        });
+    }
+    
+    // AJAX Remove Item - prevent default form submit and use AJAX
+    const removeForms = document.querySelectorAll('.cart-remove-form');
+    
+    removeForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!confirm('Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+                return;
+            }
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            
+            // Show loading state
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.5';
+            }
+            
+            fetch('<?= base_url("cart/remove") ?>', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(data => {
+                // Reload page to update cart
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi xóa sản phẩm. Vui lòng thử lại.');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                }
+            });
+        });
+    });
+});
+</script>
 
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>

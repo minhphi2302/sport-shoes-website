@@ -14,6 +14,12 @@ class CartController extends Controller
     {
         $this->productModel = new Product();
         Auth::initSession();
+        
+        // Start output buffering to prevent accidental output
+        if (!ob_get_level()) {
+            ob_start();
+        }
+        
         if (!isset($_SESSION['cart'])) {
             $_SESSION['cart'] = [];
         }
@@ -47,15 +53,39 @@ class CartController extends Controller
 
         if (Auth::check() && Auth::user()['role'] === 'admin') {
             $_SESSION['error'] = "Tài khoản admin không được phép sử dụng chức năng mua hàng.";
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => false, 'error' => $_SESSION['error']], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
             $this->redirect($referer);
         }
 
         if ($productId <= 0 || $quantity <= 0) {
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => false, 'error' => 'Thông tin sản phẩm không hợp lệ'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
             $this->redirect($referer);
         }
 
         $product = $this->productModel->findById($productId);
         if (!$product) {
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => false, 'error' => 'Sản phẩm không tồn tại'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
             $this->redirect($referer);
         }
 
@@ -77,7 +107,7 @@ class CartController extends Controller
             $variants = $this->productModel->getVariants($productId);
             $foundVariant = false;
             foreach ($variants as $v) {
-                if ($v['id'] === $variantId) {
+                if (($v['variant_id'] ?? $v['id']) === $variantId) {
                     $maxQty = $v['quantity'];
                     $priceToUse = isset($v['price']) ? $v['price'] : $product['price'];
                     $skuToUse = !empty($v['sku']) ? $v['sku'] : $product['sku'];
@@ -90,6 +120,14 @@ class CartController extends Controller
             }
             if (!$foundVariant) {
                 $_SESSION['error'] = "Biến thể sản phẩm không hợp lệ.";
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                    while (ob_get_level()) {
+                        ob_end_clean();
+                    }
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode(['success' => false, 'error' => $_SESSION['error']], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
                 $this->redirect($referer);
             }
         } else {
@@ -97,7 +135,7 @@ class CartController extends Controller
             $variants = $this->productModel->getVariants($productId);
             if (!empty($variants)) {
                 $firstV = $variants[0];
-                $variantId = $firstV['id'];
+                $variantId = $firstV['variant_id'] ?? $firstV['id'];
                 $maxQty = $firstV['quantity'];
                 $priceToUse = isset($firstV['price']) ? $firstV['price'] : $product['price'];
                 $skuToUse = !empty($firstV['sku']) ? $firstV['sku'] : $product['sku'];
@@ -112,6 +150,14 @@ class CartController extends Controller
 
         if ($newQty > $maxQty) {
             $_SESSION['error'] = "Phân loại này chỉ còn {$maxQty} sản phẩm trong kho.";
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => false, 'error' => $_SESSION['error']], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
             $this->redirect($referer);
         }
 
@@ -130,39 +176,82 @@ class CartController extends Controller
             'color' => $variantColor
         ];
 
-        $_SESSION['success'] = "Đã thêm \"" . $product['name'] . "\" vào giỏ hàng thành công.";
+        $_SESSION['success'] = "Đã thêm \"" . $product['name'] . "\" vào giỏ hàng thành công!";
 
+        // Check if this is "buy now" action
+        $action = $_POST['action'] ?? 'add';
+        
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-            header('Content-Type: application/json');
+            // Clear any previous output buffers to prevent HTML contamination
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'success' => true,
                 'message' => $_SESSION['success'],
-                'cart_count' => array_sum(array_column($_SESSION['cart'], 'quantity'))
-            ]);
+                'cartCount' => array_sum(array_column($_SESSION['cart'], 'quantity'))
+            ], JSON_UNESCAPED_UNICODE);
             unset($_SESSION['success']);
             exit;
         }
 
-        $this->redirect('/cart');
+        // If buy_now, redirect to checkout immediately
+        if ($action === 'buy_now') {
+            $this->redirect('/checkout');
+        }
+
+        // Redirect back to referer or cart
+        if (strpos($referer, '/products/') !== false || strpos($referer, '/product/') !== false) {
+            $this->redirect($referer);
+        } else {
+            $this->redirect('/cart');
+        }
     }
 
     public function update(): void
     {
         $cartKey = $_POST['cart_key'] ?? '';
         $quantity = (int)($_POST['quantity'] ?? 0);
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
         if (Auth::check() && Auth::user()['role'] === 'admin') {
             $_SESSION['error'] = "Tài khoản admin không được phép sử dụng chức năng mua hàng.";
+            if ($isAjax) {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => false, 'error' => $_SESSION['error']], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
             $this->redirect('/cart');
         }
 
         if (empty($cartKey)) {
+            if ($isAjax) {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => false, 'error' => 'Cart key không hợp lệ'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
             $this->redirect('/cart');
         }
 
         if ($quantity <= 0) {
             unset($_SESSION['cart'][$cartKey]);
             $_SESSION['success'] = "Đã xóa sản phẩm khỏi giỏ hàng.";
+            if ($isAjax) {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => true, 'message' => $_SESSION['success'], 'cartCount' => array_sum(array_column($_SESSION['cart'], 'quantity'))], JSON_UNESCAPED_UNICODE);
+                unset($_SESSION['success']);
+                exit;
+            }
             $this->redirect('/cart');
         }
         
@@ -171,6 +260,14 @@ class CartController extends Controller
         
         if (!$product || !isset($_SESSION['cart'][$cartKey])) {
             unset($_SESSION['cart'][$cartKey]);
+            if ($isAjax) {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => false, 'error' => 'Sản phẩm không tồn tại'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
             $this->redirect('/cart');
         }
 
@@ -189,11 +286,29 @@ class CartController extends Controller
 
         if ($quantity > $maxQty) {
             $_SESSION['error'] = "Phân loại này chỉ còn {$maxQty} sản phẩm trong kho.";
+            if ($isAjax) {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['success' => false, 'error' => $_SESSION['error']], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
             $this->redirect('/cart');
         }
 
         $_SESSION['cart'][$cartKey]['quantity'] = $quantity;
         $_SESSION['success'] = "Đã cập nhật giỏ hàng.";
+
+        if ($isAjax) {
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => true, 'message' => $_SESSION['success'], 'cartCount' => array_sum(array_column($_SESSION['cart'], 'quantity'))], JSON_UNESCAPED_UNICODE);
+            unset($_SESSION['success']);
+            exit;
+        }
 
         $this->redirect('/cart');
     }
@@ -201,10 +316,27 @@ class CartController extends Controller
     public function remove(): void
     {
         $cartKey = $_POST['cart_key'] ?? '';
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        
         if (!empty($cartKey) && isset($_SESSION['cart'][$cartKey])) {
             unset($_SESSION['cart'][$cartKey]);
             $_SESSION['success'] = "Đã xóa sản phẩm khỏi giỏ hàng.";
+            
+            if ($isAjax) {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'success' => true, 
+                    'message' => $_SESSION['success'],
+                    'cartCount' => array_sum(array_column($_SESSION['cart'], 'quantity'))
+                ], JSON_UNESCAPED_UNICODE);
+                unset($_SESSION['success']);
+                exit;
+            }
         }
+        
         $this->redirect('/cart');
     }
 
@@ -213,5 +345,19 @@ class CartController extends Controller
         $_SESSION['cart'] = [];
         $_SESSION['success'] = "Đã xóa toàn bộ giỏ hàng.";
         $this->redirect('/cart');
+    }
+
+    /**
+     * API endpoint: Trả về số lượng sản phẩm trong giỏ hàng (AJAX)
+     */
+    public function count(): void
+    {
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        $count = isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'quantity')) : 0;
+        echo json_encode(['count' => $count], JSON_UNESCAPED_UNICODE);
+        exit;
     }
 }

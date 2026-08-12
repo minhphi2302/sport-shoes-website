@@ -33,12 +33,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // Update cart badge
                     const badge = document.querySelector('.badge-badge-count');
-                    if (badge) {
+                    if (badge && data.cartCount !== undefined) {
                         badge.textContent = data.cartCount;
                     }
                     // Show Toast
@@ -50,13 +55,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     // Show Error Toast
                     if (typeof showCartToast === 'function') {
-                        showCartToast(data.message || 'Có lỗi xảy ra.', 'error');
+                        showCartToast(data.error || data.message || 'Có lỗi xảy ra.', 'error');
                     } else {
-                        alert(data.message || 'Có lỗi xảy ra.');
+                        alert(data.error || data.message || 'Có lỗi xảy ra.');
                     }
                 }
             })
-            .catch(error => console.error('Error adding to cart:', error));
+            .catch(error => {
+                console.error('Error adding to cart:', error);
+                if (typeof showCartToast === 'function') {
+                    showCartToast('Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+                }
+            });
         });
     });
 
@@ -84,12 +94,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // Update cart badge
                     const badge = document.querySelector('.badge-badge-count');
-                    if (badge) {
+                    if (badge && data.cartCount !== undefined) {
                         badge.textContent = data.cartCount;
                     }
                     // Show Toast
@@ -101,13 +116,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     // Show Error Toast
                     if (typeof showCartToast === 'function') {
-                        showCartToast(data.message || 'Có lỗi xảy ra.', 'error');
+                        showCartToast(data.error || data.message || 'Có lỗi xảy ra.', 'error');
                     } else {
-                        alert(data.message || 'Có lỗi xảy ra.');
+                        alert(data.error || data.message || 'Có lỗi xảy ra.');
                     }
                 }
             })
-            .catch(error => console.error('Error adding to cart:', error));
+            .catch(error => {
+                console.error('Error adding to cart:', error);
+                if (typeof showCartToast === 'function') {
+                    showCartToast('Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+                }
+            });
         });
     });
 });
