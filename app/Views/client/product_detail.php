@@ -153,7 +153,7 @@ require_once __DIR__ . '/layouts/header.php';
         </div>
     </div>
 
-    <!-- PHÍA DƯỚI: TAB MÔ TẢ CHI TIẾT & ĐÁNH GIÁ -->
+    <!-- PHÍA DƯỚI: TAB MÔ TẢ CHI TIẾT -->
     <div class="mt-5 pt-4">
         <ul class="nav nav-tabs nav-tabs-custom mb-4" id="productTab" role="tablist">
             <li class="nav-item" role="presentation">
@@ -168,137 +168,19 @@ require_once __DIR__ . '/layouts/header.php';
             <div class="tab-pane fade show active" id="desc-tab-pane" role="tabpanel">
                 <h4>Đặc điểm nổi bật của <?= htmlspecialchars($product['name'] ?? 'sản phẩm') ?></h4>
                 <div class="mt-3">
-                    <?= !empty($product['description']) ? nl2br($product['description']) : '<p class="text-muted">Chưa có mô tả chi tiết cho sản phẩm này.</p>' ?>
+                    <?= !empty($product['description']) ? nl2br(htmlspecialchars($product['description'])) : '<p class="text-muted">Chưa có mô tả chi tiết cho sản phẩm này.</p>' ?>
                 </div>
             </div>
-            
-            <h1 class="fw-bold mb-3"><?= htmlspecialchars($product['name']) ?></h1>
-            <p class="text-muted mb-4">Mã sản phẩm: <span class="fw-semibold text-dark" id="productSku"><?= htmlspecialchars($product['sku']) ?></span></p>
-
-            <div class="mb-4">
-                <?php if (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
-                    <h2 class="price-sale mb-0 display-5 fw-bold" id="productPrice"><?= number_format($product['sale_price'], 0, ',', '.') ?>đ</h2>
-                    <h4 class="price-original text-muted"><del id="productOriginalPrice"><?= number_format($product['price'], 0, ',', '.') ?>đ</del></h4>
-                <?php else: ?>
-                    <h2 class="price-regular mb-0 display-5 fw-bold text-primary" id="productPrice"><?= number_format($product['price'], 0, ',', '.') ?>đ</h2>
-                    <h4 class="price-original text-muted" style="display:none;"><del id="productOriginalPrice"><?= number_format($product['price'], 0, ',', '.') ?>đ</del></h4>
-                <?php endif; ?>
-            </div>
-
-            <div class="mb-4">
-                <span class="d-inline-block bg-light rounded px-3 py-2 <?= $product['quantity'] > 0 ? 'text-success' : 'text-danger' ?> fw-semibold">
-                    <i class="bi bi-box-seam"></i> 
-                    <?= $product['quantity'] > 0 ? 'Còn hàng' : 'Hết hàng' ?>
-                </span>
-            </div>
-
-            <?php if(!\App\Core\Auth::check() || \App\Core\Auth::user()['role'] !== 'admin'): ?>
-            <form action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/cart/add" method="POST" class="mb-5">
-                <input type="hidden" name="product_id" value="<?= $product['product_id'] ?>">
-                
-                <div class="row g-3 mb-4">
-                        <?php
-                            $uniqueGenders = ['Nam', 'Nữ', 'Trẻ em'];
-                            $uniqueModels = [];
-                            $uniqueSizes = [];
-                            $uniqueColors = [];
-                            if (isset($variants) && !empty($variants)) {
-                                foreach ($variants as &$v) {
-                                    $m = $v['model'] ?? 'Mặc định';
-                                    $uniqueModels[$m] = true;
-                                    
-                                    $isNew = isset($rel['created_at']) && (strtotime($rel['created_at']) > strtotime('-7 days'));
-                                    $hasSale = (($rel['sale_price'] ?? 0) > 0 && $rel['sale_price'] < $rel['price']);
-                                ?>
-                                <?php if ($isNew): ?>
-                                    <div class="badge-ribbon badge-ribbon-black">NEW</div>
-                                <?php endif; ?>
-                                <?php if ($hasSale): ?>
-                                    <?php $discountPercent = round((($rel['price'] - $rel['sale_price']) / $rel['price']) * 100); ?>
-                                    <div class="badge-ribbon badge-ribbon-red" <?= $isNew ? 'style="left: 43px;"' : '' ?>><small>-</small><?= $discountPercent ?>%</div>
-                                <?php endif; ?>
-
-                                <img src="<?= htmlspecialchars(base_url($imgSrcRel)) ?>" alt="<?= htmlspecialchars($rel['name']) ?>">
-                                <div class="product-center-action">
-                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $rel['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết">
-                                        <i class="fa-solid fa-magnifying-glass"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="product-body">
-                                <span class="product-brand-tag"><?= htmlspecialchars($rel['brand_name'] ?? 'Chính Hãng') ?></span>
-                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $rel['product_id'] ?>" class="product-title mb-1"><?= htmlspecialchars($rel['name']) ?></a>
-                                <?php if (!empty($rel['sku'])): ?>
-                                    <div class="text-muted mb-2" style="font-size: 0.85rem;"><?= htmlspecialchars($rel['sku']) ?></div>
-                                <?php endif; ?>
-                                <div class="product-price-box">
-                                    <?php if (($rel['sale_price'] ?? 0) > 0 && $rel['sale_price'] < $rel['price']): ?>
-                                        <span class="product-price text-danger"><?= number_format($rel['sale_price'], 0, ',', '.') ?>đ</span>
-                                        <span class="product-price-old text-decoration-line-through text-muted ms-2" style="font-size: 0.85rem;"><?= number_format($rel['price'], 0, ',', '.') ?>đ</span>
-                                    <?php else: ?>
-                                        <span class="product-price text-danger"><?= number_format($rel['price'], 0, ',', '.') ?>đ</span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">3. Màu sắc:</label>
-                                <div class="d-flex flex-wrap gap-2" id="group-color">
-                                    <?php foreach ($uniqueColors as $c): ?>
-                                        <button type="button" class="btn btn-outline-secondary opt-color" onclick="selectOption('color', this)" data-val="<?= htmlspecialchars($c) ?>"><?= htmlspecialchars($c) ?></button>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">4. Kích cỡ (Size):</label>
-                                <div class="d-flex flex-wrap gap-2" id="group-size">
-                                    <?php foreach ($allSizes as $s): ?>
-                                        <button type="button" class="btn btn-outline-secondary opt-size" onclick="selectOption('size', this)" data-val="<?= htmlspecialchars($s) ?>" style="display:none;"><?= htmlspecialchars($s) ?></button>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        <?php else: ?>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Phân loại sản phẩm:</label>
-                                <div>
-                                    <button type="button" class="btn btn-outline-secondary variant-btn" 
-                                            data-id="0" 
-                                            data-qty="<?= $product['quantity'] ?>" 
-                                            data-price="<?= $product['sale_price'] ?: $product['price'] ?>"
-                                            data-sku="<?= htmlspecialchars($product['sku']) ?>"
-                                            <?= $product['quantity'] <= 0 ? 'disabled' : '' ?>
-                                            <?= $product['quantity'] <= 0 ? 'style="opacity: 0.5;"' : '' ?>>
-                                        Mặc định
-                                    </button>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                        <input type="hidden" name="variant_id" id="selectedVariantId" value="0">
-                    </div>
-                </div>
-
-                <div class="row g-3 align-items-end">
-                    <div class="col-auto">
-                        <label for="quantity" class="form-label fw-bold">Số lượng:</label>
-                        <input type="number" class="form-control text-center bg-light border-0" id="quantity" name="quantity" value="1" min="1" max="<?= $product['quantity'] ?>" style="width: 80px;" <?= $product['quantity'] <= 0 ? 'disabled' : '' ?>>
-                    </div>
-                    <div class="col">
-                        <button type="submit" id="btnSubmit" class="btn btn-primary btn-lg w-100 rounded-3 shadow-sm" <?= $product['quantity'] <= 0 ? 'disabled' : '' ?>>
-                            <i class="bi bi-cart-plus me-2"></i> Thêm vào giỏ hàng
-                        </button>
-                    </div>
-                </div>
-            </form>
-            <?php else: ?>
-            <div class="alert alert-info mb-5">
-                Tài khoản admin không thể đặt hàng.
-            </div>
-            <?php endif; ?>
-
-            <div>
-                <h5 class="fw-bold mb-3">Mô tả sản phẩm</h5>
-                <div class="text-muted" style="line-height: 1.8;">
-                    <?= nl2br(htmlspecialchars($product['description'] ?? 'Chưa có mô tả.')) ?>
-                </div>
+            <!-- Tab 2: Thông số kỹ thuật -->
+            <div class="tab-pane fade" id="specs-tab-pane" role="tabpanel">
+                <table class="table table-bordered table-sm">
+                    <tbody>
+                        <tr><th>Thương hiệu</th><td><?= htmlspecialchars($product['brand_name'] ?? 'N/A') ?></td></tr>
+                        <tr><th>Mã sản phẩm (SKU)</th><td><?= htmlspecialchars($product['sku'] ?? 'N/A') ?></td></tr>
+                        <tr><th>Danh mục</th><td><?= htmlspecialchars($product['category_name'] ?? 'N/A') ?></td></tr>
+                        <tr><th>Tồn kho</th><td><?= htmlspecialchars($product['quantity'] ?? 0) ?></td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
