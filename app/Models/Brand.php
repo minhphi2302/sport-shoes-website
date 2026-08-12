@@ -18,11 +18,11 @@ class Brand extends Model
             throw new ValidationException('name', 'Tên thương hiệu đã tồn tại');
         }
 
-        $stmt = $this->db->prepare('INSERT INTO brands (name, description, image_url, created_at, updated_at) VALUES (:name, :description, :image_url, NOW(), NOW())');
+        $stmt = $this->db->prepare('INSERT INTO brands (name, description, logo_url, created_at) VALUES (:name, :description, :logo_url, NOW())');
         $success = $stmt->execute([
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
-            'image_url' => $data['image_url'] ?? null
+            'logo_url' => $data['logo_url'] ?? $data['image_url'] ?? null
         ]);
         return $success ? (int)$this->db->lastInsertId() : false;
     }
@@ -33,11 +33,11 @@ class Brand extends Model
             throw new ValidationException('name', 'Tên thương hiệu đã tồn tại');
         }
 
-        $stmt = $this->db->prepare('UPDATE brands SET name = :name, description = :description, image_url = :image_url, updated_at = NOW() WHERE brand_id = :id');
+        $stmt = $this->db->prepare('UPDATE brands SET name = :name, description = :description, logo_url = :logo_url WHERE brand_id = :id');
         return $stmt->execute([
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
-            'image_url' => $data['image_url'] ?? null,
+            'logo_url' => $data['logo_url'] ?? $data['image_url'] ?? null,
             'id' => $id
         ]);
     }

@@ -40,11 +40,10 @@
                 <tr>
                     <td class="ps-4"><?= $brand['brand_id'] ?></td>
                     <td>
-                        <?php if (!empty($brand['image_url'])): ?>
-                            <img src="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/uploads/<?= htmlspecialchars($brand['image_url']) ?>" alt="<?= htmlspecialchars($brand['name']) ?>" style="height: 40px; object-fit: contain;">
-                        <?php else: ?>
-                            <span class="text-muted small">Không có</span>
-                        <?php endif; ?>
+                        <?php 
+                            $logo = get_brand_image_url($brand['logo_url'] ?? null, $brand['name']);
+                        ?>
+                        <img src="<?= htmlspecialchars($logo) ?>" alt="<?= htmlspecialchars($brand['name']) ?>" style="height: 40px; object-fit: contain;" onerror="this.src='<?= base_url('image/logo.webp') ?>'">
                     </td>
                     <td class="fw-semibold"><?= htmlspecialchars($brand['name']) ?></td>
                     <td class="text-muted text-truncate" style="max-width: 250px;"><?= htmlspecialchars($brand['description']) ?></td>
