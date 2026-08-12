@@ -1,7 +1,7 @@
-<?php
-require __DIR__ . '/layouts/header.php';
+<?php 
+require_once dirname(__DIR__, 2) . '/bootstrap.php';
+require_once __DIR__ . '/layouts/header.php'; 
 ?>
-
 <!-- Breadcrumb -->
 <div class="bg-light py-3 border-bottom mb-4">
     <div class="container">
@@ -67,8 +67,19 @@ require __DIR__ . '/layouts/header.php';
                 </p>
 
                 <!-- Form chọn Size, Màu & Số lượng -->
-                <form id="addToCartForm" action="<?= ($_ENV['APP_URL'] ?? '') ?>/cart/add" method="POST">
+                <form id="addToCartForm" action="<?= base_url('cart/add') ?>" method="POST">
                     <input type="hidden" name="product_id" value="<?= $product['product_id'] ?? 1 ?>">
+                    <input type="hidden" name="variant_id" id="variantIdInput" value="">
+
+                    <script>
+                        // Pass variants to JavaScript
+                        const productVariants = <?= json_encode($variants ?? []) ?>;
+                        const basePrice = <?= (float)($product['price'] ?? 0) ?>;
+                        const baseSalePrice = <?= !empty($product['sale_price']) ? (float)$product['sale_price'] : 'null' ?>;
+                        
+                        console.log('Product Variants:', productVariants);
+                        console.log('Base Price:', basePrice);
+                    </script>
 
                     <!-- Chọn Size -->
                     <div class="mb-4">
@@ -101,19 +112,24 @@ require __DIR__ . '/layouts/header.php';
                     </div>
 
                     <!-- Chọn Giới tính -->
+                    <?php 
+                        // Lấy danh sách giới tính từ variants (model column)
+                        $availableGenders = !empty($variants) ? array_unique(array_column($variants, 'model')) : ['Nam'];
+                    ?>
+                    <?php if (count($availableGenders) > 1): ?>
                     <div class="mb-4">
                         <label class="form-label fw-bold text-uppercase fs-7 d-block">Chọn Giới tính:</label>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <?php 
-                                $genders = ['male' => 'Nam', 'female' => 'Nữ'];
-                                $productGender = $product['gender'] ?? 'male';
-                            ?>
-                            <?php foreach ($genders as $gKey => $gLabel): ?>
-                                <input type="radio" class="btn-check" name="gender" id="gender_<?= $gKey ?>" value="<?= $gKey ?>" <?= ($productGender == $gKey) ? 'checked' : '' ?>>
-                                <label class="btn btn-outline-dark btn-sm rounded-pill" for="gender_<?= $gKey ?>"><?= $gLabel ?></label>
+                            <?php foreach (array_values($availableGenders) as $idx => $model): ?>
+                                <?php $modelId = 'model_' . md5((string)$model); ?>
+                                <input type="radio" class="btn-check" name="gender" id="<?= $modelId ?>" value="<?= htmlspecialchars((string)$model) ?>" <?= $idx === 0 ? 'checked' : '' ?>>
+                                <label class="btn btn-outline-dark btn-sm rounded-pill" for="<?= $modelId ?>"><?= htmlspecialchars((string)$model) ?></label>
                             <?php endforeach; ?>
                         </div>
                     </div>
+                    <?php else: ?>
+                        <input type="hidden" name="gender" value="<?= htmlspecialchars($availableGenders[0] ?? 'Nam') ?>">
+                    <?php endif; ?>
 
                     <!-- Chọn Số lượng -->
                     <div class="mb-4">
@@ -198,14 +214,14 @@ require __DIR__ . '/layouts/header.php';
 
                                 <img src="<?= htmlspecialchars(base_url($imgSrcRel)) ?>" alt="<?= htmlspecialchars($rel['name']) ?>">
                                 <div class="product-center-action">
-                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $rel['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết">
+                                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $rel['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết">
                                         <i class="fa-solid fa-magnifying-glass"></i>
                                     </a>
                                 </div>
                             </div>
                             <div class="product-body">
                                 <span class="product-brand-tag"><?= htmlspecialchars($rel['brand_name'] ?? 'Chính Hãng') ?></span>
-                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $rel['product_id'] ?>" class="product-title mb-1"><?= htmlspecialchars($rel['name']) ?></a>
+                                <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $rel['product_id'] ?>" class="product-title mb-1"><?= htmlspecialchars($rel['name']) ?></a>
                                 <?php if (!empty($rel['sku'])): ?>
                                     <div class="text-muted mb-2" style="font-size: 0.85rem;"><?= htmlspecialchars($rel['sku']) ?></div>
                                 <?php endif; ?>
@@ -246,6 +262,168 @@ function decrementQuantity() {
     }
 }
 
+// ========== VARIANT SELECTION & PRICE UPDATE ==========
+function updateVariantPrice() {
+    const selectedSize = document.querySelector('input[name="size"]:checked')?.value;
+    const selectedColor = document.querySelector('input[name="color"]:checked')?.value;
+    const selectedGender = document.querySelector('input[name="gender"]:checked')?.value || document.querySelector('input[name="gender"]')?.value;
+    
+    console.log('Selected:', { size: selectedSize, color: selectedColor, gender: selectedGender });
+    
+    if (!selectedSize || !selectedColor) {
+        console.warn('Size or color not selected');
+        return;
+    }
+    
+    // Find matching variant (check model/gender if exists)
+    const variant = productVariants.find(v => {
+        const sizeMatch = String(v.size).trim() === String(selectedSize).trim();
+        const colorMatch = String(v.color).trim() === String(selectedColor).trim();
+        const genderMatch = !selectedGender || String(v.model).trim() === String(selectedGender).trim();
+        return sizeMatch && colorMatch && genderMatch;
+    });
+    
+    console.log('Found variant:', variant);
+    
+    if (variant) {
+        // Update variant_id hidden input
+        document.getElementById('variantIdInput').value = variant.variant_id;
+        
+        // Update price display
+        const variantPrice = parseFloat(variant.price) || basePrice;
+        const priceContainer = document.querySelector('.bg-light.p-3.rounded-3');
+        
+        let priceHTML;
+        if (baseSalePrice && variantPrice < basePrice) {
+            const savings = basePrice - variantPrice;
+            priceHTML = `
+                <span class="fs-2 fw-bold text-red">${formatPrice(variantPrice)}đ</span>
+                <span class="fs-5 text-muted text-decoration-line-through">${formatPrice(basePrice)}đ</span>
+                <span class="badge bg-red fs-6 align-middle" style="transform: translateY(-2px);">Tiết kiệm ${formatPrice(savings)}đ</span>
+            `;
+        } else {
+            priceHTML = `<span class="fs-2 fw-bold text-red">${formatPrice(variantPrice)}đ</span>`;
+        }
+        
+        if (priceContainer) {
+            priceContainer.innerHTML = priceHTML;
+        }
+        
+        // Update stock info
+        const stockQty = parseInt(variant.quantity) || 0;
+        const quantityInput = document.getElementById('quantityInput');
+        if (quantityInput) {
+            quantityInput.max = stockQty;
+            quantityInput.disabled = stockQty <= 0;
+            if (quantityInput.value > stockQty) {
+                quantityInput.value = Math.max(1, stockQty);
+            }
+        }
+        
+        // Update stock display
+        const stockDisplay = document.querySelector('.border-start.ps-3');
+        if (stockDisplay) {
+            if (stockQty > 0) {
+                stockDisplay.className = 'border-start ps-3 text-success fw-semibold';
+                stockDisplay.innerHTML = `<i class="fa-solid fa-check-circle me-1"></i> Còn hàng (${stockQty} sản phẩm)`;
+            } else {
+                stockDisplay.className = 'border-start ps-3 text-danger fw-semibold';
+                stockDisplay.innerHTML = `<i class="fa-solid fa-circle-xmark me-1"></i> Hết hàng`;
+            }
+        }
+        
+        // Enable/disable buttons
+        const addToCartBtn = document.querySelector('button[value="add"]');
+        const buyNowBtn = document.querySelector('button[value="buy_now"]');
+        if (addToCartBtn) addToCartBtn.disabled = stockQty <= 0;
+        if (buyNowBtn) buyNowBtn.disabled = stockQty <= 0;
+        
+        console.log('Price updated to:', variantPrice, 'Stock:', stockQty);
+    } else {
+        console.warn('No variant found for selected combination');
+        document.getElementById('variantIdInput').value = '';
+    }
+}
+
+function formatPrice(price) {
+    return new Intl.NumberFormat('vi-VN').format(price);
+}
+
+// Attach event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial update
+    updateVariantPrice();
+    
+    // Listen to size/color/gender changes
+    document.querySelectorAll('input[name="size"], input[name="color"], input[name="gender"]').forEach(input => {
+        input.addEventListener('change', updateVariantPrice);
+    });
+    
+    // Handle form submit
+    const form = document.getElementById('addToCartForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const action = e.submitter?.value;
+            
+            if (action === 'buy_now') {
+                // For buy now, let form submit normally to redirect to checkout
+                return true;
+            }
+            
+            if (action === 'add') {
+                // For add to cart, use AJAX
+                e.preventDefault();
+                
+                const formData = new FormData(form);
+                formData.append('action', 'add');
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    // Clone response để có thể đọc text trước khi parse JSON
+                    return response.text().then(text => {
+                        console.log('Raw response:', text);
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            console.error('JSON parse error:', e);
+                            throw new Error('Invalid JSON response: ' + text.substring(0, 100));
+                        }
+                    });
+                })
+                .then(data => {
+                    console.log('Parsed data:', data);
+                    if (data.success) {
+                        // Show success toast - will auto-update badge via footer.php's showCartToast
+                        if (typeof showCartToast === 'function') {
+                            showCartToast(data.message, 'success');
+                        }
+                    } else {
+                        // Show error toast
+                        if (typeof showCartToast === 'function') {
+                            showCartToast(data.message || 'Có lỗi xảy ra', 'error');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('AJAX Error:', error);
+                    // Show error toast only, don't use alert
+                    if (typeof showCartToast === 'function') {
+                        showCartToast('Không thể thêm sản phẩm vào giỏ hàng', 'error');
+                    }
+                });
+            }
+        });
+    }
+});
 
 </script>
 

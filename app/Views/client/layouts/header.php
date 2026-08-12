@@ -1,3 +1,14 @@
+<?php
+// Bootstrap already loaded in view page
+use App\Core\Auth;
+
+Auth::initSession();
+
+$isLoggedIn = Auth::check();
+$user = Auth::user();
+$cartCount = isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'quantity')) : 0;
+$baseUrl = $_ENV['APP_URL'] ?? '';
+?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -8,6 +19,8 @@
     <meta name="description" content="<?= htmlspecialchars($metaDescription ?? 'Cửa hàng giày thể thao uy tín, chính hãng, giá tốt nhất.') ?>">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <!-- FontAwesome 6 Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style CSS (ANTA Theme) -->
@@ -214,3 +227,61 @@
             </div>
         </div>
     </nav>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div id="cartToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fa-solid fa-circle-check me-2"></i>
+                    <span id="cartToastMessage"></span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+            <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>
+                        <?= htmlspecialchars($_SESSION['error']) ?>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const errorToastEl = document.getElementById('errorToast');
+                if (errorToastEl) {
+                    const errorToast = new bootstrap.Toast(errorToastEl, { delay: 4000 });
+                    errorToast.show();
+                }
+            });
+        </script>
+        <?php unset($_SESSION['error']); ?>
+    <?php endif; ?>
+
+    <script>
+        function updateCartBadge() {
+            const cartCount = document.querySelector('.badge-badge-count');
+            if (cartCount) {
+                fetch('<?= base_url("cart/count") ?>', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.count !== undefined) {
+                        cartCount.textContent = data.count;
+                    }
+                })
+                .catch(() => {
+                    // Fallback: silently fail, don't reload
+                    console.warn('Failed to update cart badge');
+                });
+            }
+        }
+    </script>

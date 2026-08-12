@@ -1,7 +1,7 @@
-<?php
-require __DIR__ . '/layouts/header.php';
+<?php 
+require_once dirname(__DIR__, 2) . '/bootstrap.php';
+require_once __DIR__ . '/layouts/header.php'; 
 ?>
-
 <!-- Breadcrumb -->
 <div class="bg-light py-3 border-bottom mb-4">
     <div class="container">

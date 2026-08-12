@@ -1,7 +1,7 @@
-<?php
-require __DIR__ . '/layouts/header.php';
+<?php 
+require_once dirname(__DIR__, 2) . '/bootstrap.php';
+require_once __DIR__ . '/layouts/header.php'; 
 ?>
-
 <!-- 1. HERO BANNER SLIDER -->
 <div id="heroCarousel" class="carousel slide hero-slider" data-bs-ride="carousel" data-bs-interval="1000">
     <div class="carousel-indicators">
@@ -81,24 +81,9 @@ require __DIR__ . '/layouts/header.php';
                     <div class="col-6 col-md-4 col-lg-2">
                         <a href="<?= base_url('products?brand_id=' . $brand['brand_id']) ?>" class="brand-card">
                             <?php 
-                                $logo = !empty($brand['logo_url']) ? trim($brand['logo_url']) : '';
-                                // Nếu người dùng chỉ nhập tên file (ví dụ: nike.jpg) thay vì đường dẫn đầy đủ
-                                if (!empty($logo) && strpos($logo, '/') === false) {
-                                    $logo = 'public/image/brand/' . $logo;
-                                }
-                                
-                                if (empty($logo)) {
-                                    $brandSlug = strtolower(str_replace(' ', '', $brand['name']));
-                                    $jpgPath = 'public/image/brand/' . $brandSlug . '.jpg';
-                                    $pngPath = 'public/image/brand/' . $brandSlug . '.png';
-                                    if (file_exists(__DIR__ . '/../../../' . $jpgPath)) {
-                                        $logo = $jpgPath;
-                                    } else {
-                                        $logo = $pngPath; // Default fallback to png
-                                    }
-                                }
+                                $logo = get_brand_image_url($brand['logo_url'] ?? null, $brand['name']);
                             ?>
-                            <img src="<?= base_url(htmlspecialchars($logo)) ?>" alt="<?= htmlspecialchars($brand['name']) ?>" class="brand-logo-img">
+                            <img src="<?= htmlspecialchars($logo) ?>" alt="<?= htmlspecialchars($brand['name']) ?>" class="brand-logo-img" onerror="this.src='<?= base_url('image/logo.webp') ?>'">
                             <h6 class="brand-name-text"><?= htmlspecialchars(mb_strtoupper($brand['name'])) ?></h6>
                         </a>
                     </div>
@@ -302,11 +287,10 @@ require __DIR__ . '/layouts/header.php';
                                 <?php endif; ?>
 
                                 <?php 
-                                    $fallbackImg = 'image/slide/slide' . (($product['product_id'] % 3) + 1) . '.avif';
-                                    $imgSrc = !empty($product['image_url']) ? $product['image_url'] : $fallbackImg;
+                                    $imgSrc = get_product_image_url($product['image_url'] ?? null, $product['product_id'] ?? 1);
                                 ?>
                                 <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>">
-                                    <img src="<?= htmlspecialchars(base_url($imgSrc)) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                                    <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($product['name']) ?>" onerror="this.src='<?= base_url('image/slide/slide1.avif') ?>'">
                                 </a>
                                 <div class="product-center-action">
                                     <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết"><i class="fa-solid fa-magnifying-glass"></i></a>

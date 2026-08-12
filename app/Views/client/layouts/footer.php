@@ -157,6 +157,11 @@ function showCartToast(message = 'Sản phẩm đã được thêm vào giỏ h�
     void toast.offsetWidth; // trigger reflow
     toast.classList.add('show');
     
+    // Update cart badge when showing toast
+    if (type === 'success' && typeof updateCartBadge === 'function') {
+        updateCartBadge();
+    }
+    
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => {
         hideCartToast();
@@ -170,6 +175,51 @@ function hideCartToast() {
     }
 }
 
+// AJAX Add to Cart Handler
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle quick add to cart buttons (not in detail page)
+    document.querySelectorAll('.btn-cart-hover:not(.btn-out-of-stock)').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.getAttribute('href');
+            
+            // Send AJAX request
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showCartToast(data.message, 'success');
+                } else {
+                    showCartToast(data.message || 'Có lỗi xảy ra', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showCartToast('Không thể thêm sản phẩm vào giỏ hàng', 'error');
+            });
+        });
+    });
+});
+
+// Handle session success/error messages from server-side redirects
+<?php if (isset($_SESSION['success'])): ?>
+    document.addEventListener('DOMContentLoaded', function() {
+        showCartToast(<?= json_encode($_SESSION['success']) ?>, 'success');
+    });
+    <?php unset($_SESSION['success']); ?>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['error'])): ?>
+    document.addEventListener('DOMContentLoaded', function() {
+        showCartToast(<?= json_encode($_SESSION['error']) ?>, 'error');
+    });
+    <?php unset($_SESSION['error']); ?>
+<?php endif; ?>
 
 </script>
 

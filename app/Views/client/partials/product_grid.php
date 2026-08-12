@@ -46,12 +46,12 @@
                         <?php 
                             $imgSrc = get_product_image_url($product['image_url'] ?? null, $product['product_id'] ?? 1);
                         ?>
-                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="d-block position-absolute w-100 h-100" style="top:0; left:0; z-index: 5;">
+                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="d-block position-absolute w-100 h-100" style="top:0; left:0; z-index: 5;">
                             <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($product['name'] ?? 'Product') ?>" class="product-img" onerror="this.src='<?= base_url('image/slide/slide1.avif') ?>'">
                         </a>
                         <!-- Center search button for viewing detail -->
                         <div class="product-center-action">
-                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết">
+                            <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="search-icon-btn" title="Xem chi tiết">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </a>
                         </div>
@@ -71,7 +71,7 @@
                     </div>
 
                     <div class="product-body">
-                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/product/<?= $product['product_id'] ?>" class="product-title mb-1"><?= htmlspecialchars($product['name']) ?></a>
+                        <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="product-title mb-1"><?= htmlspecialchars($product['name']) ?></a>
                         <?php if (!empty($product['sku'])): ?>
                             <div class="text-muted mb-2" style="font-size: 0.85rem;"><?= htmlspecialchars($product['sku']) ?></div>
                         <?php endif; ?>
