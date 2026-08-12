@@ -394,43 +394,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const brandFilters = document.querySelectorAll('#home-brand-filters .btn-brand-filter');
     const productContainer = document.getElementById('home-product-container');
     
-    <div class="row g-4">
-        <?php foreach ($featuredProducts as $product): ?>
-        <div class="col-lg-3 col-md-4 col-sm-6">
-            <div class="card h-100 product-card">
-                <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>">
-                    <?php 
-                        $imgSrc = !empty($product['image_url']) ? '/uploads/' . $product['image_url'] : '/uploads/default-product.jpg';
-                        $baseUrl = htmlspecialchars($_ENV['APP_URL'] ?? '');
-                    ?>
-                    <img src="<?= $baseUrl . htmlspecialchars($imgSrc) ?>" class="card-img-top product-img-fixed" style="width: 250px; height: 300px; object-fit: cover;" alt="<?= htmlspecialchars($product['name']) ?>" onerror="this.src='<?= $baseUrl ?>/uploads/default-product.jpg'">
-                </a>
-                <div class="card-body d-flex flex-column">
-                    <span class="text-muted small mb-1"><?= htmlspecialchars($product['brand_name'] ?? 'Brand') ?></span>
-                    <h5 class="card-title text-truncate">
-                        <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="text-dark text-decoration-none"><?= htmlspecialchars($product['name']) ?></a>
-                    </h5>
-                    
-                    <div class="mt-auto pt-3 d-flex justify-content-between align-items-center">
-                        <div>
-                            <?php if (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
-                                <span class="price-sale d-block"><?= number_format($product['sale_price'], 0, ',', '.') ?>đ</span>
-                                <span class="price-original"><?= number_format($product['price'], 0, ',', '.') ?>đ</span>
-                            <?php else: ?>
-                                <span class="price-regular d-block"><?= number_format($product['price'], 0, ',', '.') ?>đ</span>
-                            <?php endif; ?>
-                        </div>
-                        <?php if(!\App\Core\Auth::check() || \App\Core\Auth::user()['role'] !== 'admin'): ?>
-                        <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="btn btn-outline-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; padding: 0;" title="Chọn tuỳ chọn">
-                            <i class="bi bi-cart-plus"></i>
-                        </a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php endforeach; ?>
-    </div>
-</section>
+    if (brandFilters.length > 0 && productContainer) {
+        brandFilters.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Active state
+                brandFilters.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const brandId = this.getAttribute('data-brand-id');
+                const baseUrl = '<?= ($_ENV['APP_URL'] ?? '') ?>';
+                const url = brandId ? `${baseUrl}/products?brand_id=${brandId}&home=1` : `${baseUrl}/products?home=1`;
+                
+                // Fetch new products
+                productContainer.style.opacity = '0.5';
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.text())
+                .then(html => {
+                    productContainer.innerHTML = html;
+                    productContainer.style.opacity = '1';
+                })
+                .catch(err => {
+                    console.error('Error fetching products:', err);
+                    productContainer.style.opacity = '1';
+                });
+            });
+        });
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/layouts/footer.php'; ?>
+
