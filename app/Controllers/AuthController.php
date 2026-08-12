@@ -39,7 +39,7 @@ class AuthController extends Controller
         }
 
         if ($this->userModel->checkRateLimit($email)) {
-            $this->view('client/auth/login', ['error' => 'Quá nhiều lần thử, vui lòng thử lại sau 15 phút.', 'old_email' => $email]);
+            $this->view('client/auth/login', ['error' => 'Bạn đã nhập sai 5 lần liên tiếp. Tài khoản bị tạm khóa đăng nhập trong 15 phút, vui lòng thử lại sau.', 'old_email' => $email]);
             return;
         }
 
@@ -47,7 +47,16 @@ class AuthController extends Controller
 
         if (!$user || !$this->userModel->verifyPassword($password, $user['password'])) {
             $this->userModel->recordLoginAttempt($email, $ip);
-            $this->view('client/auth/login', ['error' => 'Email hoặc mật khẩu không đúng.', 'old_email' => $email]);
+            $attempts = $this->userModel->getRecentAttemptCount($email);
+
+            if ($attempts >= 5) {
+                $errorMsg = 'Bạn đã nhập sai 5 lần liên tiếp. Tài khoản bị tạm khóa đăng nhập trong 15 phút, vui lòng thử lại sau.';
+            } else {
+                $remaining = 5 - $attempts;
+                $errorMsg = "Email hoặc mật khẩu không đúng. Bạn đã nhập sai {$attempts}/5 lần (còn lại {$remaining} lần thử).";
+            }
+
+            $this->view('client/auth/login', ['error' => $errorMsg, 'old_email' => $email]);
             return;
         }
 
@@ -96,8 +105,15 @@ class AuthController extends Controller
             return;
         }
 
-        if (strlen($password) < 6) {
-            $this->view('client/auth/register', ['error' => 'Mật khẩu phải có ít nhất 6 ký tự.', 'old' => $old]);
+        if (strlen($password) < 8) {
+            $this->view('client/auth/register', ['error' => 'Mật khẩu phải có ít nhất 8 ký tự.', 'old' => $old]);
+            return;
+        }
+
+        // Kiểm tra độ mạnh mật khẩu (business rule USERS)
+        $pwErrors = User::validatePasswordStrength($password);
+        if (!empty($pwErrors)) {
+            $this->view('client/auth/register', ['error' => implode(' ', $pwErrors), 'old' => $old]);
             return;
         }
 
@@ -209,8 +225,10 @@ class AuthController extends Controller
             return;
         }
 
-        if (strlen($password) < 6) {
-            $this->view('client/auth/reset_password', ['error' => 'Mật khẩu phải có ít nhất 6 ký tự.', 'token' => $token]);
+        // Kiểm tra độ mạnh mật khẩu (business rule USERS)
+        $pwErrors = User::validatePasswordStrength($password);
+        if (!empty($pwErrors)) {
+            $this->view('client/auth/reset_password', ['error' => implode(' ', $pwErrors), 'token' => $token]);
             return;
         }
 

@@ -1,155 +1,222 @@
-<?php require_once __DIR__ . '/layouts/header.php'; ?>
-
-<div class="container py-5">
-    <!-- Breadcrumb & Header -->
-    <div class="row mb-4 align-items-center">
-        <div class="col-md-6">
-            <h2 class="fw-bold text-uppercase m-0">Danh sách sản phẩm</h2>
-            <small class="text-muted">Khám phá các mẫu giày thể thao mới nhất</small>
-        </div>
-        <div class="col-md-6 text-md-end mt-3 mt-md-0">
-            <span class="badge bg-dark px-3 py-2 fs-6">Tổng cộng: <?= count($products) ?> sản phẩm</span>
-        </div>
+<?php 
+require_once __DIR__ . '/../../app/bootstrap.php';
+require_once __DIR__ . '/layouts/header.php'; 
+?>
+<!-- Breadcrumb -->
+<div class="bg-light py-3 border-bottom mb-4">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="<?= ($_ENV['APP_URL'] ?? '') ?>/" class="text-decoration-none text-dark">Trang chủ</a></li>
+                <li class="breadcrumb-item active text-red fw-semibold" aria-current="page">Danh sách sản phẩm</li>
+            </ol>
+        </nav>
     </div>
+</div>
 
+<div class="container pb-5">
     <div class="row g-4">
-        <!-- Sidebar Filter -->
+        
+        <!-- SIDEBAR BỘ LỌC -->
         <div class="col-lg-3">
-            <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 100px; z-index: 1;">
-                <div class="card-body p-4">
-                    <form action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products" method="GET">
-                        <?php if (isset($filters['search'])): ?>
-                            <input type="hidden" name="search" value="<?= htmlspecialchars($filters['search']) ?>">
-                        <?php endif; ?>
-
-                        <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-funnel me-2 text-primary"></i>Danh mục</h5>
-                        <div class="mb-4">
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="category_id" id="cat_all" value="" <?= empty($filters['category_id']) ? 'checked' : '' ?>>
-                                <label class="form-check-label fw-semibold" for="cat_all">Tất cả danh mục</label>
-                            </div>
+            <div class="filter-sidebar">
+                <form action="<?= ($_ENV['APP_URL'] ?? '') ?>/products" method="GET" id="filterForm">
+                    
+                    <!-- Lọc Danh mục -->
+                    <div class="filter-group">
+                        <h6 class="filter-title"><i class="fa-solid fa-list me-2 text-red"></i> Danh mục</h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="category_id" value="" id="cat_all" <?= empty($_GET['category_id']) ? 'checked' : '' ?> onchange="this.form.submit()">
+                            <label class="form-check-label" for="cat_all">Tất cả danh mục</label>
+                        </div>
+                        <?php if (!empty($categories)): ?>
                             <?php foreach ($categories as $cat): ?>
+                                <?php
+                                    $catName = $cat['name'];
+                                    if (stripos($catName, 'Giày') === false && stripos($catName, 'Giay') === false) {
+                                        $catName = 'Giày ' . $catName;
+                                    }
+                                ?>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="category_id" value="<?= $cat['category_id'] ?>" id="cat_<?= $cat['category_id'] ?>" <?= (isset($_GET['category_id']) && $_GET['category_id'] == $cat['category_id']) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <label class="form-check-label" for="cat_<?= $cat['category_id'] ?>"><?= htmlspecialchars($catName) ?></label>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Lọc Thương hiệu -->
+                    <div class="filter-group">
+                        <h6 class="filter-title"><i class="fa-solid fa-tags me-2 text-red"></i> Thương hiệu</h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="brand_id" value="" id="brand_all" <?= empty($_GET['brand_id']) ? 'checked' : '' ?> onchange="this.form.submit()">
+                            <label class="form-check-label" for="brand_all">Tất cả thương hiệu</label>
+                        </div>
+                        <?php if (!empty($brands)): ?>
+                            <?php foreach ($brands as $b): ?>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="brand_id" value="<?= $b['brand_id'] ?>" id="brand_<?= $b['brand_id'] ?>" <?= (isset($_GET['brand_id']) && $_GET['brand_id'] == $b['brand_id']) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                    <label class="form-check-label" for="brand_<?= $b['brand_id'] ?>"><?= htmlspecialchars($b['name']) ?></label>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                    
+
+            
+                    <!-- Giới tính -->
+                    <div class="filter-group">
+                        <h6 class="filter-title"><i class="fa-solid fa-venus-mars me-2 text-red"></i> Giới tính</h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="gender" value="" id="gender_all" <?= empty($_GET['gender']) ? 'checked' : '' ?> onchange="this.form.submit()">
+                            <label class="form-check-label" for="gender_all">Tất cả</label>
+                        </div>
+                        <?php 
+                        $genders = $availableGenders ?? ['male', 'female'];
+                        $genderLabels = ['male' => 'Nam', 'female' => 'Nữ'];
+                        foreach ($genders as $g): 
+                            $label = $genderLabels[$g] ?? ucfirst($g);
+                        ?>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="category_id" id="cat_<?= $cat['category_id'] ?>" value="<?= $cat['category_id'] ?>" <?= (isset($filters['category_id']) && $filters['category_id'] == $cat['category_id']) ? 'checked' : '' ?>>
-                                <label class="form-check-label" for="cat_<?= $cat['category_id'] ?>"><?= htmlspecialchars($cat['name']) ?></label>
+                                <input class="form-check-input" type="radio" name="gender" value="<?= $g ?>" id="gender_<?= $g ?>" <?= (isset($_GET['gender']) && $_GET['gender'] == $g) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                <label class="form-check-label" for="gender_<?= $g ?>"><?= $label ?></label>
                             </div>
+                        <?php endforeach; ?>
+                    </div>
+            
+                    <!-- Chọn Size Giày -->
+                    <div class="filter-group">
+                        <h6 class="filter-title"><i class="fa-solid fa-shoe-prints me-2 text-red"></i> Kích thước (Size)</h6>
+                        <div class="size-btn-group flex-wrap gap-2 d-flex">
+                            <?php 
+                            $sizes = $availableSizes ?? [38, 39, 40, 41, 42, 43, 44]; 
+                            foreach ($sizes as $s): 
+                            ?>
+                                <input type="radio" class="btn-check" name="size" id="size_<?= $s ?>" value="<?= $s ?>" autocomplete="off" <?= (isset($_GET['size']) && $_GET['size'] == $s) ? 'checked' : '' ?> onchange="this.form.submit()">
+                                <label class="btn btn-outline-dark" for="size_<?= $s ?>"><?= $s ?></label>
                             <?php endforeach; ?>
                         </div>
+                    </div>
 
-                        <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-tags me-2 text-primary"></i>Thương hiệu</h5>
-                        <div class="mb-4">
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="brand_id" id="brand_all" value="" <?= empty($filters['brand_id']) ? 'checked' : '' ?>>
-                                <label class="form-check-label fw-semibold" for="brand_all">Tất cả thương hiệu</label>
-                            </div>
-                            <?php foreach ($brands as $brand): ?>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" name="brand_id" id="brand_<?= $brand['brand_id'] ?>" value="<?= $brand['brand_id'] ?>" <?= (isset($filters['brand_id']) && $filters['brand_id'] == $brand['brand_id']) ? 'checked' : '' ?>>
-                                <label class="form-check-label" for="brand_<?= $brand['brand_id'] ?>"><?= htmlspecialchars($brand['name']) ?></label>
-                            </div>
+                    <!-- Màu sắc -->
+                    <div class="filter-group">
+                        <h6 class="filter-title"><i class="fa-solid fa-palette me-2 text-red"></i> Màu sắc</h6>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <?php 
+                            $colors = $availableColors ?? ['Đen', 'Trắng', 'Đỏ'];
+                            foreach ($colors as $c): 
+                                $isChecked = (isset($_GET['color']) && $_GET['color'] == $c) ? 'checked' : '';
+                                $colorId = 'color_' . md5((string)$c);
+                            ?>
+                                <input type="radio" class="btn-check" name="color" id="<?= $colorId ?>" value="<?= htmlspecialchars((string)$c) ?>" <?= $isChecked ?> autocomplete="off" onchange="this.form.submit()">
+                                <label class="btn btn-outline-dark btn-sm rounded-pill" for="<?= $colorId ?>"><?= htmlspecialchars((string)$c) ?></label>
                             <?php endforeach; ?>
                         </div>
+                    </div>
 
-                        <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold"><i class="bi bi-filter me-1"></i> Lọc sản phẩm</button>
-                        <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-outline-secondary w-100 rounded-pill mt-2 py-2 fw-semibold">Xóa lọc</a>
-                    </form>
-                </div>
+                    <!-- Sắp xếp ẩn trong form -->
+                    <?php if (!empty($_GET['sort'])): ?>
+                        <input type="hidden" name="sort" value="<?= htmlspecialchars($_GET['sort']) ?>">
+                    <?php endif; ?>
+
+                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-outline-secondary w-100 mt-2 btn-sm">Xóa tất cả bộ lọc</a>
+                </form>
             </div>
         </div>
 
-        <!-- Product Grid -->
+        <!-- MAIN PRODUCT DISPLAY -->
         <div class="col-lg-9">
-            <?php if (empty($products)): ?>
-                <div class="card border-0 shadow-sm rounded-4 text-center py-5">
-                    <div class="card-body">
-                        <i class="bi bi-emoji-frown fs-1 text-muted d-block mb-3"></i>
-                        <h4 class="fw-bold">Không tìm thấy sản phẩm nào!</h4>
-                        <p class="text-muted mb-4">Vui lòng thử nghiệm bộ lọc khác hoặc tìm kiếm với từ khóa khác.</p>
-                        <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-primary rounded-pill px-4">Xem tất cả sản phẩm</a>
-                    </div>
-                </div>
-            <?php else: ?>
-                <div class="row g-4">
-                    <?php foreach ($products as $product): ?>
-                    <div class="col-md-4 col-sm-6">
-                        <div class="card h-100 border-0 shadow-sm rounded-4 product-card overflow-hidden">
-                            <?php if (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
-                                <?php $discountPercent = round((($product['price'] - $product['sale_price']) / $product['price']) * 100); ?>
-                                <span class="position-absolute top-0 start-0 bg-danger text-white px-3 py-1 fw-bold rounded-end-pill z-3" style="font-size: 0.85rem;">
-                                    -<?= $discountPercent ?>%
-                                </span>
-                            <?php endif; ?>
+            
+            <div id="product-grid-container">
+                <?php require __DIR__ . '/partials/product_grid.php'; ?>
+            </div>
 
-                            <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>">
-                                <?php 
-                                    $imgSrc = !empty($product['image_url']) ? '/uploads/' . $product['image_url'] : '/uploads/default-product.jpg';
-                                    $baseUrl = htmlspecialchars($_ENV['APP_URL'] ?? '');
-                                ?>
-                                <img src="<?= $baseUrl . htmlspecialchars($imgSrc) ?>" class="card-img-top p-3" style="height: 240px; object-fit: cover;" alt="<?= htmlspecialchars($product['name']) ?>" onerror="this.src='<?= $baseUrl ?>/uploads/default-product.jpg'">
-                            </a>
-                            
-                            <div class="card-body d-flex flex-column pt-0">
-                                <span class="text-muted small mb-1"><?= htmlspecialchars($product['brand_name'] ?? 'Giày Thể Thao') ?></span>
-                                <h6 class="card-title text-truncate fw-bold mb-2">
-                                    <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="text-dark text-decoration-none"><?= htmlspecialchars($product['name']) ?></a>
-                                </h6>
-                                
-                                <div class="mt-auto d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <?php if (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
-                                            <span class="fw-bold text-danger fs-5 me-2"><?= number_format($product['sale_price'], 0, ',', '.') ?>đ</span>
-                                            <small class="text-muted text-decoration-line-through"><?= number_format($product['price'], 0, ',', '.') ?>đ</small>
-                                        <?php else: ?>
-                                            <span class="fw-bold text-primary fs-5"><?= number_format($product['price'], 0, ',', '.') ?>đ</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <?php if(!\App\Core\Auth::check() || \App\Core\Auth::user()['role'] !== 'admin'): ?>
-                                    <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="btn btn-outline-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; padding: 0;" title="Xem chi tiết & chọn Size/Màu">
-                                        <i class="bi bi-cart-plus"></i>
-                                    </a>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-
-                <!-- Pagination -->
-                <?php if ($totalPages > 1): ?>
-                <nav class="mt-5" aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item <?= ($currentPage <= 1) ? 'disabled' : '' ?>">
-                            <?php 
-                                $prevQuery = $_GET; 
-                                $prevQuery['page'] = $currentPage - 1;
-                            ?>
-                            <a class="page-link rounded-start-pill" href="?<?= http_build_query($prevQuery) ?>">Trước</a>
-                        </li>
-                        
-                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                            <?php 
-                                $pageQuery = $_GET; 
-                                $pageQuery['page'] = $i;
-                            ?>
-                            <li class="page-item <?= ($i == $currentPage) ? 'active' : '' ?>">
-                                <a class="page-link" href="?<?= http_build_query($pageQuery) ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-                        
-                        <li class="page-item <?= ($currentPage >= $totalPages) ? 'disabled' : '' ?>">
-                            <?php 
-                                $nextQuery = $_GET; 
-                                $nextQuery['page'] = $currentPage + 1;
-                            ?>
-                            <a class="page-link rounded-end-pill" href="?<?= http_build_query($nextQuery) ?>">Sau</a>
-                        </li>
-                    </ul>
-                </nav>
-                <?php endif; ?>
-            <?php endif; ?>
         </div>
     </div>
 </div>
 
-<?php require_once __DIR__ . '/layouts/footer.php'; ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('filterForm');
+    
+    // Hàm gọi AJAX chung
+    function fetchProducts(urlStr) {
+        document.getElementById('product-grid-container').style.opacity = '0.5';
+        
+        fetch(urlStr, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('product-grid-container').innerHTML = html;
+            document.getElementById('product-grid-container').style.opacity = '1';
+            // Đổi URL trên trình duyệt mà không tải lại trang
+            window.history.pushState({}, '', urlStr);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('product-grid-container').style.opacity = '1';
+        });
+    }
+
+    // Khi người dùng submit form (bấm Enter tìm kiếm, hoặc trigger từ JS)
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const searchParams = new URLSearchParams(formData);
+        
+        // Loại bỏ các param rỗng
+        for (const [key, value] of [...searchParams.entries()]) {
+            if (!value) {
+                searchParams.delete(key);
+            }
+        }
+        
+        const urlStr = form.action + '?' + searchParams.toString();
+        fetchProducts(urlStr);
+    });
+
+    // Khi click vào số phân trang
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.ajax-pagination a')) {
+            e.preventDefault();
+            let page = e.target.closest('a').getAttribute('data-page');
+            if (!page) return;
+            
+            // Lấy lại các param hiện tại từ form
+            const formData = new FormData(form);
+            const searchParams = new URLSearchParams(formData);
+            
+            for (const [key, value] of [...searchParams.entries()]) {
+                if (!value) searchParams.delete(key);
+            }
+            searchParams.set('page', page);
+            
+            const urlStr = form.action + '?' + searchParams.toString();
+            fetchProducts(urlStr);
+        }
+    });
+
+    const inputs = form.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+    inputs.forEach(input => {
+        input.onchange = null; // Triệt để xóa onchange inline
+        input.removeAttribute('onchange'); 
+        input.addEventListener('change', () => {
+            const formData = new FormData(form);
+            const searchParams = new URLSearchParams(formData);
+            for (const [key, value] of [...searchParams.entries()]) {
+                if (!value) searchParams.delete(key);
+            }
+            const urlStr = form.action + '?' + searchParams.toString();
+            fetchProducts(urlStr);
+        });
+    });
+
+});
+</script>
+
+
+
+<?php require __DIR__ . '/layouts/footer.php'; ?>

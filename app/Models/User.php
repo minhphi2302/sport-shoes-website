@@ -23,6 +23,36 @@ class User extends Model
         return password_verify($password, $hash);
     }
 
+    /**
+     * Kiểm tra độ mạnh mật khẩu theo business rule USERS:
+     * - Tối thiểu 8 ký tự
+     * - Ít nhất 1 chữ hoa (A-Z)
+     * - Ít nhất 1 chữ thường (a-z)
+     * - Ít nhất 1 ký tự đặc biệt (!@#$%^&* ...)
+     *
+     * @param string $password Mật khẩu cần kiểm tra.
+     * @return string[] Mảng thông báo lỗi, rỗng nếu hợp lệ.
+     */
+    public static function validatePasswordStrength(string $password): array
+    {
+        $errors = [];
+
+        if (strlen($password) < 8) {
+            $errors[] = 'Mật khẩu phải có ít nhất 8 ký tự.';
+        }
+        if (!preg_match('/[A-Z]/', $password)) {
+            $errors[] = 'Mật khẩu phải có ít nhất 1 chữ hoa.';
+        }
+        if (!preg_match('/[a-z]/', $password)) {
+            $errors[] = 'Mật khẩu phải có ít nhất 1 chữ thường.';
+        }
+        if (!preg_match('/[\W_]/', $password)) {
+            $errors[] = 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt (VD: !@#$%^&*).';
+        }
+
+        return $errors;
+    }
+
     public function saveResetToken(int $userId, string $token, string $expiresAt): void
     {
         $stmt = $this->db->prepare("UPDATE {$this->table} SET reset_token = :token, reset_token_expires_at = :expires_at WHERE user_id = :id");
@@ -60,10 +90,14 @@ class User extends Model
 
     public function checkRateLimit(string $email): bool
     {
+        return $this->getRecentAttemptCount($email) >= 5;
+    }
+
+    public function getRecentAttemptCount(string $email): int
+    {
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM login_attempts WHERE email = :email AND attempted_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)");
         $stmt->execute(['email' => $email]);
-        $attempts = (int)$stmt->fetchColumn();
-        return $attempts >= 5;
+        return (int)$stmt->fetchColumn();
     }
 
     public function clearLoginAttempts(string $email): void
