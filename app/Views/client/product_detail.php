@@ -15,6 +15,8 @@ require_once __DIR__ . '/layouts/header.php';
     </div>
 </div>
 
+<!-- Main Product Detail Content -->
+<div class="container py-5">
     <div class="row bg-white p-4 rounded-4 shadow-sm">
         <!-- Product Image -->
         <div class="col-md-6 mb-4 mb-md-0">

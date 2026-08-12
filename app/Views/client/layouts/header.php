@@ -33,7 +33,7 @@ $baseUrl = $_ENV['APP_URL'] ?? '';
     <div class="top-bar" id="topAnnouncementBar">
         <div class="container position-relative text-center d-flex justify-content-center align-items-center py-1">
             <a href="<?= base_url('products') ?>" class="announcement-text fw-bold">
-                <i class="fa-solid fa-truck-fast me-2 text-red"></i> MIỄN PHÍ GIAO HÀNG TOÀN QUỐC CHO ĐƠN HÀNG TỪ 500.000VNĐ
+                <i class="fa-solid fa-truck-fast me-2 text-red"></i> MIỄN PHÍ GIAO HÀNG TOÀN QUỐC CHO ĐƠN HÀNG TỪ 1.000.000VNĐ
             </a>
             <button type="button" class="btn-close-topbar" id="closeTopBarBtn" title="Đóng thông báo">
                 <i class="fa-solid fa-xmark"></i>

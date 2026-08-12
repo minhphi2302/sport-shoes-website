@@ -4,12 +4,7 @@ require_once __DIR__ . '/layouts/header.php';
 ?>
 
 <div class="container py-5">
-    <h2 class="fw-bold mb-4">Thanh toán & Đặt hàng</h2>
-
-<div class="container pb-5">
     <h2 class="section-title mb-4">Thanh toán & Đặt hàng</h2>
-    
-
 
     <?php if (isset($_SESSION['checkout_error'])): ?>
         <div class="alert alert-danger shadow-sm rounded-3">
@@ -19,29 +14,10 @@ require_once __DIR__ . '/layouts/header.php';
         <?php unset($_SESSION['error']); ?>
     <?php endif; ?>
 
-    <form action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/checkout" method="POST">
+    <form id="checkoutForm" action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/checkout" method="POST">
         <div class="row g-5">
             <!-- Thông tin giao hàng -->
             <div class="col-lg-7">
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body p-4">
-                        <h4 class="fw-bold mb-4">Thông tin giao hàng</h4>
-                        
-                        <div class="mb-3">
-                            <label for="name" class="form-label fw-semibold">Họ và tên người nhận</label>
-                            <input type="text" class="form-control" id="name" name="name" value="<?= htmlspecialchars($user['name'] ?? '') ?>" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="phone" class="form-label fw-semibold">Số điện thoại</label>
-                            <input type="text" class="form-control" id="phone" name="phone" value="<?= htmlspecialchars($user['phone'] ?? '') ?>" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="address" class="form-label fw-semibold">Địa chỉ giao hàng (Số nhà, đường, xã/phường, quận/huyện, tỉnh/TP)</label>
-                            <textarea class="form-control" id="address" name="address" rows="3" required><?= htmlspecialchars($user['address'] ?? '') ?></textarea>
-                        </div>
-
                 <!-- Section 1: Thông tin người nhận -->
                 <div class="card border shadow-sm p-4 mb-4 rounded-3">
                     <h5 class="fw-bold mb-4">Thông tin giao hàng</h5>
