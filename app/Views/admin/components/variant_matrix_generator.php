@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.hideMatrixNotice();
             const commonQty = document.getElementById('common_qty').value.trim();
             if (commonQty === '') {
-                window.showMatrixNotice('Vui lòng nhập Số lượng ở Bước 4 trước khi thêm!');
+                window.showMatrixNotice('Vui lòng nhập số lượng!');
                 document.getElementById('common_qty').focus();
                 return;
             }
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const skuCha = (skuInput ? skuInput.value.trim() : '') || 'SKU';
             const basePrice = basePriceInput ? (parseFloat(basePriceInput.value) || 0) : 0;
             if (isNaN(basePrice) || basePrice <= 0) {
-                window.showMatrixNotice('Vui lòng nhập Giá bán mặc định hợp lệ ở phần thông tin cơ bản trước khi tạo biến thể!');
+                window.showMatrixNotice('Vui lòng nhập giá bán mặc định!');
                 if (basePriceInput) basePriceInput.focus();
                 return;
             }
@@ -212,12 +212,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Kiểm tra giá mẫu không được lớn hơn giá bán mặc định và không được âm
                     if (mPrice > basePrice) {
-                        window.showMatrixNotice('Lỗi: Giá của biến thể mẫu không được phép lớn hơn Giá bán mặc định!');
+                        window.showMatrixNotice('Giá mẫu không được lớn hơn giá bán!');
                         priceInput.focus();
                         hasError = true;
                         return;
                     } else if (mPrice < 0) {
-                        window.showMatrixNotice('Lỗi: Giá mẫu không được là số âm!');
+                        window.showMatrixNotice('Giá mẫu không được âm!');
                         priceInput.focus();
                         hasError = true;
                         return;
@@ -268,18 +268,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Snapshot các row hiện có TRƯỚC KHI thêm mới
+            const existingRowsSnapshot = Array.from(document.querySelectorAll('#variants-table tbody tr'));
             let duplicateVariants = [];
 
-            // Sinh dữ liệu
+            // Sinh và kiểm tra dữ liệu
             models.forEach(modelObj => {
                 selectedSizes.forEach(sizeObj => {
                     selectedColors.forEach(colorObj => {
                         if (hasError) return;
 
-                        // Tính giá sau khi giảm giá size
-                        let priceAfterSize = modelObj.price * (1 - (sizeObj.percent / 100));
-                        // Lấy giá sau khi giảm size tính tiếp giảm màu
-                        let calculatedPrice = priceAfterSize * (1 - (colorObj.percent / 100));
+                        // Cộng tổng % giảm của size và màu rồi áp dụng 1 lần lên giá mẫu
+                        const totalDiscountPercent = (sizeObj.percent || 0) + (colorObj.percent || 0);
+                        let calculatedPrice = modelObj.price * (1 - totalDiscountPercent / 100);
                         
                         // Ràng buộc giá biến thể không vượt quá giá bán gốc
                         if (calculatedPrice > basePrice) {
@@ -287,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         if (calculatedPrice <= 0) {
-                            window.showMatrixNotice(`Lỗi: Giá bán cuối cùng của biến thể (Mẫu: ${modelObj.name || 'Mặc định'}, Size: ${sizeObj.name}, Màu: ${colorObj.name}) phải lớn hơn 0. Vui lòng giảm bớt % giảm giá!`);
+                            window.showMatrixNotice(`Giá biến thể phải lớn hơn 0. Vui lòng giảm % giảm giá!`);
                             hasError = true;
                             return;
                         }
@@ -307,9 +308,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Kiểm tra xem biến thể đã tồn tại trong danh sách chưa
                         let isDuplicate = false;
-                        const existingRows = document.querySelectorAll('#variants-table tbody tr');
 
-                        existingRows.forEach(row => {
+                        existingRowsSnapshot.forEach(row => {
                             const rModelInput = row.querySelector('input[name="variant_models[]"]');
                             const rGenderSelect = row.querySelector('select[name="variant_genders[]"]');
                             const rSizeInput = row.querySelector('input[name="variant_raw_sizes[]"]');
@@ -370,9 +370,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.showMatrixNotice(`Đã thêm các biến thể mới!`, 'success');
             }
 
-            // Bỏ chọn tất cả sau khi đã ném xuống bảng
+            // Reset toàn bộ form sau khi thêm thành công
+            // 1. Bỏ chọn tất cả size và color
             document.querySelectorAll('.chk-size:checked, .chk-color:checked').forEach(cb => cb.checked = false);
+            
+            // 2. Reset % giảm giá của size và color về 0
+            document.querySelectorAll('.size-percent, .color-percent').forEach(input => {
+                input.value = 0;
+            });
+            
+            // 3. Reset số lượng mặc định
             document.getElementById('common_qty').value = '';
+            
+            // 4. Xóa tất cả mẫu đã thêm (nếu có)
+            const modelsContainer = document.getElementById('models-container');
+            if (modelsContainer) {
+                modelsContainer.innerHTML = '';
+            }
             
             if (typeof window.updateTotalQuantity === 'function') {
                 window.updateTotalQuantity();

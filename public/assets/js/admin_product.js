@@ -1,6 +1,6 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Tự động in hoa tất cả các ô nhập mã SKU
-    document.addEventListener('input', function(e) {
+    document.addEventListener('input', function (e) {
         if (e.target.matches('input[name="sku"], input[name="variant_skus[]"]')) {
             const start = e.target.selectionStart;
             const end = e.target.selectionEnd;
@@ -14,15 +14,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // 1. Form Validation cho cả trang Thêm và Sửa Sản Phẩm
     const productForm = document.getElementById('product-form');
     if (productForm) {
-        productForm.addEventListener('submit', function(e) {
+        productForm.addEventListener('submit', function (e) {
             document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
             document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
-            
+
             let isValid = true;
             let firstInvalid = null;
 
             const showError = (input, message) => {
-                if (!isValid) return; 
+                if (!isValid) return;
                 isValid = false;
                 firstInvalid = input;
                 input.classList.add('is-invalid');
@@ -117,14 +117,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const vGenderInput = row.querySelector('select[name="variant_genders[]"]');
                 const vRawSizeInput = row.querySelector('input[name="variant_raw_sizes[]"]');
                 const vColorInput = row.querySelector('input[name="variant_colors[]"]');
-                
+
                 const vModel = vModelInput ? vModelInput.value.trim() : 'Mặc định';
                 const vGender = vGenderInput ? vGenderInput.value.trim() : '';
                 const vRawSize = vRawSizeInput ? vRawSizeInput.value.trim() : '';
                 const vColor = vColorInput ? vColorInput.value.trim() : '';
-                
+
                 const uniqueKey = `${vModel.toLowerCase()}-${vGender.toLowerCase()}-${vRawSize.toLowerCase()}-${vColor.toLowerCase()}`;
-                
+
                 if (seenVariants.has(uniqueKey)) {
                     const msg = `Lỗi: Có biến thể bị trùng lặp (Mẫu: ${vModel}, Đối tượng: ${vGender}, Size: ${vRawSize}, Màu: ${vColor}). Không thể lưu!`;
                     if (typeof window.showMatrixNotice === 'function') {
@@ -165,8 +165,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. Logic cập nhật Bảng biến thể chung
     const tableBody = document.querySelector('#variants-table tbody');
     const totalQtyInput = document.getElementById('total_quantity');
-    
-    window.updateTotalQuantity = function() {
+
+    window.updateTotalQuantity = function () {
         if (!totalQtyInput) return;
         let total = 0;
         document.querySelectorAll('.variant-qty').forEach(input => {
@@ -176,26 +176,26 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     if (tableBody) {
-        tableBody.addEventListener('click', function(e) {
+        tableBody.addEventListener('click', function (e) {
             if (e.target.closest('.btn-remove-variant')) {
                 e.target.closest('tr').remove();
                 window.updateTotalQuantity();
             }
         });
 
-        tableBody.addEventListener('input', function(e) {
+        tableBody.addEventListener('input', function (e) {
             if (e.target.classList.contains('variant-qty')) {
                 window.updateTotalQuantity();
             }
         });
-        
+
         window.updateTotalQuantity();
     }
 
     // 3. Logic Xóa tất cả biến thể
     const btnClearAll = document.getElementById('btn-clear-all-variants');
     if (btnClearAll) {
-        btnClearAll.addEventListener('click', function() {
+        btnClearAll.addEventListener('click', function () {
             const tbody = document.querySelector('#variants-table tbody');
             if (!tbody || tbody.querySelectorAll('tr').length === 0) {
                 if (typeof window.showMatrixNotice === 'function') {

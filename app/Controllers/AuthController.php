@@ -67,6 +67,9 @@ class AuthController extends Controller
 
         $this->userModel->clearLoginAttempts($email);
         Auth::login($user);
+        
+        // Regenerate session ID để tránh session fixation (business rule: Session Security)
+        session_regenerate_id(true);
 
         if ($user['role'] === 'admin') {
             $this->redirect('/admin/dashboard');

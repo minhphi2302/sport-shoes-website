@@ -136,6 +136,41 @@ $cart = $cart ?? $cartItems ?? $_SESSION['cart'] ?? [];
 
             <!-- Tóm tắt đơn hàng -->
             <div class="col-lg-4">
+                <?php if(\App\Core\Auth::check()): ?>
+                    <?php $currentUser = \App\Core\Auth::user(); ?>
+                    <!-- Thông tin khách hàng -->
+                    <div class="card border-0 shadow-sm rounded-4 mb-3">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="bi bi-person-circle me-2 text-primary"></i>Thông tin khách hàng</h5>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Họ tên:</small>
+                                <span class="fw-semibold"><?= htmlspecialchars($currentUser['name'] ?? 'Chưa cập nhật') ?></span>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Email:</small>
+                                <span class="fw-semibold"><?= htmlspecialchars($currentUser['email'] ?? '') ?></span>
+                            </div>
+                            <?php if (!empty($currentUser['phone'])): ?>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Số điện thoại:</small>
+                                <span class="fw-semibold"><?= htmlspecialchars($currentUser['phone']) ?></span>
+                            </div>
+                            <?php endif; ?>
+                            <?php if (!empty($currentUser['address'])): ?>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Địa chỉ:</small>
+                                <span class="fw-semibold small"><?= htmlspecialchars($currentUser['address']) ?></span>
+                            </div>
+                            <?php endif; ?>
+                            <div class="mt-3">
+                                <a href="<?= base_url('profile') ?>" class="btn btn-sm btn-outline-primary rounded-pill w-100">
+                                    <i class="bi bi-pencil-square me-1"></i> Cập nhật thông tin
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                
                 <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 100px;">
                     <div class="card-body p-4">
                         <h4 class="fw-bold mb-4">Tóm tắt đơn hàng</h4>

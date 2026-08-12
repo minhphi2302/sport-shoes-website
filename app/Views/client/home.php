@@ -9,52 +9,7 @@ require_once __DIR__ . '/layouts/header.php';
         <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
         <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
     </div>
-    <div class="carousel-inner">
-        <!-- Slide 1 -->
-        <div class="carousel-item active">
-            <img src="<?= base_url('image/slide/slide1.avif') ?>" class="hero-slider-img" alt="Nike Air Zoom">
-            <div class="carousel-caption carousel-caption-custom container">
-                <span class="badge bg-red mb-2 px-3 py-2 text-uppercase">Bộ sưu tập mới 2026</span>
-                <h1>NIKE AIR ZOOM PEGASUS 39</h1>
-                <p>Êm ái vượt trội - Tối ưu từng bước chạy của bạn.</p>
-                <div>
-                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-red me-3"><i class="fa-solid fa-cart-shopping me-2"></i> Mua Ngay</a>
-                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products?brand_id=1" class="btn btn-outline-light"><i class="fa-solid fa-eye me-2"></i> Xem Chi Tiết</a>
-                </div>
-            </div>
-        </div>
-        <!-- Slide 2 -->
-        <div class="carousel-item">
-            <img src="<?= base_url('image/slide/slide2.avif') ?>" class="hero-slider-img" alt="Adidas Ultraboost">
-            <div class="carousel-caption carousel-caption-custom container">
-                <span class="badge bg-danger mb-2 px-3 py-2 text-uppercase">Giảm Giá 30%</span>
-                <h1>ADIDAS ULTRABOOST 22</h1>
-                <p>Công nghệ đế Boost hoàn trả năng lượng tối đa.</p>
-                <div>
-                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-red me-3"><i class="fa-solid fa-bolt me-2"></i> Khám Phá</a>
-                </div>
-            </div>
-        </div>
-        <!-- Slide 3 -->
-        <div class="carousel-item">
-            <img src="<?= base_url('image/slide/slide3.avif') ?>" class="hero-slider-img" alt="Puma Shoes">
-            <div class="carousel-caption carousel-caption-custom container">
-                <span class="badge bg-warning text-dark mb-2 px-3 py-2 text-uppercase">Đẳng cấp phong cách</span>
-                <h1>PUMA & CONVERSE 2026</h1>
-                <p>Phong cách trẻ trung, năng động và sành điệu nhất.</p>
-                <div>
-                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/products" class="btn btn-red me-3">Xem Tất Cả</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon"></span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon"></span>
-    </button>
-</div>
+</section>
 
 <script>
     // Khởi tạo carousel tự động chạy
@@ -87,51 +42,18 @@ require_once __DIR__ . '/layouts/header.php';
                             <h6 class="brand-name-text"><?= htmlspecialchars(mb_strtoupper($brand['name'])) ?></h6>
                         </a>
                     </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-            <div class="col-6 col-md-4 col-lg-2">
-                <a href="<?= base_url('products') ?>" class="brand-card bg-dark text-white">
-                    <i class="fa-solid fa-arrow-right text-red fs-4 mb-2"></i>
-                    <h6 class="brand-name-text text-white">XEM TẤT CẢ</h6>
-                </a>
-            </div>
+                </div>
+            </a>
         </div>
+        <?php endforeach; ?>
     </div>
 </section>
 
-<!-- 3. CHÍNH SÁCH CỬA HÀNG -->
-<section class="py-4 border-bottom border-top">
-    <div class="container">
-        <div class="row g-3">
-            <div class="col-md-3 col-6">
-                <div class="policy-box">
-                    <i class="fa-solid fa-truck-fast"></i>
-                    <h5>Giao hàng nhanh</h5>
-                    <p>Giao toàn quốc từ 1-3 ngày</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="policy-box">
-                    <i class="fa-solid fa-rotate-left"></i>
-                    <h5>Đổi trả 7 ngày</h5>
-                    <p>Miễn phí đổi size & mẫu</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="policy-box">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <h5>Thanh toán an toàn</h5>
-                    <p>100% Bảo mật thông tin</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="policy-box">
-                    <i class="fa-solid fa-headset"></i>
-                    <h5>Hỗ trợ 24/7</h5>
-                    <p>Tư vấn nhiệt tình tận tâm</p>
-                </div>
-            </div>
-        </div>
+<!-- Featured Products -->
+<section class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold m-0">Sản Phẩm Mới Nhất</h2>
+        <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products" class="text-decoration-none fw-bold">Xem tất cả <i class="bi bi-arrow-right"></i></a>
     </div>
 </section>
 
@@ -472,41 +394,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const brandFilters = document.querySelectorAll('#home-brand-filters .btn-brand-filter');
     const productContainer = document.getElementById('home-product-container');
     
-    if (brandFilters.length > 0 && productContainer) {
-        brandFilters.forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Active state
-                brandFilters.forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                
-                const brandId = this.getAttribute('data-brand-id');
-                const baseUrl = '<?= ($_ENV['APP_URL'] ?? '') ?>';
-                const url = brandId ? `${baseUrl}/products?brand_id=${brandId}&home=1` : `${baseUrl}/products?home=1`;
-                
-                // Fetch new products
-                productContainer.style.opacity = '0.5';
-                fetch(url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(res => res.text())
-                .then(html => {
-                    productContainer.innerHTML = html;
-                    productContainer.style.opacity = '1';
-                })
-                .catch(err => {
-                    console.error('Error fetching products:', err);
-                    productContainer.style.opacity = '1';
-                });
-            });
-        });
-    }
-});
-</script>
+    <div class="row g-4">
+        <?php foreach ($featuredProducts as $product): ?>
+        <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="card h-100 product-card">
+                <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>">
+                    <?php 
+                        $imgSrc = !empty($product['image_url']) ? '/uploads/' . $product['image_url'] : '/uploads/default-product.jpg';
+                        $baseUrl = htmlspecialchars($_ENV['APP_URL'] ?? '');
+                    ?>
+                    <img src="<?= $baseUrl . htmlspecialchars($imgSrc) ?>" class="card-img-top product-img-fixed" style="width: 250px; height: 300px; object-fit: cover;" alt="<?= htmlspecialchars($product['name']) ?>" onerror="this.src='<?= $baseUrl ?>/uploads/default-product.jpg'">
+                </a>
+                <div class="card-body d-flex flex-column">
+                    <span class="text-muted small mb-1"><?= htmlspecialchars($product['brand_name'] ?? 'Brand') ?></span>
+                    <h5 class="card-title text-truncate">
+                        <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="text-dark text-decoration-none"><?= htmlspecialchars($product['name']) ?></a>
+                    </h5>
+                    
+                    <div class="mt-auto pt-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <?php if (!empty($product['sale_price']) && $product['sale_price'] < $product['price']): ?>
+                                <span class="price-sale d-block"><?= number_format($product['sale_price'], 0, ',', '.') ?>đ</span>
+                                <span class="price-original"><?= number_format($product['price'], 0, ',', '.') ?>đ</span>
+                            <?php else: ?>
+                                <span class="price-regular d-block"><?= number_format($product['price'], 0, ',', '.') ?>đ</span>
+                            <?php endif; ?>
+                        </div>
+                        <?php if(!\App\Core\Auth::check() || \App\Core\Auth::user()['role'] !== 'admin'): ?>
+                        <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/products/<?= $product['product_id'] ?>" class="btn btn-outline-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; padding: 0;" title="Chọn tuỳ chọn">
+                            <i class="bi bi-cart-plus"></i>
+                        </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</section>
 
-<?php
-require __DIR__ . '/layouts/footer.php';
-?>
+<?php require_once __DIR__ . '/layouts/footer.php'; ?>

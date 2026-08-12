@@ -1,19 +1,10 @@
-<?php
-require __DIR__ . '/layouts/header.php';
+<?php 
+require_once dirname(__DIR__, 2) . '/bootstrap.php';
+require_once __DIR__ . '/layouts/header.php'; 
 ?>
 
-<!-- Breadcrumb -->
-<div class="bg-light py-3 border-bottom mb-4">
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="<?= ($_ENV['APP_URL'] ?? '') ?>/" class="text-decoration-none text-dark">Trang chủ</a></li>
-                <li class="breadcrumb-item"><a href="<?= ($_ENV['APP_URL'] ?? '') ?>/cart" class="text-decoration-none text-dark">Giỏ hàng</a></li>
-                <li class="breadcrumb-item active text-red fw-semibold" aria-current="page">Thanh toán đơn hàng</li>
-            </ol>
-        </nav>
-    </div>
-</div>
+<div class="container py-5">
+    <h2 class="fw-bold mb-4">Thanh toán & Đặt hàng</h2>
 
 <div class="container pb-5">
     <h2 class="section-title mb-4">Thanh toán & Đặt hàng</h2>
@@ -25,43 +16,31 @@ require __DIR__ . '/layouts/header.php';
             <i class="fa-solid fa-triangle-exclamation me-2"></i>
             <?= htmlspecialchars($_SESSION['checkout_error']) ?>
         </div>
-        <?php unset($_SESSION['checkout_error']); ?>
+        <?php unset($_SESSION['error']); ?>
     <?php endif; ?>
 
-    <form action="<?= ($_ENV['APP_URL'] ?? '') ?>/checkout/process" method="POST" id="checkoutForm" novalidate>
+    <form action="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/checkout" method="POST">
         <div class="row g-5">
-            
-            <!-- CỘT TRÁI: THÔNG TIN GIAO HÀNG & THANH TOÁN -->
-            <div class="col-lg-8">
-                
-                <?php if (empty($_SESSION['user'])): ?>
-                <div class="d-flex justify-content-between align-items-center bg-white border shadow-sm p-3 mb-4 rounded-3">
-                    <span class="text-dark">Đăng nhập để mua hàng tiện lợi và nhận nhiều ưu đãi hơn nữa</span>
-                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/login?redirect=checkout" class="btn btn-light border fw-semibold px-4">Đăng nhập</a>
-                </div>
-                <?php else: ?>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="fw-bold mb-0">Tài khoản</h5>
-                    <a href="<?= ($_ENV['APP_URL'] ?? '') ?>/logout" class="text-decoration-none text-muted fw-semibold">Đăng xuất</a>
-                </div>
-                <div class="bg-white border shadow-sm p-3 mb-4 rounded-3 d-flex align-items-center">
-                    <?php 
-                        $fullName = $_SESSION['user']['name'] ?? 'User';
-                        $initials = mb_strtoupper(mb_substr($fullName, 0, 1));
-                        $parts = explode(' ', $fullName);
-                        if (count($parts) > 1) {
-                            $initials = mb_strtoupper(mb_substr($parts[0], 0, 1) . mb_substr(end($parts), 0, 1));
-                        }
-                    ?>
-                    <div class="rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 50px; height: 50px; background-color: #ffdddd; color: #e60012; font-weight: bold; font-size: 1.1rem;">
-                        <?= $initials ?>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-1"><?= htmlspecialchars($fullName) ?></h6>
-                        <span class="text-muted" style="font-size: 0.9rem;"><?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?></span>
-                    </div>
-                </div>
-                <?php endif; ?>
+            <!-- Thông tin giao hàng -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4">Thông tin giao hàng</h4>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label fw-semibold">Họ và tên người nhận</label>
+                            <input type="text" class="form-control" id="name" name="name" value="<?= htmlspecialchars($user['name'] ?? '') ?>" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label fw-semibold">Số điện thoại</label>
+                            <input type="text" class="form-control" id="phone" name="phone" value="<?= htmlspecialchars($user['phone'] ?? '') ?>" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label fw-semibold">Địa chỉ giao hàng (Số nhà, đường, xã/phường, quận/huyện, tỉnh/TP)</label>
+                            <textarea class="form-control" id="address" name="address" rows="3" required><?= htmlspecialchars($user['address'] ?? '') ?></textarea>
+                        </div>
 
                 <!-- Section 1: Thông tin người nhận -->
                 <div class="card border shadow-sm p-4 mb-4 rounded-3">
@@ -126,19 +105,18 @@ require __DIR__ . '/layouts/header.php';
                     </div>
                 </div>
 
-                <!-- Section 2: Phương thức thanh toán -->
-                <div class="card border-0 shadow-sm p-4">
-                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-credit-card me-2 text-red"></i> PHƯƠNG THỨC THANH TOÁN</h5>
-                    
-                    <div class="d-flex flex-column gap-3">
-                        <!-- Option 1: COD -->
-                        <label class="payment-method-card active d-flex align-items-center border rounded p-3" style="cursor: pointer;">
-                            <input type="radio" name="payment_method" value="COD" class="form-check-input me-3" checked>
-                            <div>
-                                <h6 class="fw-bold mb-1"><i class="fa-solid fa-hand-holding-dollar text-success me-2"></i> Thanh toán khi nhận hàng (COD)</h6>
-                                <small class="text-muted">Thanh toán bằng tiền mặt trực tiếp cho shipper khi nhận được hàng.</small>
-                            </div>
-                        </label>
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4">Phương thức thanh toán</h4>
+                        
+                        <div class="form-check mb-3 p-3 border rounded-3 bg-light">
+                            <input class="form-check-input ms-1" type="radio" name="payment_method" id="payment_cod" value="COD" checked>
+                            <label class="form-check-label ms-2 fw-semibold d-flex align-items-center" for="payment_cod">
+                                <i class="bi bi-cash-stack fs-4 text-success me-2"></i> Thanh toán khi nhận hàng (COD)
+                            </label>
+                        </div>
+                        
+                        <!-- Có thể thêm VNPAY ở đây sau này -->
                     </div>
                 </div>
 
@@ -200,6 +178,100 @@ require __DIR__ . '/layouts/header.php';
                 </div>
             </div>
 
+            <!-- Tóm tắt đơn hàng -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 100px;">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4">Tóm tắt đơn hàng</h4>
+                        
+                        <div class="d-flex justify-content-between mb-3 border-bottom pb-3">
+                            <span class="text-muted">Sản phẩm</span>
+                            <span class="text-muted text-end">Tạm tính</span>
+                        </div>
+                        
+                        <?php foreach ($cart as $item): ?>
+                            <?php 
+                                $priceToUse = (!empty($item['sale_price']) && $item['sale_price'] < $item['price']) ? $item['sale_price'] : $item['price'];
+                                $subtotal = $priceToUse * $item['quantity'];
+                            ?>
+                            <div class="d-flex justify-content-between mb-3 align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="position-relative me-3">
+                                        <?php 
+                                            $imgSrc = !empty($item['image_url']) ? '/uploads/' . $item['image_url'] : '/uploads/default-product.jpg';
+                                            $baseUrl = htmlspecialchars($_ENV['APP_URL'] ?? '');
+                                        ?>
+                                        <img src="<?= $baseUrl . htmlspecialchars($imgSrc) ?>" alt="" class="rounded" style="width: 50px; height: 50px; object-fit: cover;" onerror="this.src='<?= $baseUrl ?>/uploads/default-product.jpg'">
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                                            <?= $item['quantity'] ?>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span class="d-block fw-semibold" style="font-size: 0.9rem;"><?= htmlspecialchars($item['name']) ?></span>
+                                        <?php if (!empty($item['size'])): ?>
+                                            <small class="text-muted d-block" style="font-size: 0.8rem;">Size: <?= htmlspecialchars($item['size']) ?></small>
+                                        <?php endif; ?>
+                                        <?php if (!empty($item['color'])): ?>
+                                            <small class="text-muted d-block" style="font-size: 0.8rem;">Màu: <?= htmlspecialchars($item['color']) ?></small>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <span class="fw-semibold text-end" style="font-size: 0.9rem;"><?= number_format($subtotal, 0, ',', '.') ?>đ</span>
+                            </div>
+                        <?php endforeach; ?>
+                        
+                        <hr class="my-4">
+                        
+                        <?php 
+                            $threshold = $freeThreshold ?? 1000000;
+                            $currentSubtotal = $subtotal ?? 0;
+                            $currentShippingFee = $shippingFee ?? 0;
+                            $currentGrandTotal = $grandTotal ?? ($currentSubtotal + $currentShippingFee);
+                        ?>
+
+                        <?php if ($currentSubtotal < $threshold): ?>
+                            <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-3 p-3 d-flex align-items-center" style="font-size: 0.85rem;">
+                                <i class="bi bi-info-circle-fill text-warning me-2 fs-5"></i>
+                                <div>
+                                    Mua thêm <strong><?= number_format($threshold - $currentSubtotal, 0, ',', '.') ?>đ</strong> để được <strong class="text-success">Miễn phí vận chuyển</strong>!
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="alert alert-success border-0 shadow-sm rounded-3 mb-3 p-3 d-flex align-items-center" style="font-size: 0.85rem;">
+                                <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                                <div>
+                                    Đơn hàng của bạn đã đủ điều kiện <strong class="text-success">Miễn phí vận chuyển (Freeship)</strong>!
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Tạm tính</span>
+                            <span class="fw-semibold"><?= number_format($currentSubtotal, 0, ',', '.') ?>đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Phí vận chuyển & COD</span>
+                            <?php if ($currentShippingFee == 0): ?>
+                                <span class="fw-semibold text-success"><i class="bi bi-patch-check-fill me-1"></i>Miễn phí</span>
+                            <?php else: ?>
+                                <span class="fw-semibold text-dark"><?= number_format($currentShippingFee, 0, ',', '.') ?>đ</span>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <span class="fw-bold fs-5">Tổng cộng</span>
+                            <span class="fw-bold fs-4 text-primary"><?= number_format($currentGrandTotal, 0, ',', '.') ?>đ</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-3 mt-4 rounded-pill fw-bold text-uppercase fs-5">
+                            Đặt hàng ngay
+                        </button>
+                        <div class="text-center mt-3">
+                            <a href="<?= htmlspecialchars($_ENV['APP_URL'] ?? '') ?>/cart" class="text-decoration-none text-muted"><i class="bi bi-arrow-left"></i> Quay lại giỏ hàng</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </form>
 </div>
